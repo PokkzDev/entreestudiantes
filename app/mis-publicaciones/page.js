@@ -1,0 +1,240 @@
+"use client";
+import { useEffect, useState } from "react";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
+import styles from "./page.module.css";
+
+export default function MisPublicaciones() {
+  const [publicaciones, setPublicaciones] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [message, setMessage] = useState(null);
+  const { data: session, status } = useSession();
+  const router = useRouter();
+
+  useEffect(() => {
+    // Redirigir a login si no está autenticado
+    if (status === "unauthenticated") {
+      router.push("/login");
+      return;
+    }
+
+    // Cargar las publicaciones cuando el usuario esté autenticado
+    if (status === "authenticated") {
+      fetchPublicaciones();
+    }
+  }, [status, router]);
+
+  async function fetchPublicaciones() {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/mis-publicaciones");
+      const data = await res.json();
+      
+      if (data.success) {
+        setPublicaciones(data.publicaciones);
+      } else {
+        console.error("Error al cargar publicaciones:", data.error);
+      }
+    } catch (error) {
+      console.error("Error al cargar publicaciones:", error);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleDelete(id) {
+    if (!confirm("¿Estás seguro de que quieres eliminar esta publicación?")) {
+      return;
+    }
+
+    try {
+      const res = await fetch(`/api/publicacion/${id}`, {
+        method: "DELETE",
+      });
+      const data = await res.json();
+      
+      if (data.success) {
+        // Actualizar la lista después de eliminar
+        setPublicaciones(prev => prev.filter(p => p.id !== id));
+        
+        // Mostrar mensaje de éxito
+        setMessage({
+          text: data.message || "Publicación eliminada correctamente",
+          type: "success"
+        });
+        
+        // Ocultar mensaje después de 3 segundos
+        setTimeout(() => setMessage(null), 3000);
+      } else {
+        setMessage({
+          text: data.error || "Error al eliminar la publicación",
+          type: "error"
+        });
+        setTimeout(() => setMessage(null), 3000);
+      }
+    } catch (error) {
+      setMessage({
+        text: "Error al eliminar: " + error.message,
+        type: "error"
+      });
+      setTimeout(() => setMessage(null), 3000);
+    }
+  }
+
+  // Función para cambiar el estado (activo/inactivo)
+  async function handleToggleStatus(id, currentStatus) {
+    try {
+      const res = await fetch(`/api/publicacion/${id}/toggle-status`, {
+        method: "PATCH",
+      });
+      const data = await res.json();
+      
+      if (data.success) {
+        // Actualizar el estado de la publicación en la lista
+        setPublicaciones(prev => 
+          prev.map(p => p.id === id ? {...p, status: data.publicacion.status} : p)
+        );
+        
+        // Mostrar mensaje de éxito
+        setMessage({
+          text: data.message || `La publicación ha sido ${data.publicacion.status === "activo" ? "activada" : "pausada"} correctamente`,
+          type: "success"
+        });
+        
+        // Ocultar mensaje después de 3 segundos
+        setTimeout(() => setMessage(null), 3000);
+      } else {
+        setMessage({
+          text: data.error || "Error al cambiar el estado de la publicación",
+          type: "error"
+        });
+        setTimeout(() => setMessage(null), 3000);
+      }
+    } catch (error) {
+      setMessage({
+        text: "Error al cambiar el estado: " + error.message,
+        type: "error"
+      });
+      setTimeout(() => setMessage(null), 3000);
+    }
+  }
+
+  // Función para editar (navega a una página de edición)
+  function handleEdit(id) {
+    router.push(`/editar-publicacion/${id}`);
+  }
+
+  // Si está cargando, mostrar indicador
+  if (status === "loading" || loading) {
+    return (
+      <div className={styles.container}>
+        <h1 className={styles.title}>Mis Publicaciones</h1>
+        <div className={styles.loadingContainer}>
+          <p>Cargando publicaciones...</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className={styles.container}>
+      {message && (
+        <div className={`${styles.messageContainer} ${styles[message.type]}`}>
+          {message.text}
+        </div>
+      )}
+      
+      <div className={styles.header}>
+        <h1 className={styles.title}>Mis Publicaciones</h1>
+        <button 
+          className={styles.newButton}
+          onClick={() => router.push("/publicar")}
+        >
+          Nueva Publicación
+        </button>
+      </div>
+
+      {publicaciones.length === 0 ? (
+        <div className={styles.emptyState}>
+          <p>Aún no tienes publicaciones.</p>
+          <button 
+            className={styles.startButton}
+            onClick={() => router.push("/publicar")}
+          >
+            Crear mi primera publicación
+          </button>
+        </div>
+      ) : (
+        <div className={styles.publicacionesGrid}>
+          {publicaciones.map(pub => (
+            <div key={pub.id} className={styles.publicacionCard}>
+              <span className={styles.tipoLabel}>
+                {pub.type === 'producto' ? 'Producto' : 'Servicio'}
+              </span>
+              
+              {pub.images && pub.images.length > 0 ? (
+                <img 
+                  src={pub.images.split(',')[0]} 
+                  alt={pub.title} 
+                  className={styles.publicacionImage} 
+                />
+              ) : (
+                <div className={styles.noImage}>
+                  Sin imagen
+                </div>
+              )}
+              
+              <div className={styles.publicacionContent}>
+                <h3 className={styles.publicacionTitle}>{pub.title}</h3>
+                <p className={styles.publicacionCategory}>
+                  <span>Categoría:</span> {pub.category}
+                </p>
+                <p className={styles.publicacionDescription}>
+                  {pub.description}
+                </p>
+                {pub.price && (
+                  <p className={styles.publicacionPrice}>
+                    <span>Precio:</span> ${pub.price}
+                  </p>
+                )}
+                <p className={styles.publicacionStatus}>
+                  <span>Estado:</span> 
+                  <span 
+                    className={`${styles.statusIndicator} ${styles[pub.status]}`}
+                    title={pub.status === 'activo' 
+                      ? 'Esta publicación es visible para todos los usuarios' 
+                      : 'Esta publicación está pausada y no es visible para otros usuarios'}
+                  >
+                    {pub.status === 'activo' ? 'Activo' : 'Pausado'}
+                  </span>
+                </p>
+              </div>
+              
+              <div className={styles.publicacionActions}>
+                <button 
+                  onClick={() => handleEdit(pub.id)}
+                  className={styles.editButton}
+                >
+                  Editar
+                </button>
+                <button 
+                  onClick={() => handleToggleStatus(pub.id, pub.status)}
+                  className={`${styles.toggleButton} ${pub.status === 'activo' ? styles.pauseButton : styles.activateButton}`}
+                  title={pub.status === 'activo' ? 'Ocultar temporalmente esta publicación' : 'Hacer visible esta publicación'}
+                >
+                  {pub.status === 'activo' ? 'Pausar publicación' : 'Activar publicación'}
+                </button>
+                <button 
+                  onClick={() => handleDelete(pub.id)}
+                  className={styles.deleteButton}
+                >
+                  Eliminar
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}

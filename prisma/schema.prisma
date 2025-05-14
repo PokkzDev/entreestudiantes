@@ -1,0 +1,88 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                  String    @id @default(cuid())
+  username            String?   @unique
+  name                String?
+  email               String    @unique
+  password            String
+  image               String?
+  bio                 String?   @db.Text
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+  verificationToken   String?  // Token para verificar email
+  isVerified          Boolean   @default(false) // Indica si el usuario ya completó el registro
+  publicaciones       Publicacion[]
+}
+
+model Publicacion {
+  id            String    @id @default(cuid())
+  title         String
+  description   String   @db.Text
+  type          String   // "producto" or "servicio"
+  price         Decimal? @db.Decimal(10, 2)
+  images        String   // Comma-separated URLs
+  category      String
+  contactMethod String
+  contactInfo   String
+  status        String   @default("activo")
+  location      String?
+  tags          String   // Comma-separated tags
+  views         Int      @default(0)
+  featured      Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  author        User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  authorId      String
+}
+
+model DeletedAccountLog {
+  id            String    @id @default(cuid())
+  userId        String    // Original user ID
+  username      String?   // Username at time of deletion
+  email         String    // Email at time of deletion
+  name          String?   // Name at time of deletion
+  reason        String?   @db.Text // Optional reason for deletion
+  ipAddress     String?   // IP address at time of deletion
+  userAgent     String?   @db.Text // Browser/device info
+  publicationCount Int    // Number of publications they had
+  accountCreatedAt DateTime // When the account was originally created
+  accountDeletedAt DateTime @default(now()) // When the account was deleted
+}
+
+model DeletedPublicationLog {
+  id            String    @id @default(cuid())
+  publicationId String    // Original publication ID
+  authorId      String    // Original author ID
+  username      String?   // Author username at time of deletion
+  email         String    // Author email at time of deletion
+  title         String    // Publication title
+  description   String    @db.Text // Publication description
+  type          String    // "producto" or "servicio"
+  price         Decimal?  @db.Decimal(10, 2)
+  images        String    // Comma-separated URLs
+  category      String
+  contactMethod String
+  contactInfo   String
+  location      String?
+  tags          String    // Comma-separated tags
+  ipAddress     String?   // IP address that requested deletion
+  userAgent     String?   @db.Text // Browser/device info
+  reason        String?   @db.Text // Reason for deletion (if provided)
+  deletedBy     String    // "user" (self-deletion) or "admin" or "account-deletion"
+  publicationCreatedAt DateTime // When the publication was originally created
+  deletedAt     DateTime @default(now()) // When the publication was deleted
+}

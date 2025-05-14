@@ -1,0 +1,296 @@
+.busquedaContainer {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+  min-height: 80vh;
+}
+
+.busquedaHeader {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #1e293b;
+  text-align: center;
+  margin-bottom: 2rem;
+  position: relative;
+}
+
+.busquedaHeader:after {
+  content: "";
+  position: absolute;
+  width: 60px;
+  height: 4px;
+  background: #6366f1;
+  bottom: -12px;
+  left: 50%;
+  transform: translateX(-50%);
+  border-radius: 4px;
+}
+
+.busquedaFiltros {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 2rem;
+  justify-content: center;
+  background: #f8fafc;
+  padding: 1.25rem;
+  border-radius: 12px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+}
+
+.busquedaSelect {
+  padding: 0.75rem 1.25rem;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  font-size: 0.95rem;
+  min-width: 180px;
+  background: white;
+  color: #334155;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.03);
+  outline: none;
+  transition: all 0.2s;
+  cursor: pointer;
+}
+
+.busquedaInput {
+  flex: 1;
+  min-width: 250px;
+  padding: 0.75rem 1.25rem;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  font-size: 0.95rem;
+  background: white;
+  color: #334155;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.03);
+  outline: none;
+  transition: all 0.2s;
+}
+
+.busquedaSelect:hover, .busquedaInput:hover {
+  border-color: #cbd5e1;
+}
+
+.busquedaSelect:focus, .busquedaInput:focus {
+  border-color: #6366f1;
+  box-shadow: 0 0 0 3px rgba(99,102,241,0.15);
+}
+
+.busquedaEmpty {
+  text-align: center;
+  padding: 3rem 0;
+  color: #64748b;
+  font-size: 1.05rem;
+  background: #f8fafc;
+  border-radius: 12px;
+  border: 1px dashed #cbd5e1;
+}
+
+.busquedaGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 1.5rem;
+  margin-top: 1rem;
+}
+
+.busquedaCard {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  background: white;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 6px 24px rgba(99,102,241,0.08), 0 1.5px 6px rgba(0,0,0,0.04);
+  transition: transform 0.25s, box-shadow 0.25s, border-color 0.25s;
+  height: 100%;
+  border: 2.5px solid #e2e8f0;
+  border-left-width: 2.5px;
+  border-left-color: #e2e8f0;
+  background: #fff;
+}
+
+.busquedaCard[data-type="producto"] {
+  --busqueda-card-border: #10b981;
+}
+.busquedaCard[data-type="servicio"] {
+  --busqueda-card-border: #6366f1;
+}
+
+.busquedaCard img {
+  width: 100%;
+  height: 150px;
+  object-fit: cover;
+  background: #e0e7ef;
+  border-bottom: 1.5px solid #f1f5f9;
+  transition: filter 0.2s;
+}
+
+.busquedaCard:hover img {
+  filter: brightness(0.95) saturate(1.1);
+}
+
+.busquedaCard .noImage {
+  width: 100%;
+  height: 150px;
+  background: repeating-linear-gradient(135deg, #f1f5f9, #e0e7ef 20px);
+  color: #94a3b8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.95rem;
+  font-style: italic;
+  border-bottom: 1.5px solid #f1f5f9;
+}
+
+.busquedaCard h3 {
+  font-size: 1.18rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0;
+  padding: 1rem 1.1rem 0.3rem;
+  line-height: 1.25;
+  letter-spacing: -0.5px;
+}
+
+.busquedaCard .precio {
+  color: #10b981;
+  font-weight: 700;
+  font-size: 1.05rem;
+  margin: 0.2rem 0 0.5rem 0;
+  padding: 0 1.1rem;
+  letter-spacing: -0.5px;
+}
+
+.busquedaCard .categoria {
+  color: #6366f1;
+  font-size: 0.88rem;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0 1.1rem;
+  margin-bottom: 0.2rem;
+}
+
+.busquedaCard .categoria b {
+  color: #475569;
+}
+
+.busquedaCard p {
+  padding: 0 1.1rem;
+  margin: 0.2rem 0;
+  color: #475569;
+  font-size: 0.93rem;
+  line-height: 1.5;
+}
+
+.busquedaCard .tipoLabel {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: #6366f1;
+  color: white;
+  font-weight: 600;
+  font-size: 0.78rem;
+  padding: 0.28rem 0.9rem;
+  border-radius: 20px;
+  z-index: 2;
+  box-shadow: 0 2px 8px rgba(99,102,241,0.18);
+  letter-spacing: 0.5px;
+}
+
+.busquedaCard .contacto {
+  margin-top: auto;
+  padding: 0.9rem 1.1rem;
+  border-top: 1.5px solid #e0e7ef;
+  background: #f3f4f6;
+  color: #6366f1;
+  font-size: 0.93rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font-weight: 500;
+}
+
+/* Estilo para enlaces de contacto */
+.busquedaCard .contacto a,
+.busquedaCard .contacto a:visited,
+.busquedaCard .contacto a:active,
+.busquedaCard .contacto a:focus {
+  text-decoration: none !important;
+  color: #25d366;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-weight: 500;
+  transition: color 0.18s;
+  outline: none;
+}
+
+.busquedaCard .contacto a:hover {
+  color: #128c7e;
+}
+
+.contactIcon {
+  font-size: 2.2em;
+  min-width: 32px;
+  min-height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.busquedaCard .contacto a .whatsapp-icon {
+  color: #25d366;
+  font-size: inherit;
+  display: flex;
+  align-items: center;
+  margin-right: 0.08em;
+  filter: drop-shadow(0 1px 2px rgba(37,211,102,0.13));
+  transition: transform 0.15s, filter 0.15s;
+}
+
+.busquedaCard .contacto a:hover .whatsapp-icon {
+  color: #128c7e;
+  transform: scale(1.12) rotate(-6deg);
+  filter: drop-shadow(0 2px 4px rgba(18,140,126,0.18));
+}
+
+.busquedaCard .contacto a:visited {
+  color: #25d366;
+}
+
+/* Descripción truncada para mostrar solo 2 líneas */
+.busquedaCard p:nth-of-type(2) {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-bottom: 0.8rem;
+}
+
+/* Responsive ajustes */
+@media (max-width: 768px) {
+  .busquedaGrid {
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  }
+  .busquedaSelect, .busquedaInput {
+    min-width: 100%;
+  }
+  .busquedaCard {
+    border-radius: 12px;
+    padding: 0;
+  }
+  .busquedaCard h3 {
+    font-size: 1.05rem;
+    padding: 0.8rem 0.7rem 0.2rem;
+  }
+  .busquedaCard .precio, .busquedaCard .categoria, .busquedaCard p {
+    padding-left: 0.7rem;
+    padding-right: 0.7rem;
+  }
+  .busquedaCard .contacto {
+    padding: 0.7rem;
+  }
+}

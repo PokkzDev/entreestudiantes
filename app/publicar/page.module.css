@@ -1,0 +1,474 @@
+/* Add a wrapper for vertical centering */
+.publicarPageWrapper {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(120deg, #f1f5f9 0%, #e0e7ef 60%, #dbeafe 100%);
+}
+
+/* Styles for the Publicar step-by-step form */
+.publicarContainer {
+  max-width: 480px;
+  min-width: 320px;
+  width: 100%;
+  min-height: 540px;
+  margin: 2rem auto;
+  background: rgba(255,255,255,0.98);
+  border-radius: 18px;
+  box-shadow: 0 8px 32px #33415522;
+  padding: 36px 28px 28px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  position: relative;
+  animation: fadeInUp 0.7s cubic-bezier(.23,1.01,.32,1) 1;
+  transition: all 0.2s;
+  box-sizing: border-box;
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(40px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 600px) {
+  .publicarContainer {
+    max-width: 99vw;
+    min-width: 0;
+    min-height: 420px;
+    padding: 16px 2vw 20px 2vw;
+    border-radius: 10px;
+  }
+}
+
+.publicarTitle {
+  font-size: 2.1rem;
+  font-weight: 900;
+  margin-bottom: 1.2rem;
+  color: #373a53;
+  text-align: center;
+  letter-spacing: -1px;
+}
+
+.publicarStep {
+  margin-bottom: 1.2rem;
+  color: #6366f1;
+  font-weight: 600;
+  text-align: center;
+  font-size: 1.08rem;
+}
+
+.publicarForm {
+  display: flex;
+  flex-direction: column;
+  gap: 1.7rem;
+  width: 100%;
+}
+
+.publicarForm label {
+  font-weight: 600;
+  color: #475569;
+  margin-bottom: 0.3rem;
+  display: block;
+  font-size: 1.01rem;
+}
+
+.publicarInput,
+.publicarTextarea,
+.publicarSelect {
+  padding: 13px 12px;
+  border-radius: 8px;
+  border: 1.5px solid #cbd5e1;
+  font-size: 1.04rem;
+  background: #f8fafc;
+  transition: border 0.2s, box-shadow 0.2s;
+  outline: none;
+  margin-top: 2px;
+}
+.publicarInput:focus,
+.publicarTextarea:focus,
+.publicarSelect:focus {
+  border: 1.5px solid #6366f1;
+  box-shadow: 0 0 0 2px #6366f133;
+  background: #fff;
+}
+
+.publicarTextarea {
+  min-height: 90px;
+  resize: vertical;
+}
+
+.publicarButtonRow {
+  display: flex;
+  gap: 14px;
+  margin-top: 1.7rem;
+}
+
+.publicarButton {
+  flex: 1;
+  padding: 13px;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 1.07rem;
+  border: none;
+  background: #6366f1;
+  color: #fff;
+  transition: background 0.2s, box-shadow 0.2s, transform 0.1s;
+  cursor: pointer;
+  box-shadow: 0 2px 8px #6366f122;
+  letter-spacing: 0.01em;
+}
+.publicarButton:disabled {
+  background: #c7d2fe;
+  color: #fff;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+.publicarButton:hover:not(:disabled),
+.publicarButton:focus:not(:disabled) {
+  background: #4f46e5;
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 4px 16px #6366f144;
+}
+.publicarButton.secondary {
+  background: #f8fafc;
+  color: #334155;
+  border: 1.5px solid #cbd5e1;
+  box-shadow: none;
+}
+.publicarButton.secondary:hover,
+.publicarButton.secondary:focus {
+  background: #e0e7ef;
+  color: #334155;
+  border: 1.5px solid #6366f1;
+}
+.publicarButton.success {
+  background: #10b981;
+}
+.publicarButton.success:hover,
+.publicarButton.success:focus {
+  background: #059669;
+}
+
+.publicarTypeButton {
+  flex: 1;
+  padding: 15px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 1rem;
+  border: 1.5px solid #cbd5e1;
+  background: #f8fafc;
+  cursor: pointer;
+  transition: border 0.2s, background 0.2s, box-shadow 0.2s;
+  box-shadow: 0 1px 4px #33415511;
+}
+.publicarTypeButton.selected {
+  border: 2px solid #6366f1;
+  background: #eef2ff;
+  box-shadow: 0 2px 8px #6366f122;
+}
+.publicarTypeButton:hover,
+.publicarTypeButton:focus {
+  border: 2px solid #6366f1;
+  background: #f1f5ff;
+}
+
+/* Mejoras visuales para el resumen */
+.publicarResumen {
+  background: #f1f5f9;
+  border-radius: 10px;
+  padding: 18px 14px;
+  margin-bottom: 10px;
+  font-size: 1.01rem;
+  color: #334155;
+  box-shadow: 0 1px 4px #33415511;
+}
+.publicarResumen h4 {
+  margin-top: 0;
+  color: #6366f1;
+  font-size: 1.08rem;
+  font-weight: 700;
+}
+.publicarResumen ul {
+  margin: 10px 0 0 0;
+  padding: 0;
+  list-style: none;
+}
+.publicarResumen li {
+  margin-bottom: 6px;
+}
+
+/* Estilos para la vista previa de la publicación */
+.publicacionReview {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  animation: fadeIn 0.5s ease-in-out;
+}
+
+.reviewTitle {
+  text-align: center;
+  color: #4338ca;
+  font-size: 1.2rem;
+  margin-bottom: 1.2rem;
+  font-weight: 700;
+}
+
+.publicacionCard {
+  background: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 8px 24px rgba(99, 102, 241, 0.15);
+  border: 1px solid #e2e8f0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  position: relative;
+  transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.publicacionCard:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 28px rgba(99, 102, 241, 0.25);
+}
+
+.publicacionCardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.3rem;
+}
+
+.publicacionCategoryBadge {
+  background: #eef2ff;
+  color: #4338ca;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.3rem 0.8rem;
+  border-radius: 20px;
+  display: inline-block;
+}
+
+.publicacionType {
+  color: #6366f1;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.publicacionTitle {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0.5rem 0;
+}
+
+.publicacionDescription {
+  color: #475569;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  margin-bottom: 0.6rem;
+}
+
+.publicacionDetails {
+  border-top: 1px solid #e2e8f0;
+  padding-top: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+
+.publicacionPrice, .publicacionContact {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.priceLabel, .contactLabel {
+  font-weight: 600;
+  color: #475569;
+  font-size: 0.9rem;
+  min-width: 60px;
+}
+
+.priceValue {
+  color: #10b981;
+  font-weight: 700;
+  font-size: 1.1rem;
+}
+
+.contactValue {
+  color: #6366f1;
+  font-weight: 500;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Wrapper for progress bar */
+.publicarProgressBarWrapper {
+  width: 100%;
+  max-width: 480px;
+  margin: 0 auto 18px auto;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Styles for type selection buttons */
+.typeSelectRow {
+  display: flex;
+  gap: 32px;
+  justify-content: center;
+  margin: 32px 0;
+}
+
+.typeButton {
+  min-width: 140px;
+  min-height: 120px;
+  font-weight: 600;
+  font-size: 18px;
+  border-radius: 16px;
+  border: 2px solid #e0e7ef;
+  background: #fff;
+  color: #312e81;
+  box-shadow: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  cursor: pointer;
+}
+
+.typeButton:focus {
+  outline: 2px solid #6366f1;
+}
+
+.selectedType.typeButton {
+  border: 3px solid #6366f1;
+  background: #eef2ff;
+  color: #312e81;
+  box-shadow: 0 4px 16px #6366f122;
+}
+
+.selectedType.typeButton:last-child {
+  border: 3px solid #10b981;
+  background: #ecfdf5;
+  color: #065f46;
+  box-shadow: 0 4px 16px #10b98122;
+}
+
+.typeIcon {
+  font-size: 36px;
+  margin-bottom: 8px;
+}
+
+/* Progress bar styles */
+.progressBarColumn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+}
+
+.progressBarRow {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  width: 100%;
+}
+
+.progressStepWrapper {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+}
+
+.progressStep {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #e0e7ef;
+  color: #6366f1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 15px;
+  border: 2.5px solid #e0e7ef;
+  box-shadow: none;
+  transition: all 0.2s;
+  z-index: 1;
+}
+
+.progressStepActive {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #6366f1;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 15px;
+  border: 2.5px solid #10b981;
+  box-shadow: 0 2px 8px #6366f144;
+  transition: all 0.2s;
+  z-index: 1;
+}
+
+.progressBarConnector {
+  position: absolute;
+  right: -22px;
+  top: 12px;
+  width: 28px;
+  height: 4px;
+  background: #e0e7ef;
+  border-radius: 2px;
+  z-index: 0;
+}
+
+.progressBarConnectorActive {
+  position: absolute;
+  right: -22px;
+  top: 12px;
+  width: 28px;
+  height: 4px;
+  background: #10b981;
+  border-radius: 2px;
+  z-index: 0;
+}
+
+.progressStepLabel {
+  margin-top: 6px;
+  font-size: 12px;
+  color: #64748b;
+  font-weight: 400;
+  text-align: center;
+  max-width: 90px;
+  line-height: 1.2;
+  min-height: 28px;
+  transition: color 0.2s;
+  white-space: pre-line;
+}
+
+.progressStepLabelActive {
+  margin-top: 6px;
+  font-size: 12px;
+  color: #6366f1;
+  font-weight: 600;
+  text-align: center;
+  max-width: 90px;
+  line-height: 1.2;
+  min-height: 28px;
+  transition: color 0.2s;
+  white-space: pre-line;
+}

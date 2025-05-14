@@ -1,0 +1,202 @@
+.footer {
+  background: #f8fafc;
+  border-top: 1.5px solid #e2e8f0;
+  color: #334155;
+  font-size: 0.95rem;
+  margin-top: 2rem;
+}
+
+.container {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+.footerGrid {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 2rem;
+  padding: 2rem 0;
+}
+
+.brandSection {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.logo {
+  font-size: 1.3rem;
+  font-weight: 800;
+  color: #6366f1;
+  letter-spacing: -0.02em;
+}
+
+.description {
+  color: #64748b;
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.linksWrapper {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2rem;
+}
+
+.linkColumn {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.linkColumn h4 {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #334155;
+  margin-bottom: 0.5rem;
+}
+
+.linkColumn nav {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.linkColumn a {
+  color: #6366f1;
+  text-decoration: none;
+  transition: color 0.2s ease;
+  font-weight: 500;
+  font-size: 0.95rem;
+}
+
+.linkColumn a:hover {
+  color: #4338ca;
+  text-decoration: underline;
+}
+
+.emailLink {
+  font-size: 0.9rem;
+  word-break: break-word;
+}
+
+.socials {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+}
+
+.socialIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background-color: #e2e8f0;
+  color: #6366f1;
+  transition: all 0.2s ease;
+}
+
+.socialIcon:hover {
+  background-color: #6366f1;
+  color: white;
+}
+
+.socialIcon svg {
+  width: 16px;
+  height: 16px;
+  fill: currentColor;
+}
+
+.copyright {
+  border-top: 1px solid #e2e8f0;
+  padding: 1rem 0;
+  background-color: #f1f5f9;
+}
+
+.copyright p {
+  color: #64748b;
+  font-size: 0.85rem;
+  text-align: center;
+}
+
+/* Estilos responsive */
+@media (max-width: 900px) {
+  .footerGrid {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+    padding: 1.5rem 0;
+  }
+  
+  .brandSection {
+    max-width: 500px;
+  }
+  
+  .linksWrapper {
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  }
+}
+
+@media (max-width: 600px) {
+  .footerGrid {
+    padding: 1.25rem 0;
+    gap: 1.25rem;
+  }
+  
+  .linksWrapper {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+  
+  .linkColumn {
+    gap: 0.5rem;
+  }
+  
+  .linkColumn h4 {
+    margin-bottom: 0.25rem;
+  }
+  
+  .linkColumn nav {
+    gap: 0.4rem;
+  }
+  
+  .copyright {
+    padding: 0.75rem 0;
+  }
+}
+
+@media (max-width: 400px) {
+  .container {
+    padding: 0 0.5rem;
+  }
+  
+  .footerGrid {
+    padding: 1rem 0;
+    gap: 1rem;
+  }
+  
+  .logo {
+    font-size: 1.1rem;
+  }
+  
+  .description {
+    font-size: 0.9rem;
+  }
+  
+  .linksWrapper {
+    gap: 1.25rem;
+  }
+  
+  .socialIcon {
+    width: 28px;
+    height: 28px;
+  }
+  
+  .socialIcon svg {
+    width: 14px;
+    height: 14px;
+  }
+}
