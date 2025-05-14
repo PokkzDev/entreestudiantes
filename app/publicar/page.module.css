@@ -87,6 +87,12 @@
   outline: none;
   margin-top: 2px;
 }
+
+.publicarSelect {
+  max-height: 300px;
+  overflow-y: auto;
+}
+
 .publicarInput:focus,
 .publicarTextarea:focus,
 .publicarSelect:focus {

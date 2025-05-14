@@ -3,25 +3,9 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import styles from "./page.module.css";
+import { categoryOptions, getProductCategories, getServiceCategories, getCategoryLabel } from "@/lib/categoryOptions";
 
-const categoryOptions = [
-  { value: '', label: 'Selecciona una categoría' },
-  // Productos
-  { value: 'libros', label: 'Libros, Apuntes y Material de Estudio' },
-  { value: 'tecnologia', label: 'Tecnología (laptops, calculadoras, accesorios)' },
-  { value: 'ropa', label: 'Ropa universitaria y Artículos personales' },
-  { value: 'arte', label: 'Arte, Música y Manualidades' },
-  { value: 'deportes', label: 'Artículos deportivos y recreativos' },
-  { value: 'alimentos', label: 'Alimentos y Snacks caseros' },
-  { value: 'otros', label: 'Otros productos para estudiantes' },
-  // Servicios
-  { value: 'servicios-tutorias', label: 'Tutorías (matemáticas, física, idiomas, etc.)' },
-  { value: 'servicios-tecnicos', label: 'Servicio Técnico de Computadoras y Electrónicos' },
-  { value: 'servicios-diseno', label: 'Diseño Gráfico y Multimedia' },
-  { value: 'servicios-traduccion', label: 'Traducción y Redacción' },
-  { value: 'servicios-impresion', label: 'Impresión y Copias' },
-  { value: 'servicios-otros', label: 'Otros Servicios para Estudiantes' },
-];
+
 
 const steps = [
   "Tipo",
@@ -225,18 +209,13 @@ export default function PublicarPage() {
               className={styles.publicarSelect}
             >
               <option value="">Selecciona una categoría</option>
-              {categoryOptions
-                .filter(opt => {
-                  if (form.type === 'producto') {
-                    // Solo mostrar categorías de productos
-                    return !opt.value.startsWith('servicios-');
-                  } else {
-                    // Solo mostrar categorías de servicios
-                    return opt.value.startsWith('servicios-');
-                  }
-                })
-                .map(opt => (
-                  <option key={opt.value} value={opt.value}>{opt.label}</option>
+              {(form.type === 'producto' ? getProductCategories() : getServiceCategories())
+                .map(groupObj => (
+                  <optgroup key={groupObj.group} label={groupObj.group}>
+                    {groupObj.options.map(opt => (
+                      <option key={opt.value} value={opt.value}>{opt.label}</option>
+                    ))}
+                  </optgroup>
                 ))}
             </select>
           )}
@@ -361,18 +340,17 @@ export default function PublicarPage() {
               <input name="contactInfo" value={form.contactInfo} onChange={handleChange} placeholder="Tu contacto" required className={styles.publicarInput} />
             </>
           )}
-          {step === 4 && (
-            <div className={styles.publicacionReview}>
-              <h3 className={styles.reviewTitle}>Así se verá tu publicación</h3>
-              <div className={styles.publicacionCard}>
-                <div className={styles.publicacionCardHeader}>
-                  <div className={styles.publicacionCategoryBadge}>
-                    {categoryOptions.find(opt => opt.value === form.category)?.label || ''}
+          {step === 4 && (              <div className={styles.publicacionReview}>
+                <h3 className={styles.reviewTitle}>Así se verá tu publicación</h3>
+                <div className={styles.publicacionCard}>
+                  <div className={styles.publicacionCardHeader}>
+                    <div className={styles.publicacionCategoryBadge}>
+                      {getCategoryLabel(form.category)}
+                    </div>
+                    <div className={styles.publicacionType}>
+                      {form.type === 'servicio' ? '🛠️ Servicio' : '📦 Producto'}
+                    </div>
                   </div>
-                  <div className={styles.publicacionType}>
-                    {form.type === 'servicio' ? '🛠️ Servicio' : '📦 Producto'}
-                  </div>
-                </div>
                 <h2 className={styles.publicacionTitle}>{form.title}</h2>
                 <p className={styles.publicacionDescription}>{form.description}</p>
                 <div className={styles.publicacionDetails}>
