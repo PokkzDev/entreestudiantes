@@ -1,9 +1,24 @@
+"use client";
+
 import { FaFileAlt, FaWindowMaximize, FaGlobe } from "react-icons/fa";
 import Image from 'next/image';
 import Link from 'next/link';
+import { useEffect, useState } from 'react';
 import styles from "./page.module.css";
 
 export default function Home() {
+  // Slider logic
+  const heroImages = [
+    '/images/hero1.jpg', // estudiantes en biblioteca
+  ];
+  const [current, setCurrent] = useState(0);
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrent((prev) => (prev + 1) % heroImages.length);
+    }, 4000);
+    return () => clearInterval(interval);
+  }, []);
+
   return (
     <div className={styles.page}>
       {/* Hero Section */}
@@ -18,9 +33,15 @@ export default function Home() {
                 <Link href="/busqueda" className="btn btn-outline">Buscar Productos</Link>
               </div>
             </div>
-            <div className={styles.heroImage}>
-              <div className={styles.imageReplacement}>
-                <p>Imagen de estudiantes colaborando</p>
+            <div className={styles.heroImage} style={{backgroundImage: `url(${heroImages[current]})`}}>
+              <div className={styles.sliderDots}>
+                {heroImages.map((_, idx) => (
+                  <span
+                    key={idx}
+                    className={current === idx ? styles.activeDot : styles.dot}
+                    onClick={() => setCurrent(idx)}
+                  />
+                ))}
               </div>
             </div>
           </div>

@@ -1,0 +1,11 @@
+--2025-05-14 22:54:37--  https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format
+Resolving images.unsplash.com (images.unsplash.com)... 151.101.222.208, 2a04:4e42:34::720
+Connecting to images.unsplash.com (images.unsplash.com)|151.101.222.208|:443... connected.
+HTTP request sent, awaiting response... 200 OK
+Length: 4695969 (4.5M) [image/jpeg]
+Saving to: ‘public/images/hero5.jpg’
+
+public/images/hero5.jp   0%[                          ]       0  --.-KB/s               public/images/hero5.jp 100%[=========================>]   4.48M  25.1MB/s    in 0.2s    
+
+2025-05-14 22:54:42 (25.1 MB/s) - ‘public/images/hero5.jpg’ saved [4695969/4695969]
+

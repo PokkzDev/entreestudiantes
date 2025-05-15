@@ -1,6 +1,7 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { FaEye, FaEyeSlash } from 'react-icons/fa';
 
 export default function ResetContrasena() {
   const router = useRouter();
@@ -11,16 +12,42 @@ export default function ResetContrasena() {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState("");
+  const [passwordValidations, setPasswordValidations] = useState({
+    length: false,
+    uppercase: false,
+    lowercase: false,
+    number: false,
+    symbol: false,
+  });
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  // Update password validations on password change
+  useEffect(() => {
+    setPasswordValidations({
+      length: password.length >= 8,
+      uppercase: /[A-Z]/.test(password),
+      lowercase: /[a-z]/.test(password),
+      number: /[0-9]/.test(password),
+      symbol: /[^A-Za-z0-9]/.test(password),
+    });
+  }, [password]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
-    if (!password || password.length < 6) {
-      setError("La contraseña debe tener al menos 6 caracteres.");
-      return;
-    }
     if (password !== confirmPassword) {
       setError("Las contraseñas no coinciden.");
+      return;
+    }
+    if (!(
+      password.length >= 8 &&
+      /[A-Z]/.test(password) &&
+      /[a-z]/.test(password) &&
+      /[0-9]/.test(password) &&
+      /[^A-Za-z0-9]/.test(password)
+    )) {
+      setError("La contraseña debe tener al menos 8 caracteres, una mayúscula, una minúscula, un número y un símbolo.");
       return;
     }
     setLoading(true);
@@ -68,47 +95,114 @@ export default function ResetContrasena() {
           <form onSubmit={handleSubmit} style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '1.2rem' }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
               <label htmlFor="password" style={{ fontWeight: 600, color: '#334155' }}>Nueva contraseña</label>
-              <input
-                id="password"
-                name="password"
-                type="password"
-                required
-                minLength={6}
-                value={password}
-                onChange={e => setPassword(e.target.value)}
-                style={{
-                  padding: '0.85rem 1rem',
-                  borderRadius: '10px',
-                  border: '1.5px solid #e0e7ef',
-                  fontSize: '1.08rem',
-                  outline: 'none',
-                  background: '#f8fafc',
-                  color: '#334155',
-                  transition: 'border 0.2s',
-                }}
-              />
+              <div style={{ position: 'relative' }}>
+                <input
+                  id="password"
+                  name="password"
+                  type={showPassword ? 'text' : 'password'}
+                  required
+                  value={password}
+                  onChange={e => setPassword(e.target.value)}
+                  style={{
+                    padding: '0.85rem 2.5rem 0.85rem 1rem',
+                    borderRadius: '10px',
+                    border: '1.5px solid #e0e7ef',
+                    fontSize: '1.08rem',
+                    outline: 'none',
+                    background: '#f8fafc',
+                    color: '#334155',
+                    transition: 'border 0.2s',
+                    width: '100%'
+                  }}
+                />
+                <button
+                  type="button"
+                  tabIndex={-1}
+                  aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+                  onClick={() => setShowPassword(v => !v)}
+                  style={{
+                    position: 'absolute',
+                    right: '0.7rem',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                    padding: 0,
+                    margin: 0,
+                    color: '#64748b',
+                    fontSize: '1.2rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                  }}
+                >
+                  {showPassword ? <FaEyeSlash /> : <FaEye />}
+                </button>
+              </div>
+              <ul style={{ listStyle: 'none', padding: 0, margin: '0.5rem 0 0 0', fontSize: '0.98rem', lineHeight: 1.5 }}>
+                <li style={{ color: passwordValidations.length ? '#22c55e' : '#ef4444', fontWeight: 600 }}>
+                  {passwordValidations.length ? '✔' : '✖'} Al menos 8 caracteres
+                </li>
+                <li style={{ color: passwordValidations.uppercase ? '#22c55e' : '#ef4444', fontWeight: 600 }}>
+                  {passwordValidations.uppercase ? '✔' : '✖'} Una letra mayúscula
+                </li>
+                <li style={{ color: passwordValidations.lowercase ? '#22c55e' : '#ef4444', fontWeight: 600 }}>
+                  {passwordValidations.lowercase ? '✔' : '✖'} Una letra minúscula
+                </li>
+                <li style={{ color: passwordValidations.number ? '#22c55e' : '#ef4444', fontWeight: 600 }}>
+                  {passwordValidations.number ? '✔' : '✖'} Un número
+                </li>
+                <li style={{ color: passwordValidations.symbol ? '#22c55e' : '#ef4444', fontWeight: 600 }}>
+                  {passwordValidations.symbol ? '✔' : '✖'} Un símbolo
+                </li>
+              </ul>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
               <label htmlFor="confirmPassword" style={{ fontWeight: 600, color: '#334155' }}>Confirmar contraseña</label>
-              <input
-                id="confirmPassword"
-                name="confirmPassword"
-                type="password"
-                required
-                minLength={6}
-                value={confirmPassword}
-                onChange={e => setConfirmPassword(e.target.value)}
-                style={{
-                  padding: '0.85rem 1rem',
-                  borderRadius: '10px',
-                  border: '1.5px solid #e0e7ef',
-                  fontSize: '1.08rem',
-                  outline: 'none',
-                  background: '#f8fafc',
-                  color: '#334155',
-                  transition: 'border 0.2s',
-                }}
-              />
+              <div style={{ position: 'relative' }}>
+                <input
+                  id="confirmPassword"
+                  name="confirmPassword"
+                  type={showConfirmPassword ? 'text' : 'password'}
+                  required
+                  value={confirmPassword}
+                  onChange={e => setConfirmPassword(e.target.value)}
+                  style={{
+                    padding: '0.85rem 2.5rem 0.85rem 1rem',
+                    borderRadius: '10px',
+                    border: '1.5px solid #e0e7ef',
+                    fontSize: '1.08rem',
+                    outline: 'none',
+                    background: '#f8fafc',
+                    color: '#334155',
+                    transition: 'border 0.2s',
+                    width: '100%'
+                  }}
+                />
+                <button
+                  type="button"
+                  tabIndex={-1}
+                  aria-label={showConfirmPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+                  onClick={() => setShowConfirmPassword(v => !v)}
+                  style={{
+                    position: 'absolute',
+                    right: '0.7rem',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                    padding: 0,
+                    margin: 0,
+                    color: '#64748b',
+                    fontSize: '1.2rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                  }}
+                >
+                  {showConfirmPassword ? <FaEyeSlash /> : <FaEye />}
+                </button>
+              </div>
             </div>
             {error && <div style={{ color: '#ef4444', fontWeight: 600, textAlign: 'center' }}>{error}</div>}
             <button

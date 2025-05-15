@@ -1,8 +1,19 @@
 import prisma from "@/lib/prisma";
 import { sendEmail } from "@/lib/sendEmail";
 import { randomBytes } from "crypto";
+import { rateLimit } from "@/lib/rateLimit";
 
 export async function POST(req) {
+  // Rate limit by IP
+  const ip = req.headers.get("x-forwarded-for")?.split(",")[0] || req.headers.get("x-real-ip") || req.ip || "unknown";
+  const { allowed, retryAfter } = rateLimit(ip);
+  if (!allowed) {
+    return new Response(JSON.stringify({ error: "Demasiadas solicitudes. Intenta de nuevo en un minuto." }), {
+      status: 429,
+      headers: { "Retry-After": String(Math.ceil(retryAfter / 1000)) }
+    });
+  }
+
   const { email } = await req.json();
   if (!email) {
     return new Response(JSON.stringify({ error: "Email requerido" }), { status: 400 });

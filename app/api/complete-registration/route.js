@@ -6,6 +6,27 @@ export async function POST(request) {
   try {
     const { email, token, username, name, password } = await request.json();
 
+    // Backend validation
+    if (!username || typeof username !== 'string' || username.length < 4) {
+      return NextResponse.json(
+        { message: 'El nombre de usuario debe tener al menos 4 caracteres.' },
+        { status: 400 }
+      );
+    }
+    if (!name || typeof name !== 'string' || name.trim().length === 0) {
+      return NextResponse.json(
+        { message: 'El nombre completo no puede estar vacío.' },
+        { status: 400 }
+      );
+    }
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z\d]).{8,}$/;
+    if (!password || typeof password !== 'string' || !passwordRegex.test(password)) {
+      return NextResponse.json(
+        { message: 'La contraseña debe tener al menos 8 caracteres, una mayúscula, una minúscula, un número y un símbolo.' },
+        { status: 400 }
+      );
+    }
+
     // Verify if the email exists
     const user = await prisma.user.findUnique({
       where: { email },
@@ -56,9 +77,9 @@ export async function POST(request) {
       },
     });
 
-    return NextResponse.json({ 
-      success: true, 
-      message: 'Registro completado exitosamente' 
+    return NextResponse.json({
+      success: true,
+      message: 'Registro completado exitosamente'
     });
   } catch (error) {
     console.error('Error completing registration:', error);

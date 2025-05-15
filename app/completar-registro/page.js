@@ -47,8 +47,27 @@ export default function CompletarRegistro() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    // Frontend validation
+    if (!username || username.length < 4) {
+      setError("El nombre de usuario debe tener al menos 4 caracteres.");
+      return;
+    }
+    if (!name || name.trim().length === 0) {
+      setError("El nombre completo no puede estar vacío.");
+      return;
+    }
     if (password !== confirmPassword) {
       setError("Las contraseñas no coinciden");
+      return;
+    }
+    if (!(
+      password.length >= 8 &&
+      /[A-Z]/.test(password) &&
+      /[a-z]/.test(password) &&
+      /[0-9]/.test(password) &&
+      /[^A-Za-z0-9]/.test(password)
+    )) {
+      setError("La contraseña debe tener al menos 8 caracteres, una mayúscula, una minúscula, un número y un símbolo.");
       return;
     }
     setError("");

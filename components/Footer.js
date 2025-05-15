@@ -36,7 +36,7 @@ export default function Footer() {
       
       <div className={styles.copyright}>
         <div className={styles.container}>
-          <p>© {new Date().getFullYear()} entreestudiantes.online. Todos los derechos reservados.</p>
+          <p>© {new Date().getFullYear()} <b>entreestudiantes.cl</b>. Todos los derechos reservados.</p>
           <p>Desarrollado por <a href="https://pokkz.dev" target="_blank" rel="noopener noreferrer">Pokkz.dev</a></p>
         </div>
       </div>
