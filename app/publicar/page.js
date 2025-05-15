@@ -5,12 +5,12 @@ import { useSession } from "next-auth/react";
 import styles from "./page.module.css";
 import { categoryOptions, getProductCategories, getServiceCategories, getCategoryLabel } from "@/lib/categoryOptions";
 
-
-
+// Move "Imágenes" step before "Contacto"
 const steps = [
   "Tipo",
   "Categoría",
   "Detalles",
+  "Imágenes",
   "Contacto",
   "Confirmar"
 ];
@@ -30,6 +30,8 @@ export default function PublicarPage() {
     contactMethod: "whatsapp",
     contactInfo: "",
   });
+  const [imagePreviews, setImagePreviews] = useState([]);
+  const [uploading, setUploading] = useState(false);
   const router = useRouter();
   const { data: session, status } = useSession();
 
@@ -69,6 +71,66 @@ export default function PublicarPage() {
     setForm(f => ({ ...f, type }));
     handleNext();
   }
+
+  // Handle image selection and preview
+  function handleImageChange(e) {
+    const files = Array.from(e.target.files);
+    // Limitar a 4 imágenes en total
+    if (imagePreviews.length + files.length > 4) {
+      // Si se intenta agregar más de 4 imágenes, solo tomar las que faltan para llegar a 4
+      const availableSlots = 4 - imagePreviews.length;
+      const filesToAdd = files.slice(0, availableSlots);
+      
+      setForm(f => ({ ...f, images: [...(f.images || []), ...filesToAdd] }));
+      const newPreviews = filesToAdd.map(file => URL.createObjectURL(file));
+      setImagePreviews(prev => [...prev, ...newPreviews]);
+      
+      if (availableSlots < files.length) {
+        alert(`Solo se han agregado ${availableSlots} imágenes para no exceder el límite de 4 imágenes.`);
+      }
+    } else {
+      setForm(f => ({ ...f, images: [...(f.images || []), ...files] }));
+      const newPreviews = files.map(file => URL.createObjectURL(file));
+      setImagePreviews(prev => [...prev, ...newPreviews]);
+    }
+  }
+  
+  // Handle removing an image
+  function handleRemoveImage(index) {
+    setForm(f => {
+      const updatedImages = [...(f.images || [])];
+      updatedImages.splice(index, 1);
+      return { ...f, images: updatedImages };
+    });
+    
+    setImagePreviews(prev => {
+      const updatedPreviews = [...prev];
+      updatedPreviews.splice(index, 1);
+      return updatedPreviews;
+    });
+  }
+
+  // Handle image upload to server
+  async function handleImageUpload() {
+    if (!form.images || form.images.length === 0) return [];
+    setUploading(true);
+    const uploadedUrls = [];
+    for (const file of form.images) {
+      const formData = new FormData();
+      formData.append('image', file);
+      const res = await fetch('/api/upload-image', {
+        method: 'POST',
+        body: formData,
+      });
+      const data = await res.json();
+      if (data.success && data.url) {
+        uploadedUrls.push(data.url);
+      }
+    }
+    setUploading(false);
+    return uploadedUrls;
+  }
+
   async function handleSubmit(e) {
     e.preventDefault();
     
@@ -78,9 +140,18 @@ export default function PublicarPage() {
       router.push("/login");
       return;
     }
-    
+
+    // Upload images first
+    let imageUrls = [];
+    if (form.images && form.images.length > 0 && typeof form.images[0] !== 'string') {
+      imageUrls = await handleImageUpload();
+    } else if (form.images && typeof form.images[0] === 'string') {
+      imageUrls = form.images;
+    }
+
     const formData = {
       ...form,
+      images: imageUrls,
       authorId: session.user.id
     };
     
@@ -130,6 +201,9 @@ export default function PublicarPage() {
       }
     }
     if (step === 3) {
+      return true;
+    }
+    if (step === 4) {
       return form.contactMethod && form.contactInfo.trim();
     }
     return true;
@@ -330,6 +404,69 @@ export default function PublicarPage() {
             </>
           )}
           {step === 3 && (
+            <div>
+              <label className={styles.publicarLabel}>Sube imágenes (opcional, máximo 4):</label>
+              <input
+                type="file"
+                accept="image/*"
+                multiple
+                onChange={handleImageChange}
+                disabled={uploading || imagePreviews.length >= 4}
+                className={styles.publicarInput}
+                style={{ marginBottom: 8 }}
+              />
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 8 }}>
+                {imagePreviews.map((src, idx) => (
+                  <div key={idx} style={{ position: 'relative', display: 'inline-block' }}>
+                    <img 
+                      key={idx} 
+                      src={src} 
+                      alt="preview" 
+                      style={{ 
+                        width: 80, 
+                        height: 80, 
+                        objectFit: 'cover', 
+                        borderRadius: 8, 
+                        border: '1px solid #ddd' 
+                      }} 
+                    />
+                    <button 
+                      type="button" 
+                      onClick={() => handleRemoveImage(idx)} 
+                      style={{ 
+                        position: 'absolute', 
+                        top: 2, 
+                        right: 2, 
+                        background: '#fff', 
+                        border: 'none', 
+                        borderRadius: '50%', 
+                        boxShadow: '0 1px 4px #0002', 
+                        cursor: 'pointer', 
+                        width: 22, 
+                        height: 22, 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        justifyContent: 'center', 
+                        padding: 0 
+                      }} 
+                      title="Eliminar imagen"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
+                ))}
+              </div>
+              {imagePreviews.length >= 4 && (
+                <div style={{ color: '#f43f5e', fontSize: '14px', marginTop: '4px' }}>
+                  Has alcanzado el límite de 4 imágenes.
+                </div>
+              )}
+              {uploading && <div style={{ color: '#6366f1' }}>Subiendo imágenes...</div>}
+            </div>
+          )}
+          {step === 4 && (
             <>
               <select name="contactMethod" value={form.contactMethod} onChange={handleChange} className={styles.publicarSelect}>
                 <option value="whatsapp">WhatsApp</option>
@@ -340,17 +477,18 @@ export default function PublicarPage() {
               <input name="contactInfo" value={form.contactInfo} onChange={handleChange} placeholder="Tu contacto" required className={styles.publicarInput} />
             </>
           )}
-          {step === 4 && (              <div className={styles.publicacionReview}>
-                <h3 className={styles.reviewTitle}>Así se verá tu publicación</h3>
-                <div className={styles.publicacionCard}>
-                  <div className={styles.publicacionCardHeader}>
-                    <div className={styles.publicacionCategoryBadge}>
-                      {getCategoryLabel(form.category)}
-                    </div>
-                    <div className={styles.publicacionType}>
-                      {form.type === 'servicio' ? '🛠️ Servicio' : '📦 Producto'}
-                    </div>
+          {step === 5 && (
+            <div className={styles.publicacionReview}>
+              <h3 className={styles.reviewTitle}>Así se verá tu publicación</h3>
+              <div className={styles.publicacionCard}>
+                <div className={styles.publicacionCardHeader}>
+                  <div className={styles.publicacionCategoryBadge}>
+                    {getCategoryLabel(form.category)}
                   </div>
+                  <div className={styles.publicacionType}>
+                    {form.type === 'servicio' ? '🛠️ Servicio' : '📦 Producto'}
+                  </div>
+                </div>
                 <h2 className={styles.publicacionTitle}>{form.title}</h2>
                 <p className={styles.publicacionDescription}>{form.description}</p>
                 <div className={styles.publicacionDetails}>
@@ -376,6 +514,11 @@ export default function PublicarPage() {
                     </span>
                   </div>
                 </div>
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 8 }}>
+                  {form.images && form.images.length > 0 && form.images.map((img, idx) => (
+                    <img key={idx} src={typeof img === 'string' ? img : imagePreviews[idx]} alt="imagen" style={{ width: 80, height: 80, objectFit: 'cover', borderRadius: 8, border: '1px solid #ddd' }} />
+                  ))}
+                </div>
               </div>
             </div>
           )}
@@ -389,7 +532,6 @@ export default function PublicarPage() {
                 Anterior
               </button>
             )}
-            {/* Ocultar el botón Siguiente en el paso 1 (índice 0) */}
             {step > 0 && step < steps.length - 1 && (
               <button
                 type="button"

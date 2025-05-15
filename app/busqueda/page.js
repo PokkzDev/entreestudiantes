@@ -22,7 +22,7 @@ export default function Busqueda() {
     // Formatear la parte entera con puntos como separadores de miles
     integerPart = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
     
-    // Devolver el número formateado con coma para decimales si existe parte decimal
+    // Devolver el número formateado with coma para decimales si existe parte decimal
     return decimalPart ? `${integerPart},${decimalPart}` : integerPart;
   };
 
@@ -101,7 +101,7 @@ export default function Busqueda() {
                 contactoIcon = <FaRegAddressCard className={styles.contactIcon} style={{ color: '#64748b' }} />;
               }
               return (
-                <div key={prod.id} className={styles.busquedaCard} data-type={prod.type}>
+                <div key={prod.id} className={styles.busquedaCard} data-type={prod.type} onClick={() => window.location.href = `/publicacion/${prod.id}`} style={{ cursor: 'pointer' }}>
                   <span className={styles.tipoLabel}>{prod.type === 'producto' ? 'Producto' : 'Servicio'}</span>
                   {prod.images && prod.images.length > 0 ? (
                     <img src={prod.images.split(",")[0]} alt={prod.title} />

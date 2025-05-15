@@ -3,6 +3,7 @@ import { signIn } from "next-auth/react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from 'next/link';
+import { FaEye, FaEyeSlash } from 'react-icons/fa';
 import styles from '../page.module.css';
 
 export default function Login() {
@@ -10,6 +11,8 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [remember, setRemember] = useState(false);
   const router = useRouter();
 
   const handleSubmit = async (e) => {
@@ -20,6 +23,7 @@ export default function Login() {
       redirect: false,
       identifier,
       password,
+      remember, // send remember value
     });
     setLoading(false);
     if (res?.error) {
@@ -75,25 +79,64 @@ export default function Login() {
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
             <label htmlFor="password" style={{ fontWeight: 600, color: '#334155' }}>Contraseña</label>
+            <div style={{ position: 'relative' }}>
+              <input
+                id="password"
+                name="password"
+                type={showPassword ? 'text' : 'password'}
+                required
+                autoComplete="current-password"
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                style={{
+                  padding: '0.85rem 2.5rem 0.85rem 1rem',
+                  borderRadius: '10px',
+                  border: '1.5px solid #e0e7ef',
+                  fontSize: '1.08rem',
+                  outline: 'none',
+                  background: '#f8fafc',
+                  color: '#334155',
+                  transition: 'border 0.2s',
+                  width: '100%'
+                }}
+              />
+              <button
+                type="button"
+                tabIndex={-1}
+                aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+                onClick={() => setShowPassword(v => !v)}
+                style={{
+                  position: 'absolute',
+                  right: '0.7rem',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  padding: 0,
+                  margin: 0,
+                  color: '#64748b',
+                  fontSize: '1.2rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                }}
+              >
+                {showPassword ? <FaEyeSlash /> : <FaEye />}
+              </button>
+            </div>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '-0.5rem', marginBottom: '-0.5rem' }}>
             <input
-              id="password"
-              name="password"
-              type="password"
-              required
-              autoComplete="current-password"
-              value={password}
-              onChange={e => setPassword(e.target.value)}
-              style={{
-                padding: '0.85rem 1rem',
-                borderRadius: '10px',
-                border: '1.5px solid #e0e7ef',
-                fontSize: '1.08rem',
-                outline: 'none',
-                background: '#f8fafc',
-                color: '#334155',
-                transition: 'border 0.2s',
-              }}
+              id="remember"
+              name="remember"
+              type="checkbox"
+              checked={remember}
+              onChange={e => setRemember(e.target.checked)}
+              style={{ accentColor: '#6366f1', width: 18, height: 18 }}
             />
+            <label htmlFor="remember" style={{ color: '#64748b', fontSize: '1rem', cursor: 'pointer', userSelect: 'none' }}>
+              Recuérdame
+            </label>
           </div>
           {error && <div style={{ color: '#ef4444', fontWeight: 600, textAlign: 'center' }}>{error}</div>}
           <button
@@ -119,6 +162,9 @@ export default function Login() {
         <div style={{ fontSize: '1rem', color: '#64748b', textAlign: 'center' }}>
           ¿No tienes cuenta?{' '}
           <Link href="/registro" style={{ color: '#6366f1', fontWeight: 600, textDecoration: 'none' }}>Regístrate</Link>
+        </div>
+        <div style={{ fontSize: '1rem', color: '#64748b', textAlign: 'center', marginTop: '0.5rem' }}>
+          <Link href="/recuperar-contrasena" style={{ color: '#2563eb', fontWeight: 600, textDecoration: 'none' }}>¿Olvidaste tu contraseña?</Link>
         </div>
       </div>
     </div>

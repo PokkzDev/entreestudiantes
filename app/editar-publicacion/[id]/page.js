@@ -1,7 +1,8 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter, useParams } from "next/navigation";
+import { categoryOptions as groupedCategoryOptions } from "../../../lib/categoryOptions";
 import styles from "./page.module.css";
 
 export default function EditarPublicacion() {
@@ -28,27 +29,17 @@ export default function EditarPublicacion() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
+  const [imagePreviews, setImagePreviews] = useState([]);
+  const [removedImages, setRemovedImages] = useState([]);
+  const [uploading, setUploading] = useState(false);
   const { data: session, status } = useSession();
   const router = useRouter();
+  const fileInputRef = useRef();
 
-  const categoryOptions = [
-    { value: '', label: 'Selecciona una categoría' },
-    // Productos
-    { value: 'libros', label: 'Libros, Apuntes y Material de Estudio' },
-    { value: 'tecnologia', label: 'Tecnología (laptops, calculadoras, accesorios)' },
-    { value: 'ropa', label: 'Ropa universitaria y Artículos personales' },
-    { value: 'arte', label: 'Arte, Música y Manualidades' },
-    { value: 'deportes', label: 'Artículos deportivos y recreativos' },
-    { value: 'alimentos', label: 'Alimentos y Snacks caseros' },
-    { value: 'otros', label: 'Otros productos para estudiantes' },
-    // Servicios
-    { value: 'servicios-tutorias', label: 'Tutorías (matemáticas, física, idiomas, etc.)' },
-    { value: 'servicios-tecnicos', label: 'Servicio Técnico de Computadoras y Electrónicos' },
-    { value: 'servicios-diseno', label: 'Diseño Gráfico y Multimedia' },
-    { value: 'servicios-traduccion', label: 'Traducción y Redacción' },
-    { value: 'servicios-impresion', label: 'Impresión y Copias' },
-    { value: 'servicios-otros', label: 'Otros Servicios para Estudiantes' },
-  ];
+  // Reemplazar categoryOptions por las del archivo centralizado
+  // Generar un array plano de opciones para el <select>
+  const flatCategoryOptions = groupedCategoryOptions
+    .flatMap(group => group.options.map(opt => ({ ...opt, group: group.group })));
 
   useEffect(() => {
     // Redirigir si no está autenticado
@@ -68,13 +59,9 @@ export default function EditarPublicacion() {
     try {
       const res = await fetch(`/api/publicacion/${publicacionId}`);
       const data = await res.json();
-      
       if (data.success) {
         const pub = data.publicacion;
-        
-        // Ajustar datos para el formulario
         const priceValue = pub.price ? parseFloat(pub.price) : null;
-        
         setForm({
           type: pub.type || "",
           title: pub.title || "",
@@ -85,12 +72,13 @@ export default function EditarPublicacion() {
           category: pub.category || "",
           contactMethod: pub.contactMethod || "",
           contactInfo: pub.contactInfo || "",
-          images: pub.images || "",
+          images: pub.images ? pub.images.split(",") : [],
           status: pub.status || "activo",
           location: pub.location || "",
           tags: pub.tags || "",
         });
-        
+        setImagePreviews(pub.images ? pub.images.split(",") : []);
+        setRemovedImages([]);
         setError(null);
       } else {
         setError(data.error || "Error al cargar la publicación");
@@ -104,13 +92,67 @@ export default function EditarPublicacion() {
     }
   }
 
+  function handleImageChange(e) {
+    const files = Array.from(e.target.files);
+    // Limitar a un máximo de 4 imágenes en total
+    const currentImageCount = Array.isArray(form.images) ? form.images.length : 0;
+    const availableSlots = 4 - currentImageCount;
+    
+    if (availableSlots <= 0) {
+      alert("Solo puedes subir un máximo de 4 imágenes por publicación.");
+      return;
+    }
+    
+    const filesToAdd = files.slice(0, availableSlots);
+    
+    setForm(prev => ({ 
+      ...prev, 
+      images: [...(Array.isArray(prev.images) ? prev.images : []), ...filesToAdd] 
+    }));
+    
+    setImagePreviews(prev => ([
+      ...prev, 
+      ...filesToAdd.map(file => URL.createObjectURL(file))
+    ]));
+  }
+
+  function handleRemoveImage(idx) {
+    setForm(prev => {
+      const imgs = Array.isArray(prev.images) ? [...prev.images] : [];
+      const removed = imgs.splice(idx, 1)[0];
+      if (typeof removed === "string") setRemovedImages(rm => [...rm, removed]);
+      return { ...prev, images: imgs };
+    });
+    setImagePreviews(prev => prev.filter((_, i) => i !== idx));
+  }
+
+  async function handleImageUpload() {
+    if (!form.images || form.images.length === 0) return [];
+    setUploading(true);
+    const uploadedUrls = [];
+    for (const img of form.images) {
+      if (typeof img === "string") {
+        uploadedUrls.push(img);
+      } else {
+        const formData = new FormData();
+        formData.append("image", img);
+        const res = await fetch("/api/upload-image", {
+          method: "POST",
+          body: formData,
+        });
+        const data = await res.json();
+        if (data.success && data.url) uploadedUrls.push(data.url);
+      }
+    }
+    setUploading(false);
+    return uploadedUrls;
+  }
+
   async function handleSubmit(e) {
     e.preventDefault();
     setSaving(true);
-    
     try {
       const formData = { ...form };
-      
       // Ajustar precio según el tipo
       if (form.type === 'producto') {
         if (form.priceRange) {
@@ -124,15 +166,22 @@ export default function EditarPublicacion() {
         formData.priceMin = "";
         formData.priceMax = "";
       }
-      
+      // Subir imágenes nuevas y mantener URLs de las existentes
+      formData.images = await handleImageUpload();
+      // Eliminar imágenes del storage si fueron removidas
+      for (const url of removedImages) {
+        await fetch("/api/delete-image", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ url }),
+        });
+      }
       const res = await fetch(`/api/publicacion/${publicacionId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
       });
-      
       const data = await res.json();
-      
       if (data.success) {
         router.push("/mis-publicaciones");
       } else {
@@ -181,7 +230,6 @@ export default function EditarPublicacion() {
   return (
     <div className={styles.container}>
       <h1 className={styles.title}>Editar Publicación</h1>
-      
       <form onSubmit={handleSubmit} className={styles.form}>
         <div className={styles.typeSelector}>
           <h3>Tipo de publicación</h3>
@@ -244,16 +292,35 @@ export default function EditarPublicacion() {
             className={styles.select}
           >
             <option value="">Selecciona una categoría</option>
-            {categoryOptions
-              .filter(opt => {
-                if (form.type === 'producto') {
-                  return !opt.value.startsWith('servicios-');
-                } else {
-                  return opt.value.startsWith('servicios-');
-                }
-              })
-              .map(opt => (
-                <option key={opt.value} value={opt.value}>{opt.label}</option>
+            {groupedCategoryOptions
+              .filter(group =>
+                form.type === 'producto'
+                  ? [
+                      'Libros y apuntes',
+                      'Tecnología',
+                      'Papelería y oficina',
+                      'Mobiliario y decoración',
+                      'Moda y accesorios',
+                      'Arte y manualidades',
+                      'Deporte y outdoor',
+                      'Alimentación y bebidas',
+                    ].includes(group.group)
+                  : [
+                      'Tutorías académicas',
+                      'Diseño y multimedia',
+                      'Traducción y redacción',
+                      'Desarrollo y tecnología',
+                      'Asesoría y desarrollo profesional',
+                      'Bienestar y estilo de vida',
+                      'Eventos y logística',
+                    ].includes(group.group)
+              )
+              .map(group => (
+                <optgroup key={group.group} label={group.group}>
+                  {group.options.map(opt => (
+                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                  ))}
+                </optgroup>
               ))}
           </select>
         </div>
@@ -412,6 +479,38 @@ export default function EditarPublicacion() {
           <p className={styles.fieldDescription}>
             Cambia a "Pausado" si quieres ocultar temporalmente tu publicación sin eliminarla.
           </p>
+        </div>
+        
+        <div className={styles.formGroup}>
+          <label>
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.586-6.586a2 2 0 10-2.828-2.828z" />
+            </svg>
+            Imágenes de la publicación (máximo 4)
+          </label>
+          <input
+            type="file"
+            accept="image/*"
+            multiple
+            ref={fileInputRef}
+            onChange={handleImageChange}
+            disabled={uploading}
+            className={styles.input}
+            style={{ marginBottom: 8 }}
+          />
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 8 }}>
+            {imagePreviews.map((src, idx) => (
+              <div key={idx} style={{ position: 'relative', display: 'inline-block' }}>
+                <img src={typeof form.images[idx] === 'string' ? form.images[idx] : src} alt="imagen" style={{ width: 80, height: 80, objectFit: 'cover', borderRadius: 8, border: '1px solid #ddd' }} />
+                <button type="button" onClick={() => handleRemoveImage(idx)} style={{ position: 'absolute', top: 2, right: 2, background: '#fff', border: 'none', borderRadius: '50%', boxShadow: '0 1px 4px #0002', cursor: 'pointer', width: 22, height: 22, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0 }} title="Eliminar imagen">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            ))}
+          </div>
+          {uploading && <div style={{ color: '#6366f1' }}>Subiendo imágenes...</div>}
         </div>
         
         <div className={styles.formActions}>

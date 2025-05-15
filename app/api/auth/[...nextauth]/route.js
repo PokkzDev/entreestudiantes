@@ -11,7 +11,8 @@ export const authOptions = {
       name: "Credentials",
       credentials: {
         identifier: { label: "Email or Username", type: "text" },
-        password: { label: "Password", type: "password" }
+        password: { label: "Password", type: "password" },
+        remember: { label: "Recuérdame", type: "checkbox", optional: true },
       },
       async authorize(credentials) {
         // Permitir login con email o username
@@ -24,6 +25,8 @@ export const authOptions = {
           }
         });
         if (user && await bcrypt.compare(credentials.password, user.password)) {
+          // Attach remember to user object for use in callbacks
+          user.remember = credentials.remember === true || credentials.remember === 'true';
           return user;
         }
         return null;
@@ -31,7 +34,7 @@ export const authOptions = {
     })
   ],
   callbacks: {
-    async jwt({ token, user, trigger }) {
+    async jwt({ token, user, trigger, account }) {
       if (user) {
         token.id = user.id;
         token.isVerified = user.isVerified;
@@ -39,6 +42,8 @@ export const authOptions = {
         token.username = user.username; // Add username to token
         token.email = user.email;
         token.createdAt = user.createdAt;
+        // Pass remember to token for session callback
+        if (user.remember !== undefined) token.remember = user.remember;
       }
       
       // On session update, fetch the latest user data from database
@@ -68,10 +73,25 @@ export const authOptions = {
     }
   },
   session: {
-    strategy: "jwt"
+    strategy: "jwt",
+    maxAge: 24 * 60 * 60, // default 1 day
+    updateAge: 24 * 60 * 60, // default 1 day
+  },
+  events: {
+    async signIn({ user, account, isNewUser }) {
+      // No-op, but could be used for logging
+    }
   },
   pages: {
     signIn: "/login"
+  },
+  // Custom session maxAge per user (recuerdame)
+  async createSession({ session, token }) {
+    // If remember is set, extend session maxAge
+    if (token.remember) {
+      session.maxAge = 30 * 24 * 60 * 60; // 30 days
+    }
+    return session;
   }
 };
 
