@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import styles from "./page.module.css";
 import { FaWhatsapp, FaEnvelope, FaPhone, FaRegAddressCard } from "react-icons/fa";
 import Image from "next/image";
+import { getCategoryLabel, getProductCategories, getServiceCategories } from "../../lib/categoryOptions";
 
 export default function Busqueda() {
   const [productos, setProductos] = useState([]);
@@ -12,6 +13,8 @@ export default function Busqueda() {
   const [loading, setLoading] = useState(false);
   const [tipo, setTipo] = useState("");
   const [tipos, setTipos] = useState([]);
+  // Nuevo estado para controlar la búsqueda manual
+  const [buscar, setBuscar] = useState(false);
   
   // Función para formatear números con puntos para separar miles y comas para decimales
   const formatNumber = (num) => {
@@ -25,6 +28,32 @@ export default function Busqueda() {
     
     // Devolver el número formateado with coma para decimales si existe parte decimal
     return decimalPart ? `${integerPart},${decimalPart}` : integerPart;
+  };
+
+  // Obtener categorías según el tipo seleccionado
+  const getCategoriasByTipo = () => {
+    if (tipo === "producto") {
+      return getProductCategories().flatMap(group => group.options);
+    } else if (tipo === "servicio") {
+      return getServiceCategories().flatMap(group => group.options);
+    } else {
+      // Si no hay tipo seleccionado, mostrar todas las categorías
+      return [
+        ...getProductCategories().flatMap(group => group.options),
+        ...getServiceCategories().flatMap(group => group.options)
+      ];
+    }
+  };
+
+  // Cuando cambia el tipo, resetear la categoría
+  const handleTipoChange = (e) => {
+    setTipo(e.target.value);
+    setCategoria("");
+  };
+
+  // Nueva función para buscar manualmente
+  const handleBuscar = () => {
+    setBuscar(prev => !prev); // Cambia el estado para disparar el useEffect
   };
 
   useEffect(() => {
@@ -42,7 +71,7 @@ export default function Busqueda() {
       setLoading(false);
     }
     fetchProductos();
-  }, [categoria, q, tipo]);
+  }, [buscar]); // Solo buscar cuando se presiona el botón
 
   return (
     <div className={styles.busquedaContainer}>
@@ -54,9 +83,8 @@ export default function Busqueda() {
           onChange={e => setTipo(e.target.value)}
         >
           <option value="">Todos los tipos</option>
-          {tipos.map(t => (
-            <option key={t} value={t}>{t === 'producto' ? 'Productos' : 'Servicios'}</option>
-          ))}
+          <option value="producto">Productos</option>
+          <option value="servicio">Servicios</option>
         </select>
         <select
           className={styles.busquedaSelect}
@@ -64,8 +92,8 @@ export default function Busqueda() {
           onChange={e => setCategoria(e.target.value)}
         >
           <option value="">Todas las categorías</option>
-          {categorias.map(cat => (
-            <option key={cat} value={cat}>{cat}</option>
+          {getCategoriasByTipo().map(cat => (
+            <option key={cat.value} value={cat.value}>{cat.label}</option>
           ))}
         </select>
         <input
@@ -75,6 +103,7 @@ export default function Busqueda() {
           value={q}
           onChange={e => setQ(e.target.value)}
         />
+        <button className={styles.busquedaButton} onClick={handleBuscar}>Buscar</button>
       </div>
       {loading ? (
         <p>Cargando...</p>
@@ -116,7 +145,7 @@ export default function Busqueda() {
                     <div className={styles.noImage}>Sin imagen</div>
                   )}
                   <h3>{prod.title}</h3>
-                  <p className={styles.categoria}><b>Categoría:</b> {prod.category}</p>
+                  <p className={styles.categoria}><b>Categoría:</b> {getCategoryLabel(prod.category)}</p>
                   <p>{prod.description}</p>
                   {prod.price && <p className={styles.precio}><b>Precio:</b> ${formatNumber(prod.price)}</p>}
                   <p className={styles.contacto}>

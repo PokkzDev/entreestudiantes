@@ -201,3 +201,34 @@
   margin-top: 1rem;
 }
 
+/* Legal checkboxes group and items */
+.legalCheckboxGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin: 1rem 0 0.5rem 0;
+}
+.legalCheckboxTitle {
+  font-size: 1rem;
+  color: #334155;
+  font-weight: 600;
+  margin-bottom: 0.2rem;
+}
+.legalCheckboxItem {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+.legalCheckbox {
+  accent-color: #2563eb;
+  width: 18px;
+  height: 18px;
+  margin-right: 0.3rem;
+}
+.legalCheckboxLabel {
+  color: #334155;
+  font-size: 0.97rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+

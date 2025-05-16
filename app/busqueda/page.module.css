@@ -294,3 +294,28 @@
     padding: 0.7rem;
   }
 }
+
+.busquedaButton {
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  border: none;
+  background: #6366f1;
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 600;
+  box-shadow: 0 2px 6px rgba(99,102,241,0.08);
+  cursor: pointer;
+  transition: background 0.2s, box-shadow 0.2s, transform 0.2s;
+  margin-left: 0.5rem;
+  margin-top: 0.1rem;
+  height: 48px;
+  display: flex;
+  align-items: center;
+}
+
+.busquedaButton:hover, .busquedaButton:focus {
+  background: #4f46e5;
+  box-shadow: 0 4px 16px rgba(99,102,241,0.13);
+  transform: translateY(-2px) scale(1.03);
+  outline: none;
+}

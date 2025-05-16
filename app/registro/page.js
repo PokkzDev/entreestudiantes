@@ -14,10 +14,16 @@ export default function Register() {
   const [existingUser, setExistingUser] = useState(false);
   const [showTerminos, setShowTerminos] = useState(false);
   const [showPrivacidad, setShowPrivacidad] = useState(false);
+  const [acceptedTerminos, setAcceptedTerminos] = useState(false);
+  const [acceptedPrivacidad, setAcceptedPrivacidad] = useState(false);
   const router = useRouter();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!acceptedTerminos || !acceptedPrivacidad) {
+      setError("Debes aceptar los Términos de Uso y la Política de Privacidad.");
+      return;
+    }
     setLoading(true);
     setError("");
     setExistingUser(false);
@@ -35,7 +41,7 @@ export default function Register() {
 
       if (!response.ok) {
         if (response.status === 400 && responseData.message.includes('ya está registrado y verificado')) {
-          setError('Este correo ya está registrado y verificado. Inicia sesión.');
+          setError('Este correo ya está registrado. Inicia sesión.');
           return;
         }
         if (response.status === 400 && responseData.message.includes('ya está registrado pero no verificado')) {
@@ -139,24 +145,53 @@ export default function Register() {
               </button>
             </div>
           )}
-          <div className={styles.legalText}>
-            Al registrarte, aceptas los{' '}
-            <button
-              type="button"
-              onClick={() => setShowTerminos(true)}
-              className={styles.legalLink}
-            >
-              Términos de Uso
-            </button>
-            {' '}y la{' '}
-            <button
-              type="button"
-              onClick={() => setShowPrivacidad(true)}
-              className={styles.legalLink}
-            >
-              Política de Privacidad
-            </button>
-            .
+          {/* Separate checkboxes for legal acceptance */}
+          <div className={styles.legalCheckboxGroup}>
+            <div className={styles.legalCheckboxTitle}>
+              Para continuar, debes aceptar:
+            </div>
+            <div className={styles.legalCheckboxItem}>
+              <input
+                type="checkbox"
+                id="terminosCheckbox"
+                checked={acceptedTerminos}
+                onChange={e => setAcceptedTerminos(e.target.checked)}
+                className={styles.legalCheckbox}
+              />
+              <label htmlFor="terminosCheckbox" className={styles.legalCheckboxLabel}>
+                Acepto los{' '}
+                <button
+                  type="button"
+                  onClick={() => setShowTerminos(true)}
+                  className={styles.legalLink}
+                  tabIndex={-1}
+                >
+                  Términos de Uso
+                </button>
+                .
+              </label>
+            </div>
+            <div className={styles.legalCheckboxItem}>
+              <input
+                type="checkbox"
+                id="privacidadCheckbox"
+                checked={acceptedPrivacidad}
+                onChange={e => setAcceptedPrivacidad(e.target.checked)}
+                className={styles.legalCheckbox}
+              />
+              <label htmlFor="privacidadCheckbox" className={styles.legalCheckboxLabel}>
+                Acepto la{' '}
+                <button
+                  type="button"
+                  onClick={() => setShowPrivacidad(true)}
+                  className={styles.legalLink}
+                  tabIndex={-1}
+                >
+                  Política de Privacidad
+                </button>
+                .
+              </label>
+            </div>
           </div>
           <button
             type="submit"

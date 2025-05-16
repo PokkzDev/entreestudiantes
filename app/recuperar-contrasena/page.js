@@ -53,7 +53,7 @@ export default function RecuperarContrasena() {
         </div>
         {success ? (
           <div style={{ color: '#22c55e', fontWeight: 600, textAlign: 'center' }}>
-            Si tu email está registrado, se ha enviado un enlace para restablecer la contraseña.
+            Si el correo electrónico está registrado, recibirás un enlace para restablecer tu contraseña.
           </div>
         ) : (
           <form onSubmit={handleSubmit} style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '1.2rem' }}>

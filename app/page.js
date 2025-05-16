@@ -4,6 +4,7 @@ import { FaFileAlt, FaWindowMaximize, FaGlobe } from "react-icons/fa";
 import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
+import { useSession } from "next-auth/react";
 import styles from "./page.module.css";
 
 export default function Home() {
@@ -19,6 +20,8 @@ export default function Home() {
     return () => clearInterval(interval);
   }, [heroImages.length]);
 
+  const { data: session, status } = useSession();
+
   return (
     <div className={styles.page}>
       {/* Hero Section */}
@@ -29,7 +32,9 @@ export default function Home() {
               <h1 className={styles.heroTitle}>¡Conecta, vende y encuentra lo que necesitas entre estudiantes universitarios!</h1>
               <p className={styles.heroSubtitle}>La comunidad donde tus ideas, productos y servicios encuentran a otros estudiantes como tú. ¡Haz crecer tu red y tus oportunidades!</p>
               <div className={styles.heroCtas}>
-                <Link href="/registro" className="btn btn-primary">Registrarte gratis</Link>
+                {status !== "loading" && !session && (
+                  <Link href="/registro" className="btn btn-primary">Registrarte gratis</Link>
+                )}
                 <Link href="/busqueda" className="btn btn-outline">Buscar Productos</Link>
               </div>
             </div>
