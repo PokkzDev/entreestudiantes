@@ -169,11 +169,19 @@ export default function PublicacionDetalle(props) {
         </div>
       </div>
       <div className={`${styles.detalleFooter} ${styles.detalleFooterEnhanced}`}>
-        <span className={styles.detalleId}><FaIdCard /> ID publicación: {publicacion.id}</span>
         {publicacion.createdAt && (
-          <span className={styles.detalleFecha}><FaCalendarAlt /> Publicado: {new Date(publicacion.createdAt).toLocaleDateString()}</span>
+          <span className={styles.detalleFecha} style={{ marginLeft: 'auto' }}><FaCalendarAlt /> Publicado: {formatDate(publicacion.createdAt)}</span>
         )}
       </div>
     </div>
   );
+}
+
+// Helper to format date as DD/MM/YYYY
+function formatDate(dateString) {
+  const date = new Date(dateString);
+  const day = date.getDate().toString().padStart(2, '0');
+  const month = (date.getMonth() + 1).toString().padStart(2, '0');
+  const year = date.getFullYear();
+  return `${day}/${month}/${year}`;
 }

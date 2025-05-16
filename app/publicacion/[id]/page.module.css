@@ -4,13 +4,14 @@
 .detalleContainerEnhanced {
   max-width: 1100px;
   margin: 40px auto;
-  background: var(--bg-white);
+  background: #fff; /* Force strong contrast with dark backgrounds */
   border-radius: 18px;
   box-shadow: 0 4px 32px rgba(0,0,0,0.10);
   padding: 32px 24px;
   display: flex;
   flex-direction: column;
   gap: 32px;
+  color: #1e293b; /* Force dark text for readability on white */
 }
 
 .detalleHeaderEnhanced {
@@ -75,13 +76,14 @@
 
 /* Larger main image */
 .mainImageLarge {
-  max-width: 700px;
-  max-height: 500px;
+  max-width: 420px;
+  max-height: 320px;
   width: 100%;
   height: auto;
   object-fit: contain;
   border-radius: 12px;
   box-shadow: 0 2px 16px rgba(0,0,0,0.10);
+  transition: max-width 0.2s, max-height 0.2s;
 }
 
 /* Improved thumbnail gallery */
@@ -153,6 +155,29 @@
   font-size: 1.4rem;
   margin: 0 0 10px 0;
   font-weight: 600;
+}
+
+.detalleContainerEnhanced .detalleTitulo,
+.detalleContainerEnhanced .descripcionTitle,
+.detalleContainerEnhanced .precio,
+.detalleContainerEnhanced .infoGroup p b {
+  color: #1e293b !important;
+}
+
+.detalleContainerEnhanced .infoGroup p,
+.detalleContainerEnhanced .descripcion,
+.detalleContainerEnhanced .detalleFooterEnhanced,
+.detalleContainerEnhanced .contactoBoxEnhanced span:not(.contactoLabel) {
+  color: #334155 !important;
+}
+
+.detalleContainerEnhanced .detalleId,
+.detalleContainerEnhanced .detalleFecha {
+  color: #64748b !important;
+}
+
+.detalleContainerEnhanced .contactoLabel {
+  color: #2563eb !important;
 }
 
 /* Highlight price */
@@ -458,8 +483,8 @@
   }
   
   .mainImageLarge {
-    max-width: 600px;
-    max-height: 450px;
+    max-width: 320px;
+    max-height: 220px;
   }
 }
 
@@ -491,8 +516,8 @@
   }
   
   .mainImageLarge {
-    max-width: 100%;
-    max-height: 350px;
+    max-width: 95vw;
+    max-height: 180px;
   }
   
   .thumbnail {
@@ -540,7 +565,8 @@
   }
   
   .mainImageLarge {
-    max-height: 280px;
+    max-width: 98vw;
+    max-height: 120px;
   }
   
   .thumbnailGalleryImproved {
