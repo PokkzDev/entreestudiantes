@@ -3,7 +3,7 @@ import React from "react";
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import styles from "./page.module.css";
-import { FaWhatsapp, FaEnvelope, FaPhone, FaRegAddressCard, FaMapMarkerAlt, FaTag, FaTags, FaCalendarAlt, FaIdCard, FaDollarSign } from "react-icons/fa";
+import { FaWhatsapp, FaEnvelope, FaPhone, FaRegAddressCard, FaMapMarkerAlt, FaTag, FaTags, FaCalendarAlt, FaIdCard, FaDollarSign, FaChevronLeft, FaChevronRight, FaTimes } from "react-icons/fa";
 
 export default function PublicacionDetalle(props) {
   // Next.js 14+: params es una promesa, usar React.use() para obtener el valor
@@ -12,6 +12,7 @@ export default function PublicacionDetalle(props) {
   const [publicacion, setPublicacion] = useState(null);
   const [loading, setLoading] = useState(true);
   const [selectedImage, setSelectedImage] = useState(0);
+  const [showCarousel, setShowCarousel] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -66,11 +67,13 @@ export default function PublicacionDetalle(props) {
         <div className={`${styles.detalleImagesSection} ${styles.detalleImagesSectionFull}`}>
           {publicacion.images && publicacion.images.length > 0 ? (
             <div className={styles.detalleImagesGalleryCenter}>
-              <div className={styles.mainImageWrapperLarge}>
+              <div className={styles.mainImageWrapperLarge} style={{ position: 'relative' }}>
                 <img
                   src={publicacion.images.split(",")[selectedImage]}
                   alt={publicacion.title}
                   className={styles.mainImageLarge}
+                  style={{ cursor: 'pointer' }}
+                  onClick={() => setShowCarousel(true)}
                 />
               </div>
               {publicacion.images.split(",").length > 1 && (
@@ -93,6 +96,44 @@ export default function PublicacionDetalle(props) {
             <div className={styles.noImageLarge}>Sin imagen</div>
           )}
         </div>
+
+        {/* Carousel Modal */}
+        {showCarousel && (
+          <div className={styles.carouselModalOverlay} onClick={() => setShowCarousel(false)}>
+            <div className={styles.carouselModalContent} onClick={e => e.stopPropagation()}>
+              {/* Left arrow */}
+              {publicacion.images.split(",").length > 1 && (
+                <button
+                  className={styles.carouselArrowModal}
+                  style={{ left: 0 }}
+                  aria-label="Anterior"
+                  onClick={() => setSelectedImage((prev) => (prev - 1 + publicacion.images.split(",").length) % publicacion.images.split(",").length)}
+                >
+                  <FaChevronLeft />
+                </button>
+              )}
+              <img
+                src={publicacion.images.split(",")[selectedImage]}
+                alt={publicacion.title}
+                className={styles.carouselModalImage}
+              />
+              {/* Right arrow */}
+              {publicacion.images.split(",").length > 1 && (
+                <button
+                  className={styles.carouselArrowModal}
+                  style={{ right: 0 }}
+                  aria-label="Siguiente"
+                  onClick={() => setSelectedImage((prev) => (prev + 1) % publicacion.images.split(",").length)}
+                >
+                  <FaChevronRight />
+                </button>
+              )}
+              <button className={styles.carouselCloseButton} onClick={() => setShowCarousel(false)} aria-label="Cerrar">
+                <FaTimes />
+              </button>
+            </div>
+          </div>
+        )}
         
         {/* Information section below the images */}
         <div className={`${styles.detalleInfoSection} ${styles.detalleInfoSectionEnhanced}`}>

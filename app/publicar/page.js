@@ -45,7 +45,7 @@ export default function PublicarPage() {
     // Formatear la parte entera con puntos como separadores de miles
     integerPart = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
     
-    // Devolver el número formateado con coma para decimales si existe parte decimal
+    // Devolver el número formateado with coma para decimales si existe parte decimal
     return decimalPart ? `${integerPart},${decimalPart}` : integerPart;
   };
 
@@ -74,24 +74,46 @@ export default function PublicarPage() {
 
   // Handle image selection and preview
   function handleImageChange(e) {
+    const allowedExtensions = ["jpg", "jpeg", "png", "gif", "webp"];
+    const maxFileSize = 1024 * 1024; // 1MB
     const files = Array.from(e.target.files);
-    // Limitar a 4 imágenes en total
-    if (imagePreviews.length + files.length > 4) {
-      // Si se intenta agregar más de 4 imágenes, solo tomar las que faltan para llegar a 4
-      const availableSlots = 4 - imagePreviews.length;
-      const filesToAdd = files.slice(0, availableSlots);
-      
-      setForm(f => ({ ...f, images: [...(f.images || []), ...filesToAdd] }));
-      const newPreviews = filesToAdd.map(file => URL.createObjectURL(file));
-      setImagePreviews(prev => [...prev, ...newPreviews]);
-      
-      if (availableSlots < files.length) {
-        alert(`Solo se han agregado ${availableSlots} imágenes para no exceder el límite de 4 imágenes.`);
+    const validFiles = [];
+    let errorMessages = [];
+    let availableSlots = 4 - imagePreviews.length;
+
+    for (const file of files) {
+      if (validFiles.length >= availableSlots) break;
+      // Check MIME type
+      if (!file.type.startsWith("image/")) {
+        errorMessages.push(`El archivo '${file.name}' no es una imagen válida.`);
+        continue;
       }
-    } else {
-      setForm(f => ({ ...f, images: [...(f.images || []), ...files] }));
-      const newPreviews = files.map(file => URL.createObjectURL(file));
+      // Check extension
+      const ext = file.name.split(".").pop().toLowerCase();
+      if (!allowedExtensions.includes(ext)) {
+        errorMessages.push(`El archivo '${file.name}' tiene una extensión no permitida.`);
+        continue;
+      }
+      // Check file size
+      if (file.size > maxFileSize) {
+        errorMessages.push(`El archivo '${file.name}' supera el tamaño máximo de 1MB.`);
+        continue;
+      }
+      validFiles.push(file);
+    }
+
+    if (errorMessages.length > 0) {
+      alert(errorMessages.join("\n"));
+    }
+
+    if (validFiles.length > 0) {
+      setForm(f => ({ ...f, images: [...(f.images || []), ...validFiles] }));
+      const newPreviews = validFiles.map(file => URL.createObjectURL(file));
       setImagePreviews(prev => [...prev, ...newPreviews]);
+    }
+
+    if (files.length > availableSlots) {
+      alert(`Solo se han agregado ${availableSlots} imágenes para no exceder el límite de 4 imágenes.`);
     }
   }
   
@@ -168,6 +190,8 @@ export default function PublicarPage() {
     }
   }
 
+  const minPriceValue = 10; // Precio mínimo permitido
+
   function isStepValid() {
     if (step === 0) {
       return true;
@@ -176,27 +200,29 @@ export default function PublicarPage() {
       return !!form.category;
     }
     if (step === 2) {
+      const titleValid = form.title.trim().length >= 5 && form.title.trim().length <= 40;
+      const descValid = form.description.trim().length >= 20 && form.description.trim().length <= 200;
       if (form.type === 'producto') {
         if (form.priceRange) {
-          const min = form.priceMin && /^\d+(\.\d{1,2})?$/.test(form.priceMin);
-          const max = form.priceMax && /^\d+(\.\d{1,2})?$/.test(form.priceMax);
+          const min = form.priceMin && /^\d+(\.\d{1,2})?$/.test(form.priceMin) && parseFloat(form.priceMin) >= minPriceValue;
+          const max = form.priceMax && /^\d+(\.\d{1,2})?$/.test(form.priceMax) && parseFloat(form.priceMax) >= minPriceValue;
           const priceValid = min && max && parseFloat(form.priceMin) <= parseFloat(form.priceMax);
           return (
-            form.title.trim() &&
-            form.description.trim() &&
+            titleValid &&
+            descValid &&
             priceValid
           );
         } else {
           return (
-            form.title.trim() &&
-            form.description.trim() &&
-            form.priceMin && /^\d+(\.\d{1,2})?$/.test(form.priceMin)
+            titleValid &&
+            descValid &&
+            form.priceMin && /^\d+(\.\d{1,2})?$/.test(form.priceMin) && parseFloat(form.priceMin) >= minPriceValue
           );
         }
       } else {
         return (
-          form.title.trim() &&
-          form.description.trim()
+          titleValid &&
+          descValid
         );
       }
     }
@@ -204,6 +230,14 @@ export default function PublicarPage() {
       return true;
     }
     if (step === 4) {
+      if (form.contactMethod === 'whatsapp' || form.contactMethod === 'telefono') {
+        // Must be exactly 9 digits
+        return /^\d{9}$/.test(form.contactInfo);
+      }
+      if (form.contactMethod === 'email') {
+        // Simple email regex
+        return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.contactInfo);
+      }
       return form.contactMethod && form.contactInfo.trim();
     }
     return true;
@@ -302,7 +336,12 @@ export default function PublicarPage() {
                 placeholder={form.type === 'servicio' ? "Nombre del servicio" : "Título del producto"}
                 required
                 className={styles.publicarInput}
+                minLength={5}
+                maxLength={40}
               />
+              <div style={{ fontSize: 12, color: '#64748b', marginBottom: 4 }}>
+                Título: mínimo 5 y máximo 40 caracteres ({form.title.length}/40)
+              </div>
               <textarea
                 name="description"
                 value={form.description}
@@ -311,7 +350,12 @@ export default function PublicarPage() {
                 required
                 rows={3}
                 className={styles.publicarTextarea}
+                minLength={20}
+                maxLength={200}
               />
+              <div style={{ fontSize: 12, color: '#64748b', marginBottom: 4 }}>
+                Descripción: mínimo 20 y máximo 200 caracteres ({form.description.length}/200)
+              </div>
               {form.type === "producto" && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                   <div style={{ display: 'flex', gap: 8, alignItems: 'center', width: '100%' }}>
@@ -352,7 +396,8 @@ export default function PublicarPage() {
                       className={styles.publicarInput}
                       autoComplete="off"
                       maxLength={10}
-                      title="Ingresa solo números (puedes usar decimales)"
+                      min={minPriceValue}
+                      title={`Ingresa solo números (mínimo $${minPriceValue})`}
                       style={{ width: '100%' }}
                     />
                   ) : (
@@ -372,7 +417,8 @@ export default function PublicarPage() {
                         className={styles.publicarInput}
                         autoComplete="off"
                         maxLength={10}
-                        title="Ingresa solo números (puedes usar decimales)"
+                        min={minPriceValue}
+                        title={`Ingresa solo números (mínimo $${minPriceValue})`}
                         style={{ flex: 1, minWidth: 0 }}
                       />
                       <span style={{ color: '#64748b', fontWeight: 600 }}>a</span>
@@ -391,7 +437,8 @@ export default function PublicarPage() {
                         className={styles.publicarInput}
                         autoComplete="off"
                         maxLength={10}
-                        title="Ingresa solo números (puedes usar decimales)"
+                        min={minPriceValue}
+                        title={`Ingresa solo números (mínimo $${minPriceValue})`}
                         style={{ flex: 1, minWidth: 0 }}
                       />
                     </div>
@@ -415,43 +462,21 @@ export default function PublicarPage() {
                 className={styles.publicarInput}
                 style={{ marginBottom: 8 }}
               />
-              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 8 }}>
+              <div className={styles.imagePreviewGrid}>
                 {imagePreviews.map((src, idx) => (
-                  <div key={idx} style={{ position: 'relative', display: 'inline-block' }}>
-                    <img 
-                      key={idx} 
-                      src={src} 
-                      alt="preview" 
-                      style={{ 
-                        width: 80, 
-                        height: 80, 
-                        objectFit: 'cover', 
-                        borderRadius: 8, 
-                        border: '1px solid #ddd' 
-                      }} 
+                  <div key={idx} className={styles.imagePreviewItem}>
+                    <img
+                      src={src}
+                      alt="preview"
+                      className={styles.imagePreviewImg}
                     />
-                    <button 
-                      type="button" 
-                      onClick={() => handleRemoveImage(idx)} 
-                      style={{ 
-                        position: 'absolute', 
-                        top: 2, 
-                        right: 2, 
-                        background: '#fff', 
-                        border: 'none', 
-                        borderRadius: '50%', 
-                        boxShadow: '0 1px 4px #0002', 
-                        cursor: 'pointer', 
-                        width: 22, 
-                        height: 22, 
-                        display: 'flex', 
-                        alignItems: 'center', 
-                        justifyContent: 'center', 
-                        padding: 0 
-                      }} 
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveImage(idx)}
+                      className={styles.imagePreviewDeleteBtn}
                       title="Eliminar imagen"
                     >
-                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
                       </svg>
                     </button>
@@ -474,7 +499,73 @@ export default function PublicarPage() {
                 <option value="telefono">Teléfono</option>
                 <option value="otro">Otro</option>
               </select>
-              <input name="contactInfo" value={form.contactInfo} onChange={handleChange} placeholder="Tu contacto" required className={styles.publicarInput} />
+              {(form.contactMethod === 'whatsapp' || form.contactMethod === 'telefono') ? (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 0 }}>
+                  <span
+                    style={{
+                      fontWeight: 600,
+                      color: '#fff',
+                      background: '#6366f1',
+                      borderTopLeftRadius: 6,
+                      borderBottomLeftRadius: 6,
+                      padding: '0 12px',
+                      height: 40,
+                      display: 'flex',
+                      alignItems: 'center',
+                      border: '1px solid #6366f1',
+                      borderRight: 'none',
+                      fontSize: 16,
+                      letterSpacing: 1,
+                    }}
+                  >
+                    +56
+                  </span>
+                  <input
+                    name="contactInfo"
+                    value={form.contactInfo}
+                    onChange={e => {
+                      // Only allow numbers, max 9 digits
+                      let value = e.target.value.replace(/\D/g, '').slice(0, 9);
+                      setForm(f => ({ ...f, contactInfo: value }));
+                    }}
+                    placeholder="9 12345678"
+                    required
+                    className={styles.publicarInput}
+                    maxLength={9}
+                    minLength={9}
+                    pattern="^\d{9}$"
+                    title="Ingresa un número chileno válido de 9 dígitos"
+                    style={{
+                      flex: 1,
+                      borderTopLeftRadius: 0,
+                      borderBottomLeftRadius: 0,
+                      borderLeft: 'none',
+                      height: 40,
+                    }}
+                  />
+                </div>
+              ) : form.contactMethod === 'email' ? (
+                <input
+                  name="contactInfo"
+                  value={form.contactInfo}
+                  onChange={handleChange}
+                  placeholder="correo@ejemplo.com"
+                  required
+                  className={styles.publicarInput}
+                  type="email"
+                  pattern="^[^\s@]+@[^\s@]+\.[^\s@]+$"
+                  title="Ingresa un correo electrónico válido"
+                />
+              ) : (
+                <input
+                  name="contactInfo"
+                  value={form.contactInfo}
+                  onChange={handleChange}
+                  placeholder="Tu contacto"
+                  required
+                  className={styles.publicarInput}
+                />
+              )}
             </>
           )}
           {step === 5 && (

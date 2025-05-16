@@ -5,7 +5,6 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(120deg, #f1f5f9 0%, #e0e7ef 60%, #dbeafe 100%);
 }
 
 /* Styles for the Publicar step-by-step form */
@@ -477,4 +476,87 @@
   min-height: 28px;
   transition: color 0.2s;
   white-space: pre-line;
+}
+
+/* --- Image Preview Styles for Publicar Step --- */
+.imagePreviewGrid {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+
+.imagePreviewItem {
+  position: relative;
+  display: inline-block;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 12px #33415522, 0 1.5px 6px #6366f122;
+  border: 1.5px solid #e0e7ef;
+  transition: box-shadow 0.2s, transform 0.2s, border 0.2s;
+  background: #fff;
+}
+.imagePreviewItem:hover,
+.imagePreviewItem:focus-within {
+  box-shadow: 0 6px 24px #6366f144, 0 2px 8px #6366f122;
+  border: 1.5px solid #6366f1;
+  transform: scale(1.04);
+  z-index: 2;
+}
+
+.imagePreviewImg {
+  width: 100px;
+  height: 100px;
+  object-fit: cover;
+  border-radius: 12px;
+  display: block;
+  transition: filter 0.2s;
+}
+.imagePreviewItem:hover .imagePreviewImg {
+  filter: brightness(0.95) blur(0.5px);
+}
+
+.imagePreviewDeleteBtn {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  background: rgba(255,255,255,0.92);
+  border: none;
+  border-radius: 50%;
+  box-shadow: 0 1px 4px #0002;
+  cursor: pointer;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  opacity: 0;
+  transition: opacity 0.2s, background 0.2s;
+  z-index: 3;
+}
+.imagePreviewItem:hover .imagePreviewDeleteBtn,
+.imagePreviewDeleteBtn:focus {
+  opacity: 1;
+  background: #f43f5e;
+}
+.imagePreviewDeleteBtn svg {
+  color: #f43f5e;
+  width: 18px;
+  height: 18px;
+  transition: color 0.2s;
+}
+.imagePreviewItem:hover .imagePreviewDeleteBtn svg,
+.imagePreviewDeleteBtn:focus svg {
+  color: #fff;
+}
+
+@media (max-width: 600px) {
+  .imagePreviewImg {
+    width: 70px;
+    height: 70px;
+  }
+  .imagePreviewGrid {
+    gap: 8px;
+  }
 }
