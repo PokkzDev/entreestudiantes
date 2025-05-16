@@ -136,7 +136,14 @@ export default function Busqueda() {
                   <span className={styles.tipoLabel}>{prod.type === 'producto' ? 'Producto' : 'Servicio'}</span>
                   {prod.images && prod.images.length > 0 ? (
                     <Image
-                      src={prod.images.split(",")[0]}
+                      src={(() => {
+                        const img = prod.images.split(",")[0].trim();
+                        if (!img) return "";
+                        // If already starts with /images/ or is a full URL, use as is
+                        if (img.startsWith("/images/") || img.startsWith("http")) return img;
+                        // Otherwise, prepend /images/
+                        return `/images/${img.replace(/^\/+/, "")}`;
+                      })()}
                       alt={prod.title}
                       width={300}
                       height={200}

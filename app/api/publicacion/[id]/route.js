@@ -208,6 +208,29 @@ export async function DELETE(req, context) {
       }
     });
 
+    // Eliminar imágenes asociadas antes de eliminar la publicación
+    if (existingPublication.images) {
+      const imagesArr = existingPublication.images.split(',').map(img => img.trim()).filter(Boolean);
+      const fs = require('fs').promises;
+      const path = require('path');
+      for (const imgUrl of imagesArr) {
+        let imgPath = imgUrl;
+        // Only handle local images in /images/
+        if (imgPath.startsWith('/images/')) {
+          imgPath = path.join(process.cwd(), 'public', imgPath);
+        } else if (!imgPath.startsWith('/') && !imgPath.startsWith('http')) {
+          imgPath = path.join(process.cwd(), 'public', 'images', imgPath);
+        } else {
+          continue; // skip external or malformed URLs
+        }
+        try {
+          await fs.unlink(imgPath);
+        } catch (e) {
+          // Ignore errors (file may not exist)
+        }
+      }
+    }
+
     // Eliminar la publicación
     await prisma.publicacion.delete({
       where: { id }

@@ -220,6 +220,13 @@ export default function PublicarPage() {
             form.priceMin && /^\d+(\.\d{1,2})?$/.test(form.priceMin) && parseFloat(form.priceMin) >= minPriceValue
           );
         }
+      } else if (form.type === 'servicio') {
+        // Para servicios, solo precio base obligatorio
+        return (
+          titleValid &&
+          descValid &&
+          form.priceMin && /^\d+(\.\d{1,2})?$/.test(form.priceMin) && parseFloat(form.priceMin) >= minPriceValue
+        );
       } else {
         return (
           titleValid &&
@@ -357,7 +364,7 @@ export default function PublicarPage() {
               <div style={{ fontSize: 12, color: '#64748b', marginBottom: 4 }}>
                 Descripción: mínimo 20 y máximo 200 caracteres ({form.description.length}/200)
               </div>
-              {form.type === "producto" && (
+              {(form.type === "producto" || form.type === "servicio") && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                   <div style={{ display: 'flex', gap: 8, alignItems: 'center', width: '100%' }}>
                     <label style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 13, color: '#475569', fontWeight: 500, cursor: 'pointer' }}>
@@ -367,21 +374,24 @@ export default function PublicarPage() {
                         checked={!form.priceRange}
                         onChange={() => setForm(f => ({ ...f, priceRange: false, priceMax: '', priceMin: '' }))}
                         style={{ accentColor: '#6366f1', marginRight: 2 }}
+                        disabled={form.type === 'servicio'}
                       />
                       Precio fijo
                     </label>
-                    <label style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 13, color: '#475569', fontWeight: 500, cursor: 'pointer' }}>
-                      <input
-                        type="radio"
-                        name="priceType"
-                        checked={!!form.priceRange}
-                        onChange={() => setForm(f => ({ ...f, priceRange: true, priceMax: '', priceMin: '' }))}
-                        style={{ accentColor: '#6366f1', marginRight: 2 }}
-                      />
-                      Rango de precios
-                    </label>
+                    {form.type === 'producto' && (
+                      <label style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 13, color: '#475569', fontWeight: 500, cursor: 'pointer' }}>
+                        <input
+                          type="radio"
+                          name="priceType"
+                          checked={!!form.priceRange}
+                          onChange={() => setForm(f => ({ ...f, priceRange: true, priceMax: '', priceMin: '' }))}
+                          style={{ accentColor: '#6366f1', marginRight: 2 }}
+                        />
+                        Rango de precios
+                      </label>
+                    )}
                   </div>
-                  {!form.priceRange ? (
+                  {!form.priceRange || form.type === 'servicio' ? (
                     <input
                       name="priceMin"
                       value={form.priceMin || ''}
@@ -389,7 +399,7 @@ export default function PublicarPage() {
                         const value = e.target.value.replace(/[^\d.]/g, '');
                         setForm(f => ({ ...f, priceMin: value }));
                       }}
-                      placeholder="Precio"
+                      placeholder={form.type === 'servicio' ? "Precio base del servicio" : "Precio"}
                       type="text"
                       pattern="^\\d+(\\.\\d{1,2})?$"
                       inputMode="decimal"
@@ -445,7 +455,9 @@ export default function PublicarPage() {
                     </div>
                   )}
                   <span style={{ fontSize: 12, color: '#64748b', marginTop: 2 }}>
-                    Puedes definir un rango de precios si tu producto lo requiere.
+                    {form.type === 'servicio'
+                      ? 'Puedes definir un precio base para tu servicio.'
+                      : 'Puedes definir un rango de precios si tu producto lo requiere.'}
                   </span>
                 </div>
               )}
@@ -586,11 +598,11 @@ export default function PublicarPage() {
                 <h2 className={styles.publicacionTitle}>{form.title}</h2>
                 <p className={styles.publicacionDescription}>{form.description}</p>
                 <div className={styles.publicacionDetails}>
-                  {form.type === "producto" && (
+                  {(form.type === "producto" || form.type === "servicio") && (
                     <div className={styles.publicacionPrice}>
                       <span className={styles.priceLabel}>Precio:</span>
                       <span className={styles.priceValue}>
-                        {form.priceRange 
+                        {form.type === 'producto' && form.priceRange
                           ? `$${formatNumber(form.priceMin)} a $${formatNumber(form.priceMax)}`
                           : `$${formatNumber(form.priceMin)}`
                         }

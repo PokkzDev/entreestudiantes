@@ -196,7 +196,11 @@ export default function EditarPublicacion() {
 
   function handleChange(e) {
     const { name, value } = e.target;
-    setForm((prev) => ({ ...prev, [name]: value }));
+    if (name === "contactMethod") {
+      setForm((prev) => ({ ...prev, contactMethod: value, contactInfo: "" }));
+    } else {
+      setForm((prev) => ({ ...prev, [name]: value }));
+    }
   }
 
   if (loading) {
@@ -424,7 +428,7 @@ export default function EditarPublicacion() {
           />
         </div>
 
-        {form.type === "producto" && (
+        {(form.type === "producto" || form.type === "servicio") && (
           <div className={styles.formGroup}>
             <label>
               <svg
@@ -445,27 +449,32 @@ export default function EditarPublicacion() {
               Precio
             </label>
             <div className={styles.priceOptions}>
-              <label className={styles.radioLabel}>
-                <input
-                  type="radio"
-                  name="priceType"
-                  checked={!form.priceRange}
-                  onChange={() => setForm((prev) => ({ ...prev, priceRange: false }))}
-                />
-                Precio fijo
-              </label>
-              <label className={styles.radioLabel}>
-                <input
-                  type="radio"
-                  name="priceType"
-                  checked={form.priceRange}
-                  onChange={() => setForm((prev) => ({ ...prev, priceRange: true }))}
-                />
-                Rango de precios
-              </label>
+              {form.type === "producto" ? (
+                <>
+                  <label className={styles.radioLabel}>
+                    <input
+                      type="radio"
+                      name="priceType"
+                      checked={!form.priceRange}
+                      onChange={() => setForm((prev) => ({ ...prev, priceRange: false }))}
+                    />
+                    Precio fijo
+                  </label>
+                  <label className={styles.radioLabel}>
+                    <input
+                      type="radio"
+                      name="priceType"
+                      checked={form.priceRange}
+                      onChange={() => setForm((prev) => ({ ...prev, priceRange: true }))}
+                    />
+                    Rango de precios
+                  </label>
+                </>
+              ) : null}
             </div>
 
-            {!form.priceRange ? (
+            {/* Solo mostrar el campo de precio fijo para servicios, y ambos para producto según selección */}
+            {form.type === "servicio" || !form.priceRange ? (
               <div className={styles.priceInputs}>
                 <input
                   type="text"
@@ -473,10 +482,11 @@ export default function EditarPublicacion() {
                   value={form.priceMin}
                   onChange={(e) => {
                     const value = e.target.value.replace(/[^\d.]/g, "");
-                    setForm((prev) => ({ ...prev, priceMin: value }));
+                    setForm((prev) => ({ ...prev, priceMin: value, priceRange: form.type === "servicio" ? false : prev.priceRange }));
                   }}
                   placeholder="Precio"
                   className={styles.input}
+                  required
                 />
               </div>
             ) : (
@@ -491,6 +501,7 @@ export default function EditarPublicacion() {
                   }}
                   placeholder="Precio mínimo"
                   className={styles.input}
+                  required
                 />
                 <span>a</span>
                 <input
@@ -503,6 +514,7 @@ export default function EditarPublicacion() {
                   }}
                   placeholder="Precio máximo"
                   className={styles.input}
+                  required
                 />
               </div>
             )}
@@ -563,54 +575,67 @@ export default function EditarPublicacion() {
             </svg>
             Información de contacto
           </label>
-          <input
-            type="text"
-            id="contactInfo"
-            name="contactInfo"
-            value={form.contactInfo}
-            onChange={handleChange}
-            placeholder="Tu información de contacto"
-            required
-            className={styles.input}
-          />
+          {(form.contactMethod === "telefono" || form.contactMethod === "whatsapp") ? (
+            <div style={{ display: 'flex', alignItems: 'center', width: '100%' }}>
+              <span
+                style={{
+                  fontWeight: 600,
+                  color: '#fff',
+                  background: '#6366f1',
+                  borderTopLeftRadius: 6,
+                  borderBottomLeftRadius: 6,
+                  padding: '0 12px',
+                  height: 40,
+                  display: 'flex',
+                  alignItems: 'center',
+                  border: '1px solid #6366f1',
+                  borderRight: 'none',
+                  fontSize: 16,
+                  letterSpacing: 1,
+                }}
+              >
+                +56
+              </span>
+              <input
+                type="text"
+                id="contactInfo"
+                name="contactInfo"
+                value={form.contactInfo}
+                onChange={e => {
+                  let value = e.target.value.replace(/\D/g, '').slice(0, 9);
+                  setForm(prev => ({ ...prev, contactInfo: value }));
+                }}
+                placeholder="9 12345678"
+                required
+                className={styles.input}
+                maxLength={9}
+                minLength={9}
+                pattern="^\d{9}$"
+                title="Ingresa un número chileno válido de 9 dígitos"
+                style={{
+                  flex: 1,
+                  borderTopLeftRadius: 0,
+                  borderBottomLeftRadius: 0,
+                  borderLeft: 'none',
+                  height: 40,
+                }}
+              />
+            </div>
+          ) : (
+            <input
+              type="text"
+              id="contactInfo"
+              name="contactInfo"
+              value={form.contactInfo}
+              onChange={handleChange}
+              placeholder="Tu información de contacto"
+              required
+              className={styles.input}
+            />
+          )}
         </div>
 
-        <div className={styles.formGroup}>
-          <label htmlFor="status">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="20"
-              height="20"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-              />
-            </svg>
-            Estado de la publicación
-          </label>
-          <select
-            id="status"
-            name="status"
-            value={form.status}
-            onChange={handleChange}
-            className={styles.select}
-          >
-            <option value="activo">Activo - Visible para todos</option>
-            <option value="inactivo">
-              Pausado - No visible para otros usuarios
-            </option>
-          </select>
-          <p className={styles.fieldDescription}>
-            Cambia a &quot;Pausado&quot; si quieres ocultar temporalmente tu
-            publicación sin eliminarla.
-          </p>
-        </div>
+        {/* Quitar el campo de estado de la publicación */}
 
         <div className={styles.formGroup}>
           <label>

@@ -26,10 +26,15 @@ export async function POST(req) {
       } else if (data.priceMin) {
         price = parseFloat(data.priceMin);
       }
-      // Si no hay precio válido, dejar como null
+      if (isNaN(price)) price = null;
+    } else if (data.type === 'servicio') {
+      // Para servicios, guardar el precio base
+      if (data.priceMin) {
+        price = parseFloat(data.priceMin);
+      }
       if (isNaN(price)) price = null;
     } else {
-      price = null; // Para servicios, siempre null
+      price = null;
     }
     // Limitar a 4 imágenes para evitar exceder el límite del campo en la base de datos
     let imagesToStore = [];
