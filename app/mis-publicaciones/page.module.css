@@ -238,13 +238,14 @@
 
 .publicacionActions {
   display: flex;
+  flex-wrap: wrap;
   gap: 0.5rem;
   padding: 1rem;
   background: #f8fafc;
   border-top: 1px solid #f1f5f9;
 }
 
-.editButton, .deleteButton, .toggleButton {
+.editButton, .deleteButton, .toggleButton, .viewButton {
   padding: 0.5rem 1rem;
   border-radius: 6px;
   font-size: 0.9rem;
@@ -253,6 +254,8 @@
   transition: all 0.2s;
   border: none;
   flex: 1;
+  min-width: 120px;
+  flex: 1 1 120px;
 }
 
 .editButton {
@@ -291,6 +294,134 @@
   background: #a7f3d0;
 }
 
+.viewButton {
+  background: #f1f5f9;
+  color: #6366f1;
+  border: 1px solid #6366f1;
+  border-radius: 6px;
+  padding: 0.5rem 1rem;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s, border 0.2s;
+  flex: 1;
+}
+
+.viewButton:hover {
+  background: #6366f1;
+  color: #fff;
+  border: 1px solid #6366f1;
+}
+
+.modalOverlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(30, 41, 59, 0.35);
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn 0.2s;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.modalContent {
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(30,41,59,0.18);
+  padding: 2.5rem 2rem 2rem 2rem;
+  min-width: 320px;
+  max-width: 95vw;
+  position: relative;
+  text-align: center;
+  animation: modalPop 0.25s;
+}
+
+@keyframes modalPop {
+  from { transform: scale(0.95); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+.modalClose {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  color: #64748b;
+  cursor: pointer;
+  transition: color 0.2s;
+  z-index: 10;
+}
+.modalClose:hover {
+  color: #ef4444;
+}
+
+.modalIconWarning {
+  font-size: 2.5rem;
+  margin-bottom: 0.5rem;
+  color: #f59e42;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+}
+
+.modalTitle {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: #b91c1c;
+  margin: 0 0 0.5rem 0;
+}
+
+.modalText {
+  color: #475569;
+  font-size: 1.05rem;
+  margin-bottom: 1.5rem;
+}
+
+.modalActions {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  margin-top: 1rem;
+}
+
+.cancelButton {
+  background: #e2e8f0;
+  color: #334155;
+  border: none;
+  border-radius: 8px;
+  padding: 0.6rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.cancelButton:hover {
+  background: #cbd5e1;
+}
+
+.deleteButton {
+  background: #fee2e2;
+  color: #ef4444;
+  border: none;
+  border-radius: 8px;
+  padding: 0.6rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.deleteButton:hover {
+  background: #fecaca;
+}
+
 @media (max-width: 768px) {
   .header {
     flex-direction: column;
@@ -304,5 +435,21 @@
   
   .title:after {
     bottom: -8px;
+  }
+}
+
+@media (max-width: 600px) {
+  .publicacionActions {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  .editButton, .deleteButton, .toggleButton, .viewButton {
+    min-width: 0;
+    width: 100%;
+  }
+  .modalContent {
+    min-width: 0;
+    width: 95vw;
+    padding: 1.5rem 0.5rem 1.5rem 0.5rem;
   }
 }

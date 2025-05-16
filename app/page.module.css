@@ -135,39 +135,40 @@
   transform: perspective(1500px) rotateY(-8deg) rotateX(4deg) translateZ(0);
   transition: all 0.6s cubic-bezier(0.165, 0.84, 0.44, 1);
   animation: floatIn 1.2s ease forwards;
-  background-image: url('/hero-students.jpg');
   background-size: cover;
   background-position: center;
   position: relative;
 }
 
-.heroImage::before {
-  content: '';
+.sliderDots {
   position: absolute;
-  inset: 0;
-  background: linear-gradient(to right, rgba(37, 99, 235, 0.1), transparent);
-  z-index: 1;
+  left: 50%;
+  bottom: 18px;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 0.5rem;
+  z-index: 2;
 }
 
-.heroImage::after {
-  content: '';
-  position: absolute;
-  top: -10%;
-  right: -10%;
-  width: 200px;
-  height: 200px;
-  background: radial-gradient(circle, rgba(79, 70, 229, 0.2) 0%, transparent 70%);
+.dot {
+  width: 12px;
+  height: 12px;
   border-radius: 50%;
-  z-index: 0;
+  background: #e0e7ef;
+  opacity: 0.7;
+  cursor: pointer;
+  transition: background 0.2s, opacity 0.2s;
+  border: 2px solid #cbd5e1;
 }
 
-.heroImage:hover {
-  transform: perspective(1500px) rotateY(-4deg) rotateX(2deg) translateZ(10px) scale(1.02);
-  box-shadow: 0 30px 60px -15px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(0, 0, 0, 0.05);
-}
-
-.imageReplacement {
-  display: none;
+.activeDot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #6366f1;
+  opacity: 1;
+  border: 2px solid #334155;
+  cursor: pointer;
 }
 
 /* Features Section */

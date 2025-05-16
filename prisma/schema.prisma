@@ -26,6 +26,8 @@ model User {
   verificationToken   String?  // Token para verificar email
   isVerified          Boolean   @default(false) // Indica si el usuario ya completó el registro
   publicaciones       Publicacion[]
+  resetPasswordToken       String?
+  resetPasswordTokenExpiry DateTime?
 }
 
 model Publicacion {
@@ -34,7 +36,7 @@ model Publicacion {
   description   String   @db.Text
   type          String   // "producto" or "servicio"
   price         Decimal? @db.Decimal(10, 2)
-  images        String   // Comma-separated URLs
+  images        String   @db.Text // Comma-separated URLs
   category      String
   contactMethod String
   contactInfo   String
@@ -73,7 +75,7 @@ model DeletedPublicationLog {
   description   String    @db.Text // Publication description
   type          String    // "producto" or "servicio"
   price         Decimal?  @db.Decimal(10, 2)
-  images        String    // Comma-separated URLs
+  images        String    @db.Text // Comma-separated URLs
   category      String
   contactMethod String
   contactInfo   String

@@ -31,6 +31,27 @@ export async function POST(req) {
     } else {
       price = null; // Para servicios, siempre null
     }
+    // Limitar a 4 imágenes para evitar exceder el límite del campo en la base de datos
+    let imagesToStore = [];
+    if (Array.isArray(data.images)) {
+      if (data.images.length > 4) {
+        return NextResponse.json({ 
+          success: false, 
+          error: "Solo se permiten un máximo de 4 imágenes por publicación." 
+        }, { status: 400 });
+      }
+      imagesToStore = data.images.slice(0, 4);
+    } else if (typeof data.images === 'string' && data.images) {
+      const imageArray = data.images.split(',');
+      if (imageArray.length > 4) {
+        return NextResponse.json({ 
+          success: false, 
+          error: "Solo se permiten un máximo de 4 imágenes por publicación." 
+        }, { status: 400 });
+      }
+      imagesToStore = imageArray.slice(0, 4);
+    }
+    
     const publicacion = await prisma.publicacion.create({
       data: {
         type: data.type,
@@ -40,7 +61,7 @@ export async function POST(req) {
         price: price, // Siempre null o número válido
         contactMethod: data.contactMethod,
         contactInfo: data.contactInfo,
-        images: Array.isArray(data.images) ? data.images.join(",") : "",
+        images: Array.isArray(imagesToStore) ? imagesToStore.join(",") : "",
         status: "activo",
         location: data.location || "",
         tags: data.tags || "",

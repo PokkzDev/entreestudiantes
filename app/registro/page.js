@@ -3,6 +3,8 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from 'next/link';
 import styles from './page.module.css';
+import ModalTerminos from "../../components/ModalTerminos";
+import ModalPrivacidad from "../../components/ModalPrivacidad";
 
 export default function Register() {
   const [email, setEmail] = useState("");
@@ -10,6 +12,8 @@ export default function Register() {
   const [loading, setLoading] = useState(false);
   const [emailSent, setEmailSent] = useState(false);
   const [existingUser, setExistingUser] = useState(false);
+  const [showTerminos, setShowTerminos] = useState(false);
+  const [showPrivacidad, setShowPrivacidad] = useState(false);
   const router = useRouter();
 
   const handleSubmit = async (e) => {
@@ -53,54 +57,22 @@ export default function Register() {
 
   if (emailSent) {
     return (
-      <div className={styles.page} style={{ minHeight: '80vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f8fafc' }}>
-        <div style={{
-          background: '#fff',
-          borderRadius: '20px',
-          boxShadow: '0 8px 32px 0 rgba(31,38,135,0.07)',
-          padding: '2.5rem 2rem',
-          maxWidth: '500px',
-          width: '100%',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          gap: '1.5rem',
-          textAlign: 'center'
-        }}>
-          <div style={{
-            width: '60px',
-            height: '60px',
-            borderRadius: '50%',
-            background: '#e6f0ff',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            marginBottom: '1rem'
-          }}>
+      <div className={styles.page}>
+        <div className={styles.cardEmailSent}>
+          <div className={styles.iconCircle}>
             <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" fill="#2563eb" viewBox="0 0 16 16">
               <path d="M8 0a8 8 0 1 1 0 16A8 8 0 0 1 8 0zm.5 5a.5.5 0 0 0-1 0v4.5a.5.5 0 0 0 .5.5H12a.5.5 0 0 0 0-1H8.5V5z"/>
             </svg>
           </div>
-          <h1 style={{
-            fontSize: '1.8rem',
-            fontWeight: 800,
-            color: '#2563eb',
-            letterSpacing: '-0.02em',
-          }}>¡Revisa tu correo electrónico!</h1>
-          <p style={{ fontSize: '1.1rem', color: '#64748b', lineHeight: '1.6' }}>
+          <h1 className={styles.titleEmailSent}>¡Revisa tu correo electrónico!</h1>
+          <p className={styles.emailSentText}>
             Hemos enviado un correo a <strong>{email}</strong> con un enlace para completar tu registro.
           </p>
-          <p style={{ fontSize: '1rem', color: '#64748b', lineHeight: '1.5' }}>
+          <p className={styles.emailSentSubText}>
             El correo debería llegar en unos minutos. Si no lo encuentras, revisa también tu carpeta de spam.
           </p>
-          <div style={{ marginTop: '1rem' }}>
-            <Link href="/login" style={{ 
-              color: '#6366f1', 
-              fontWeight: 600, 
-              textDecoration: 'none',
-              display: 'inline-block',
-              marginTop: '1rem' 
-            }}>
+          <div className={styles.emailSentBack}>
+            <Link href="/login" className={styles.emailSentBackLink}>
               Volver al inicio de sesión
             </Link>
           </div>
@@ -110,32 +82,17 @@ export default function Register() {
   }
 
   return (
-    <div className={styles.page} style={{ minHeight: '80vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f8fafc' }}>
-      <div style={{
-        background: '#fff',
-        borderRadius: '20px',
-        boxShadow: '0 8px 32px 0 rgba(31,38,135,0.07)',
-        padding: '2.5rem 2rem',
-        maxWidth: '400px',
-        width: '100%',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        gap: '2rem',
-      }}>
-        <h1 style={{
-          fontSize: '2rem',
-          fontWeight: 800,
-          color: '#2563eb',
-          marginBottom: '0.5rem',
-          letterSpacing: '-0.02em',
-        }}>Crear cuenta</h1>
-        <p style={{ fontSize: '1.1rem', color: '#64748b', textAlign: 'center', margin: '-1rem 0 0' }}>
+    <div className={styles.page}>
+      <ModalTerminos open={showTerminos} onClose={() => setShowTerminos(false)} />
+      <ModalPrivacidad open={showPrivacidad} onClose={() => setShowPrivacidad(false)} />
+      <div className={styles.card}>
+        <h1 className={styles.title}>Crear cuenta</h1>
+        <p className={styles.subtitle}>
           Ingresa tu correo electrónico para comenzar
         </p>
-        <form onSubmit={handleSubmit} style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '1.2rem' }}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-            <label htmlFor="email" style={{ fontWeight: 600, color: '#334155' }}>Correo electrónico</label>
+        <form onSubmit={handleSubmit} className={styles.form}>
+          <div className={styles.inputGroup}>
+            <label htmlFor="email" className={styles.label}>Correo electrónico</label>
             <input
               id="email"
               name="email"
@@ -144,23 +101,13 @@ export default function Register() {
               autoComplete="email"
               value={email}
               onChange={e => setEmail(e.target.value)}
-              style={{
-                padding: '0.85rem 1rem',
-                borderRadius: '10px',
-                border: '1.5px solid #e0e7ef',
-                fontSize: '1.08rem',
-                outline: 'none',
-                background: '#f8fafc',
-                color: '#334155',
-                transition: 'border 0.2s',
-              }}
+              className={styles.input}
             />
           </div>
-          {error && <div style={{ color: '#ef4444', fontWeight: 600, textAlign: 'center' }}>{error}</div>}
-          
+          {error && <div className={styles.error}>{error}</div>}
           {existingUser && (
-            <div style={{ textAlign: 'center', marginTop: '0.5rem' }}>
-              <p style={{ color: '#0284c7', marginBottom: '0.5rem' }}>¿No recibiste el correo de confirmación?</p>
+            <div className={styles.existingUser}>
+              <p className={styles.existingUserText}>¿No recibiste el correo de confirmación?</p>
               <button
                 type="button"
                 onClick={async () => {
@@ -173,13 +120,10 @@ export default function Register() {
                       },
                       body: JSON.stringify({ email }),
                     });
-                    
                     const data = await response.json();
-                    
                     if (!response.ok) {
                       throw new Error(data.message || "Error al reenviar el correo");
                     }
-                    
                     setEmailSent(true);
                     setExistingUser(false);
                   } catch (error) {
@@ -188,47 +132,43 @@ export default function Register() {
                     setLoading(false);
                   }
                 }}
-                style={{
-                  background: '#0ea5e9',
-                  color: '#fff',
-                  fontWeight: 600,
-                  fontSize: '1rem',
-                  border: 'none',
-                  borderRadius: '8px',
-                  padding: '0.7rem 1.5rem',
-                  cursor: loading ? 'not-allowed' : 'pointer',
-                  opacity: loading ? 0.7 : 1,
-                  transition: 'all 0.3s',
-                }}
+                className={styles.resendButton}
+                disabled={loading}
               >
                 Reenviar correo de verificación
               </button>
             </div>
           )}
-          
+          <div className={styles.legalText}>
+            Al registrarte, aceptas los{' '}
+            <button
+              type="button"
+              onClick={() => setShowTerminos(true)}
+              className={styles.legalLink}
+            >
+              Términos de Uso
+            </button>
+            {' '}y la{' '}
+            <button
+              type="button"
+              onClick={() => setShowPrivacidad(true)}
+              className={styles.legalLink}
+            >
+              Política de Privacidad
+            </button>
+            .
+          </div>
           <button
             type="submit"
             disabled={loading}
-            style={{
-              background: 'linear-gradient(90deg, #334155 0%, #6366f1 100%)',
-              color: '#fff',
-              fontWeight: 700,
-              fontSize: '1.13rem',
-              border: 'none',
-              borderRadius: '10px',
-              padding: '0.85rem 2.2rem',
-              boxShadow: '0 8px 24px -8px #33415533',
-              cursor: loading ? 'not-allowed' : 'pointer',
-              opacity: loading ? 0.7 : 1,
-              transition: 'all 0.3s',
-            }}
+            className={styles.submitButton}
           >
             {loading ? 'Procesando...' : 'Continuar'}
           </button>
         </form>
-        <div style={{ fontSize: '1rem', color: '#64748b', textAlign: 'center' }}>
+        <div className={styles.loginText}>
           ¿Ya tienes cuenta?{' '}
-          <Link href="/login" style={{ color: '#6366f1', fontWeight: 600, textDecoration: 'none' }}>Inicia sesión</Link>
+          <Link href="/login" className={styles.loginLink}>Inicia sesión</Link>
         </div>
       </div>
     </div>

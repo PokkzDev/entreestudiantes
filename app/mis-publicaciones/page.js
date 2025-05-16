@@ -8,6 +8,8 @@ export default function MisPublicaciones() {
   const [publicaciones, setPublicaciones] = useState([]);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [toDeleteId, setToDeleteId] = useState(null);
   const { data: session, status } = useSession();
   const router = useRouter();
 
@@ -43,10 +45,7 @@ export default function MisPublicaciones() {
   }
 
   async function handleDelete(id) {
-    if (!confirm("¿Estás seguro de que quieres eliminar esta publicación?")) {
-      return;
-    }
-
+    // No confirm here, handled by modal
     try {
       const res = await fetch(`/api/publicacion/${id}`, {
         method: "DELETE",
@@ -54,16 +53,11 @@ export default function MisPublicaciones() {
       const data = await res.json();
       
       if (data.success) {
-        // Actualizar la lista después de eliminar
         setPublicaciones(prev => prev.filter(p => p.id !== id));
-        
-        // Mostrar mensaje de éxito
         setMessage({
           text: data.message || "Publicación eliminada correctamente",
           type: "success"
         });
-        
-        // Ocultar mensaje después de 3 segundos
         setTimeout(() => setMessage(null), 3000);
       } else {
         setMessage({
@@ -79,6 +73,18 @@ export default function MisPublicaciones() {
       });
       setTimeout(() => setMessage(null), 3000);
     }
+    setShowDeleteModal(false);
+    setToDeleteId(null);
+  }
+
+  function openDeleteModal(id) {
+    setToDeleteId(id);
+    setShowDeleteModal(true);
+  }
+
+  function closeDeleteModal() {
+    setShowDeleteModal(false);
+    setToDeleteId(null);
   }
 
   // Función para cambiar el estado (activo/inactivo)
@@ -138,9 +144,19 @@ export default function MisPublicaciones() {
 
   return (
     <div className={styles.container}>
-      {message && (
-        <div className={`${styles.messageContainer} ${styles[message.type]}`}>
-          {message.text}
+      {/* Modal de confirmación de eliminación */}
+      {showDeleteModal && (
+        <div className={styles.modalOverlay}>
+          <div className={styles.modalContent}>
+            <button className={styles.modalClose} onClick={closeDeleteModal} title="Cerrar">×</button>
+            <div className={styles.modalIconWarning}>⚠️</div>
+            <h2 className={styles.modalTitle}>¿Eliminar publicación?</h2>
+            <p className={styles.modalText}>¿Estás seguro de que quieres eliminar esta publicación? <b>Esta acción no se puede deshacer.</b></p>
+            <div className={styles.modalActions}>
+              <button onClick={closeDeleteModal} className={styles.cancelButton}>Cancelar</button>
+              <button onClick={() => handleDelete(toDeleteId)} className={styles.deleteButton}>Eliminar</button>
+            </div>
+          </div>
         </div>
       )}
       
@@ -211,6 +227,13 @@ export default function MisPublicaciones() {
               </div>
               
               <div className={styles.publicacionActions}>
+                <button
+                  onClick={() => router.push(`/publicacion/${pub.id}`)}
+                  className={styles.viewButton}
+                  title="Ver publicación como usuario"
+                >
+                  Ver publicación
+                </button>
                 <button 
                   onClick={() => handleEdit(pub.id)}
                   className={styles.editButton}
@@ -225,7 +248,7 @@ export default function MisPublicaciones() {
                   {pub.status === 'activo' ? 'Pausar publicación' : 'Activar publicación'}
                 </button>
                 <button 
-                  onClick={() => handleDelete(pub.id)}
+                  onClick={() => openDeleteModal(pub.id)}
                   className={styles.deleteButton}
                 >
                   Eliminar
