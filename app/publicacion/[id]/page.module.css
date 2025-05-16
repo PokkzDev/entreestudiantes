@@ -1,17 +1,4 @@
-:root {
-  --footer-height: 180px;
-  --primary-color: #2563eb;
-  --secondary-color: #6366f1;
-  --text-dark: #1e293b;
-  --text-light: #475569;
-  --text-extra-light: #64748b;
-  --bg-light: #f1f5f9;
-  --bg-white: #ffffff;
-  --border-color: #e5e7eb;
-  --success-color: #10b981;
-  --warning-color: #f59e42;
-  --whatsapp-color: #25D366;
-}
+/* Move :root variables to app/globals.css. Remove :root from this file. */
 
 /* Enhanced container with more space */
 .detalleContainerEnhanced {

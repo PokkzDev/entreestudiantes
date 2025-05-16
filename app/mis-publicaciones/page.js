@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import styles from "./page.module.css";
 
 export default function MisPublicaciones() {
@@ -189,10 +190,11 @@ export default function MisPublicaciones() {
               </span>
               
               {pub.images && pub.images.length > 0 ? (
-                <img 
+                <Image 
                   src={pub.images.split(',')[0]} 
                   alt={pub.title} 
                   className={styles.publicacionImage} 
+                  width={300} height={200} 
                 />
               ) : (
                 <div className={styles.noImage}>

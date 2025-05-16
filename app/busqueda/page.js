@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import styles from "./page.module.css";
 import { FaWhatsapp, FaEnvelope, FaPhone, FaRegAddressCard } from "react-icons/fa";
+import Image from "next/image";
 
 export default function Busqueda() {
   const [productos, setProductos] = useState([]);
@@ -27,22 +28,21 @@ export default function Busqueda() {
   };
 
   useEffect(() => {
+    async function fetchProductos() {
+      setLoading(true);
+      const params = new URLSearchParams();
+      if (categoria) params.append("categoria", categoria);
+      if (q) params.append("q", q);
+      if (tipo) params.append("tipo", tipo);
+      const res = await fetch(`/api/busqueda?${params.toString()}`);
+      const data = await res.json();
+      setProductos(data.publicaciones || []);
+      setCategorias(data.categorias || []);
+      setTipos(data.tipos || []);
+      setLoading(false);
+    }
     fetchProductos();
   }, [categoria, q, tipo]);
-
-  async function fetchProductos() {
-    setLoading(true);
-    const params = new URLSearchParams();
-    if (categoria) params.append("categoria", categoria);
-    if (q) params.append("q", q);
-    if (tipo) params.append("tipo", tipo);
-    const res = await fetch(`/api/busqueda?${params.toString()}`);
-    const data = await res.json();
-    setProductos(data.publicaciones || []);
-    setCategorias(data.categorias || []);
-    setTipos(data.tipos || []);
-    setLoading(false);
-  }
 
   return (
     <div className={styles.busquedaContainer}>
@@ -104,7 +104,14 @@ export default function Busqueda() {
                 <div key={prod.id} className={styles.busquedaCard} data-type={prod.type} onClick={() => window.location.href = `/publicacion/${prod.id}`} style={{ cursor: 'pointer' }}>
                   <span className={styles.tipoLabel}>{prod.type === 'producto' ? 'Producto' : 'Servicio'}</span>
                   {prod.images && prod.images.length > 0 ? (
-                    <img src={prod.images.split(",")[0]} alt={prod.title} />
+                    <Image
+                      src={prod.images.split(",")[0]}
+                      alt={prod.title}
+                      width={300}
+                      height={200}
+                      style={{ width: '100%', height: 150, objectFit: 'cover', borderTopLeftRadius: 16, borderTopRightRadius: 16 }}
+                      priority={false}
+                    />
                   ) : (
                     <div className={styles.noImage}>Sin imagen</div>
                   )}

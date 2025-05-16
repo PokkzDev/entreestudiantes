@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import styles from "./page.module.css";
 import { FaWhatsapp, FaEnvelope, FaPhone, FaRegAddressCard, FaMapMarkerAlt, FaTag, FaTags, FaCalendarAlt, FaIdCard, FaDollarSign, FaChevronLeft, FaChevronRight, FaTimes } from "react-icons/fa";
+import Image from 'next/image';
 
 export default function PublicacionDetalle(props) {
   // Next.js 14+: params es una promesa, usar React.use() para obtener el valor
@@ -68,18 +69,20 @@ export default function PublicacionDetalle(props) {
           {publicacion.images && publicacion.images.length > 0 ? (
             <div className={styles.detalleImagesGalleryCenter}>
               <div className={styles.mainImageWrapperLarge} style={{ position: 'relative' }}>
-                <img
+                <Image
                   src={publicacion.images.split(",")[selectedImage]}
                   alt={publicacion.title}
                   className={styles.mainImageLarge}
                   style={{ cursor: 'pointer' }}
                   onClick={() => setShowCarousel(true)}
+                  width={600}
+                  height={400}
                 />
               </div>
               {publicacion.images.split(",").length > 1 && (
                 <div className={styles.thumbnailGalleryImproved}>
                   {publicacion.images.split(",").map((img, idx) => (
-                    <img
+                    <Image
                       key={idx}
                       src={img}
                       alt={`${publicacion.title} miniatura ${idx + 1}`}
@@ -87,6 +90,8 @@ export default function PublicacionDetalle(props) {
                         `${styles.thumbnail} ${selectedImage === idx ? styles.thumbnailSelected : ''}`
                       }
                       onClick={() => setSelectedImage(idx)}
+                      width={80}
+                      height={80}
                     />
                   ))}
                 </div>
@@ -112,10 +117,12 @@ export default function PublicacionDetalle(props) {
                   <FaChevronLeft />
                 </button>
               )}
-              <img
+              <Image
                 src={publicacion.images.split(",")[selectedImage]}
                 alt={publicacion.title}
                 className={styles.carouselModalImage}
+                width={600}
+                height={400}
               />
               {/* Right arrow */}
               {publicacion.images.split(",").length > 1 && (

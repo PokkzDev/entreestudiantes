@@ -508,11 +508,6 @@
   font-size: 0.98rem;
 }
 
-/* Remove margin above footer if any */
-:global(footer), .footer {
-  margin-top: 0 !important;
-}
-
 /* Inline Username Action Buttons */
 .editarButton {
   font-size: 14px;

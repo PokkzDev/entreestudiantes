@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import styles from "./page.module.css";
 import { categoryOptions, getProductCategories, getServiceCategories, getCategoryLabel } from "@/lib/categoryOptions";
+import Image from 'next/image';
 
 // Move "Imágenes" step before "Contacto"
 const steps = [
@@ -465,10 +466,12 @@ export default function PublicarPage() {
               <div className={styles.imagePreviewGrid}>
                 {imagePreviews.map((src, idx) => (
                   <div key={idx} className={styles.imagePreviewItem}>
-                    <img
+                    <Image
                       src={src}
                       alt="preview"
                       className={styles.imagePreviewImg}
+                      width={80}
+                      height={80}
                     />
                     <button
                       type="button"
@@ -607,7 +610,7 @@ export default function PublicarPage() {
                 </div>
                 <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 8 }}>
                   {form.images && form.images.length > 0 && form.images.map((img, idx) => (
-                    <img key={idx} src={typeof img === 'string' ? img : imagePreviews[idx]} alt="imagen" style={{ width: 80, height: 80, objectFit: 'cover', borderRadius: 8, border: '1px solid #ddd' }} />
+                    <Image key={idx} src={typeof img === 'string' ? img : imagePreviews[idx]} alt="imagen" width={80} height={80} style={{ width: 80, height: 80, objectFit: 'cover', borderRadius: 8, border: '1px solid #ddd' }} />
                   ))}
                 </div>
               </div>

@@ -1,11 +1,19 @@
 "use client";
-import { useState, useEffect } from "react";
+import React, { Suspense, useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from 'next/link';
 import styles from '../page.module.css';
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
 
-export default function CompletarRegistro() {
+export default function CompletarRegistroWrapper() {
+  return (
+    <Suspense fallback={<div>Cargando...</div>}>
+      <CompletarRegistro />
+    </Suspense>
+  );
+}
+
+function CompletarRegistro() {
   const [name, setName] = useState("");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");

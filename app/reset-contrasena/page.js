@@ -1,9 +1,17 @@
 "use client";
-import { useState, useEffect } from "react";
+import React, { Suspense, useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
 
-export default function ResetContrasena() {
+export default function ResetContrasenaWrapper() {
+  return (
+    <Suspense fallback={<div>Cargando...</div>}>
+      <ResetContrasena />
+    </Suspense>
+  );
+}
+
+function ResetContrasena() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const token = searchParams.get("token") || "";

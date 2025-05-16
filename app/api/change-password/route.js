@@ -7,7 +7,7 @@ import bcrypt from 'bcryptjs';
 export async function POST(request) {
   try {
     // Verificar que el usuario esté autenticado
-    const session = await getServerSession(authOptions);
+    const session = await getServerSession(request, authOptions);
     if (!session || !session.user) {
       return NextResponse.json(
         { error: 'No autenticado' },
