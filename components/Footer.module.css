@@ -9,8 +9,10 @@
 .container {
   width: 100%;
   max-width: 1200px;
-  margin: 0 auto;
+  margin-left: auto;
+  margin-right: auto;
   padding: 0 1rem;
+  box-sizing: border-box;
 }
 
 .footerGrid {
@@ -62,6 +64,7 @@
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+  align-items: flex-start;
 }
 
 .linkColumn a {
@@ -73,6 +76,44 @@
 }
 
 .linkColumn a:hover {
+  color: #4338ca;
+  text-decoration: underline;
+}
+
+.linkColumn button {
+  color: #6366f1;
+  background: none;
+  border: none;
+  text-decoration: none;
+  font-weight: 500;
+  font-size: 0.95rem;
+  padding: 0;
+  cursor: pointer;
+  transition: color 0.2s;
+  outline: none;
+  text-align: left;
+}
+
+.linkColumn button:hover {
+  color: #4338ca;
+  text-decoration: underline;
+}
+
+.legalButton {
+  color: #6366f1;
+  background: none;
+  border: none;
+  text-decoration: none;
+  font-weight: 500;
+  font-size: 0.95rem;
+  padding: 0;
+  cursor: pointer;
+  transition: color 0.2s;
+  outline: none;
+  text-align: left;
+}
+
+.legalButton:hover {
   color: #4338ca;
   text-decoration: underline;
 }

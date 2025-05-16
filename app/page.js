@@ -9,7 +9,7 @@ import styles from "./page.module.css";
 export default function Home() {
   // Slider logic
   const heroImages = [
-    '/images/hero1.jpg', // estudiantes en biblioteca
+    '/pageImages/hero1.jpg', // estudiantes en biblioteca
   ];
   const [current, setCurrent] = useState(0);
   useEffect(() => {

@@ -1,9 +1,19 @@
+"use client";
+
 import Link from "next/link";
+import { useState } from "react";
+import ModalTerminos from "./ModalTerminos";
+import ModalPrivacidad from "./ModalPrivacidad";
 import styles from "./Footer.module.css";
 
 export default function Footer() {
+  const [showTerminos, setShowTerminos] = useState(false);
+  const [showPrivacidad, setShowPrivacidad] = useState(false);
+
   return (
     <footer className={styles.footer}>
+      <ModalTerminos open={showTerminos} onClose={() => setShowTerminos(false)} />
+      <ModalPrivacidad open={showPrivacidad} onClose={() => setShowPrivacidad(false)} />
       <div className={styles.container}>
         <div className={styles.footerGrid}>
           <div className={styles.brandSection}>
@@ -26,8 +36,20 @@ export default function Footer() {
             <div className={styles.linkColumn}>
               <h4>Legal</h4>
               <nav>
-                <Link href="/terminos">Términos de Servicio</Link>
-                <Link href="/privacidad">Política de Privacidad</Link>
+                <button
+                  type="button"
+                  onClick={() => setShowTerminos(true)}
+                  className={styles.legalButton}
+                >
+                  Términos de Servicio
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowPrivacidad(true)}
+                  className={styles.legalButton}
+                >
+                  Política de Privacidad
+                </button>
               </nav>
             </div>
           </div>

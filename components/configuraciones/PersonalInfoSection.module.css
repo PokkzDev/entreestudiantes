@@ -1,0 +1,35 @@
+/* Personal info section styles */
+.section {
+  margin-bottom: 32px;
+}
+.sectionTitle {
+  font-size: 18px;
+  font-weight: 600;
+  color: #334155;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+}
+.infoCard {
+  background: #f8fafc;
+  padding: 20px;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+}
+.infoRow {
+  display: flex;
+  margin-bottom: 12px;
+}
+.infoRow:last-child {
+  margin-bottom: 0;
+}
+.infoLabel {
+  font-weight: 600;
+  color: #475569;
+  width: 120px;
+  flex-shrink: 0;
+}
+.infoValue {
+  color: #0f172a;
+  flex-grow: 1;
+}
