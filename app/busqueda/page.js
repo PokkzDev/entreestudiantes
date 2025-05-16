@@ -51,27 +51,29 @@ export default function Busqueda() {
     setCategoria("");
   };
 
-  // Nueva función para buscar manualmente
-  const handleBuscar = () => {
-    setBuscar(prev => !prev); // Cambia el estado para disparar el useEffect
+  // Fetch productos (initial load or manual search)
+  const fetchProductos = async () => {
+    setLoading(true);
+    const params = new URLSearchParams();
+    if (categoria) params.append("categoria", categoria);
+    if (q) params.append("q", q);
+    if (tipo) params.append("tipo", tipo);
+    const res = await fetch(`/api/busqueda?${params.toString()}`);
+    const data = await res.json();
+    setProductos(data.publicaciones || []);
+    setCategorias(data.categorias || []);
+    setTipos(data.tipos || []);
+    setLoading(false);
   };
 
+  // Initial search on mount
   useEffect(() => {
-    async function fetchProductos() {
-      setLoading(true);
-      const params = new URLSearchParams();
-      if (categoria) params.append("categoria", categoria);
-      if (q) params.append("q", q);
-      if (tipo) params.append("tipo", tipo);
-      const res = await fetch(`/api/busqueda?${params.toString()}`);
-      const data = await res.json();
-      setProductos(data.publicaciones || []);
-      setCategorias(data.categorias || []);
-      setTipos(data.tipos || []);
-      setLoading(false);
-    }
     fetchProductos();
-  }, [buscar]); // Solo buscar cuando se presiona el botón
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Nueva función para buscar manualmente
+  const handleBuscar = fetchProductos;
 
   return (
     <div className={styles.busquedaContainer}>
@@ -80,7 +82,7 @@ export default function Busqueda() {
         <select
           className={styles.busquedaSelect}
           value={tipo}
-          onChange={e => setTipo(e.target.value)}
+          onChange={handleTipoChange}
         >
           <option value="">Todos los tipos</option>
           <option value="producto">Productos</option>
