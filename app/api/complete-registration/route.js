@@ -39,9 +39,16 @@ export async function POST(request) {
       );
     }
 
-    // In a production app, we'd verify the token more securely.
-    // For this example, we're just checking that a token is provided.
-    if (!token) {
+    // Check if user is already verified
+    if (user.isVerified) {
+      return NextResponse.json(
+        { message: 'La cuenta ya está verificada. Por favor inicia sesión.' },
+        { status: 400 }
+      );
+    }
+
+    // Check if token matches
+    if (!token || user.verificationToken !== token) {
       return NextResponse.json(
         { message: 'Token inválido o expirado' },
         { status: 400 }

@@ -30,6 +30,7 @@ function CompletarRegistro() {
   });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [checking, setChecking] = useState(true);
 
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -40,7 +41,22 @@ function CompletarRegistro() {
     // Redirect if no token or email
     if (!token || !email) {
       router.push('/registro');
+      return;
     }
+    // Check if user is already verified
+    const checkVerified = async () => {
+      try {
+        const res = await fetch(`/api/check-verified?email=${encodeURIComponent(email)}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.isVerified) {
+            router.replace('/login');
+          }
+        }
+      } catch {}
+      setChecking(false);
+    };
+    checkVerified();
   }, [token, email, router]);
 
   useEffect(() => {
@@ -96,6 +112,8 @@ function CompletarRegistro() {
       setLoading(false);
     }
   };
+
+  if (checking) return <div className={styles.page}>Cargando...</div>;
 
   if (success) {
     return (

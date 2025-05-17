@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import ModalTerminos from "./ModalTerminos";
 import ModalPrivacidad from "./ModalPrivacidad";
 import styles from "./Footer.module.css";
@@ -9,6 +9,8 @@ import styles from "./Footer.module.css";
 export default function Footer() {
   const [showTerminos, setShowTerminos] = useState(false);
   const [showPrivacidad, setShowPrivacidad] = useState(false);
+  const [showAuthLinks, setShowAuthLinks] = useState(false);
+
 
   return (
     <footer className={styles.footer}>
@@ -26,10 +28,8 @@ export default function Footer() {
               <h4>Navegación</h4>
               <nav>
                 <Link href="/">Inicio</Link>
-                <Link href="/productos">Productos</Link>
-                <Link href="/servicios">Servicios</Link>
-                <Link href="/comunidades">Comunidades</Link>
-                <Link href="/contacto">Contacto</Link>
+                <Link href="/busqueda">Búsqueda</Link>
+                
               </nav>
             </div>
             
