@@ -5,6 +5,7 @@ import { useSession } from "next-auth/react";
 import styles from "./page.module.css";
 import { categoryOptions, getProductCategories, getServiceCategories, getCategoryLabel } from "@/lib/categoryOptions";
 import Image from 'next/image';
+import { CldImage } from 'next-cloudinary';
 
 // Move "Imágenes" step before "Contacto"
 const steps = [
@@ -622,7 +623,19 @@ export default function PublicarPage() {
                 </div>
                 <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 8 }}>
                   {form.images && form.images.length > 0 && form.images.map((img, idx) => (
-                    <Image key={idx} src={typeof img === 'string' ? img : imagePreviews[idx]} alt="imagen" width={80} height={80} style={{ width: 80, height: 80, objectFit: 'cover', borderRadius: 8, border: '1px solid #ddd' }} />
+                    typeof img === 'string' && img.includes('cloudinary') ? (
+                      <CldImage
+                        key={idx}
+                        src={img.split('/').slice(-1)[0].split('.')[0]} // public_id from URL
+                        width={80}
+                        height={80}
+                        alt="imagen"
+                        style={{ width: 80, height: 80, objectFit: 'cover', borderRadius: 8, border: '1px solid #ddd' }}
+                        crop={{ type: 'auto', source: true }}
+                      />
+                    ) : (
+                      <Image key={idx} src={typeof img === 'string' ? img : imagePreviews[idx]} alt="imagen" width={80} height={80} style={{ width: 80, height: 80, objectFit: 'cover', borderRadius: 8, border: '1px solid #ddd' }} />
+                    )
                   ))}
                 </div>
               </div>

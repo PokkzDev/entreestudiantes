@@ -15,9 +15,6 @@ export default function EditarPublicacion() {
     title: "",
     description: "",
     price: "",
-    priceMin: "",
-    priceMax: "",
-    priceRange: false,
     category: "",
     contactMethod: "",
     contactInfo: "",
@@ -58,23 +55,20 @@ export default function EditarPublicacion() {
           const data = await res.json();
           if (data.success) {
             const pub = data.publicacion;
-            const priceValue = pub.price ? parseFloat(pub.price) : null;
             setForm({
               type: pub.type || "",
               title: pub.title || "",
               description: pub.description || "",
-              priceMin: priceValue !== null ? priceValue.toString() : "",
-              priceMax: "",
-              priceRange: false,
+              price: pub.price ? pub.price.toString() : "",
               category: pub.category || "",
               contactMethod: pub.contactMethod || "",
               contactInfo: pub.contactInfo || "",
-              images: pub.images ? pub.images.split(",") : [],
+              images: pub.images ? (Array.isArray(pub.images) ? pub.images : pub.images.split(",")) : [],
               status: pub.status || "activo",
               location: pub.location || "",
               tags: pub.tags || "",
             });
-            setImagePreviews(pub.images ? pub.images.split(",") : []);
+            setImagePreviews(pub.images ? (Array.isArray(pub.images) ? pub.images : pub.images.split(",")) : []);
             setRemovedImages([]);
             setError(null);
           } else {
@@ -153,21 +147,9 @@ export default function EditarPublicacion() {
     setSaving(true);
     try {
       const formData = { ...form };
-      // Ajustar precio según el tipo
-      if (form.type === "producto") {
-        if (form.priceRange) {
-          formData.priceMin = form.priceMin;
-          formData.priceMax = form.priceMax;
-        } else {
-          formData.priceMin = form.priceMin;
-          formData.priceMax = "";
-        }
-      } else {
-        formData.priceMin = "";
-        formData.priceMax = "";
-      }
       // Subir imágenes nuevas y mantener URLs de las existentes
       formData.images = await handleImageUpload();
+      // Usar solo el campo price para el backend
       // Eliminar imágenes del storage si fueron removidas
       for (const url of removedImages) {
         await fetch("/api/delete-image", {
@@ -448,76 +430,20 @@ export default function EditarPublicacion() {
               </svg>
               Precio
             </label>
-            <div className={styles.priceOptions}>
-              {form.type === "producto" ? (
-                <>
-                  <label className={styles.radioLabel}>
-                    <input
-                      type="radio"
-                      name="priceType"
-                      checked={!form.priceRange}
-                      onChange={() => setForm((prev) => ({ ...prev, priceRange: false }))}
-                    />
-                    Precio fijo
-                  </label>
-                  <label className={styles.radioLabel}>
-                    <input
-                      type="radio"
-                      name="priceType"
-                      checked={form.priceRange}
-                      onChange={() => setForm((prev) => ({ ...prev, priceRange: true }))}
-                    />
-                    Rango de precios
-                  </label>
-                </>
-              ) : null}
+            <div className={styles.priceInputs}>
+              <input
+                type="text"
+                name="price"
+                value={form.price}
+                onChange={e => {
+                  const value = e.target.value.replace(/[^\d.]/g, "");
+                  setForm(prev => ({ ...prev, price: value }));
+                }}
+                placeholder="Precio"
+                className={styles.input}
+                required
+              />
             </div>
-
-            {/* Solo mostrar el campo de precio fijo para servicios, y ambos para producto según selección */}
-            {form.type === "servicio" || !form.priceRange ? (
-              <div className={styles.priceInputs}>
-                <input
-                  type="text"
-                  name="priceMin"
-                  value={form.priceMin}
-                  onChange={(e) => {
-                    const value = e.target.value.replace(/[^\d.]/g, "");
-                    setForm((prev) => ({ ...prev, priceMin: value, priceRange: form.type === "servicio" ? false : prev.priceRange }));
-                  }}
-                  placeholder="Precio"
-                  className={styles.input}
-                  required
-                />
-              </div>
-            ) : (
-              <div className={styles.priceInputs}>
-                <input
-                  type="text"
-                  name="priceMin"
-                  value={form.priceMin}
-                  onChange={(e) => {
-                    const value = e.target.value.replace(/[^\d.]/g, "");
-                    setForm((prev) => ({ ...prev, priceMin: value }));
-                  }}
-                  placeholder="Precio mínimo"
-                  className={styles.input}
-                  required
-                />
-                <span>a</span>
-                <input
-                  type="text"
-                  name="priceMax"
-                  value={form.priceMax}
-                  onChange={(e) => {
-                    const value = e.target.value.replace(/[^\d.]/g, "");
-                    setForm((prev) => ({ ...prev, priceMax: value }));
-                  }}
-                  placeholder="Precio máximo"
-                  className={styles.input}
-                  required
-                />
-              </div>
-            )}
           </div>
         )}
 

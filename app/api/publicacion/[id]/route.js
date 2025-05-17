@@ -2,6 +2,14 @@ import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "../../auth/[...nextauth]/route";
+import { v2 as cloudinary } from "cloudinary";
+
+// Configuración de Cloudinary
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
 
 // GET /api/publicacion/[id] - Obtener una publicación específica
 export async function GET(req, context) {
@@ -71,18 +79,9 @@ export async function PUT(req, context) {
     const data = await req.json();
     let price = null;
     
-    if (data.type === 'producto') {
-      if (data.priceRange) {
-        if (data.priceMin && data.priceMax) {
-          price = parseFloat(data.priceMin);
-        }
-      } else if (data.priceMin) {
-        price = parseFloat(data.priceMin);
-      }
-      // Si no hay precio válido, dejar como null
+    if (data.price) {
+      price = parseFloat(data.price);
       if (isNaN(price)) price = null;
-    } else {
-      price = null; // Para servicios, siempre null
     }
 
     // Limitar a 4 imágenes para evitar exceder el límite del campo en la base de datos
@@ -214,19 +213,46 @@ export async function DELETE(req, context) {
       const fs = require('fs').promises;
       const path = require('path');
       for (const imgUrl of imagesArr) {
-        let imgPath = imgUrl;
-        // Only handle local images in /images/
-        if (imgPath.startsWith('/images/')) {
-          imgPath = path.join(process.cwd(), 'public', imgPath);
-        } else if (!imgPath.startsWith('/') && !imgPath.startsWith('http')) {
-          imgPath = path.join(process.cwd(), 'public', 'images', imgPath);
+        if (imgUrl.includes('res.cloudinary.com')) {
+          // Extract public_id from Cloudinary URL robustly
+          try {
+            // Example: https://res.cloudinary.com/<cloud_name>/image/upload/v1234567890/entreestudiantes/filename.jpg
+            // We want: entreestudiantes/filename (without extension)
+            const urlParts = imgUrl.split('/');
+            const uploadIdx = urlParts.findIndex(p => p === 'upload');
+            if (uploadIdx !== -1 && urlParts.length > uploadIdx + 1) {
+              // Get everything after 'upload/' (may include version)
+              let publicIdParts = urlParts.slice(uploadIdx + 1);
+              // Remove version if present (starts with 'v' and is all digits)
+              if (publicIdParts[0] && /^v\d+$/.test(publicIdParts[0])) {
+                publicIdParts = publicIdParts.slice(1);
+              }
+              let publicIdWithExt = publicIdParts.join('/');
+              // Remove extension
+              const lastDot = publicIdWithExt.lastIndexOf('.');
+              const publicId = lastDot !== -1 ? publicIdWithExt.substring(0, lastDot) : publicIdWithExt;
+              if (publicId) {
+                await cloudinary.uploader.destroy(publicId);
+              }
+            }
+          } catch (e) {
+            // Ignore Cloudinary errors
+          }
         } else {
-          continue; // skip external or malformed URLs
-        }
-        try {
-          await fs.unlink(imgPath);
-        } catch (e) {
-          // Ignore errors (file may not exist)
+          let imgPath = imgUrl;
+          // Only handle local images in /images/
+          if (imgPath.startsWith('/images/')) {
+            imgPath = path.join(process.cwd(), 'public', imgPath);
+          } else if (!imgPath.startsWith('/') && !imgPath.startsWith('http')) {
+            imgPath = path.join(process.cwd(), 'public', 'images', imgPath);
+          } else {
+            continue; // skip external or malformed URLs
+          }
+          try {
+            await fs.unlink(imgPath);
+          } catch (e) {
+            // Ignore errors (file may not exist)
+          }
         }
       }
     }
