@@ -36,6 +36,7 @@
   padding: 1.25rem;
   border-radius: 12px;
   box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+  align-items: center;
 }
 
 .busquedaSelect {
@@ -293,6 +294,19 @@
   .busquedaCard .contacto {
     padding: 0.7rem;
   }
+  .busquedaFiltros {
+    flex-direction: column;
+    gap: 0.7rem;
+    align-items: stretch;
+  }
+  .busquedaButton, .busquedaResetButton {
+    width: 100%;
+    min-width: unset;
+    margin-left: 0;
+    margin-top: 0.5rem;
+    height: 44px;
+    justify-content: center;
+  }
 }
 
 .busquedaButton {
@@ -313,9 +327,40 @@
   align-items: center;
 }
 
+.busquedaResetButton {
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  border: none;
+  background: #e2e8f0;
+  color: #334155;
+  font-size: 1rem;
+  font-weight: 500;
+  box-shadow: 0 2px 6px rgba(99,102,241,0.04);
+  cursor: pointer;
+  transition: background 0.2s, box-shadow 0.2s, transform 0.2s;
+  margin-left: 0.5rem;
+  margin-top: 0.1rem;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  min-width: 120px;
+}
+
+.busquedaButton, .busquedaResetButton {
+  order: 2;
+}
+
 .busquedaButton:hover, .busquedaButton:focus {
   background: #4f46e5;
   box-shadow: 0 4px 16px rgba(99,102,241,0.13);
+  transform: translateY(-2px) scale(1.03);
+  outline: none;
+}
+
+.busquedaResetButton:hover, .busquedaResetButton:focus {
+  background: #cbd5e1;
+  color: #1e293b;
+  box-shadow: 0 4px 16px rgba(99,102,241,0.08);
   transform: translateY(-2px) scale(1.03);
   outline: none;
 }

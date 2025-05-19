@@ -78,8 +78,8 @@ export default function PublicarPage() {
 
   // Handle image selection and preview
   function handleImageChange(e) {
-    const allowedExtensions = ["jpg", "jpeg", "png", "gif", "webp"];
-    const maxFileSize = 1024 * 1024; // 1MB
+    const allowedExtensions = ["jpg", "jpeg", "png", "webp"];
+    const maxFileSize = 2 * 1024 * 1024; // 2MB
     const files = Array.from(e.target.files);
     const validFiles = [];
     let errorMessages = [];
@@ -100,7 +100,7 @@ export default function PublicarPage() {
       }
       // Check file size
       if (file.size > maxFileSize) {
-        errorMessages.push(`El archivo '${file.name}' supera el tamaño máximo de 1MB.`);
+        errorMessages.push(`El archivo '${file.name}' supera el tamaño máximo de 2MB.`);
         continue;
       }
       validFiles.push(file);

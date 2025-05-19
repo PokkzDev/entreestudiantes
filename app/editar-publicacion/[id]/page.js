@@ -87,8 +87,11 @@ export default function EditarPublicacion() {
   }, [status, publicacionId, router]);
 
   function handleImageChange(e) {
+    const allowedExtensions = ["jpg", "jpeg", "png", "webp"];
+    const maxFileSize = 5 * 1024 * 1024; // 5MB
     const files = Array.from(e.target.files);
-    // Limitar a un máximo de 4 imágenes en total
+    const validFiles = [];
+    let errorMessages = [];
     const currentImageCount = Array.isArray(form.images) ? form.images.length : 0;
     const availableSlots = 4 - currentImageCount;
 
@@ -97,17 +100,45 @@ export default function EditarPublicacion() {
       return;
     }
 
-    const filesToAdd = files.slice(0, availableSlots);
+    for (const file of files) {
+      if (validFiles.length >= availableSlots) break;
+      // Check MIME type
+      if (!file.type.startsWith("image/")) {
+        errorMessages.push(`El archivo '${file.name}' no es una imagen válida.`);
+        continue;
+      }
+      // Check extension
+      const ext = file.name.split(".").pop().toLowerCase();
+      if (!allowedExtensions.includes(ext)) {
+        errorMessages.push(`El archivo '${file.name}' tiene una extensión no permitida.`);
+        continue;
+      }
+      // Check file size
+      if (file.size > maxFileSize) {
+        errorMessages.push(`El archivo '${file.name}' supera el tamaño máximo de 5MB.`);
+        continue;
+      }
+      validFiles.push(file);
+    }
 
-    setForm((prev) => ({
-      ...prev,
-      images: [...(Array.isArray(prev.images) ? prev.images : []), ...filesToAdd],
-    }));
+    if (errorMessages.length > 0) {
+      alert(errorMessages.join("\n"));
+    }
 
-    setImagePreviews((prev) => [
-      ...prev,
-      ...filesToAdd.map((file) => URL.createObjectURL(file)),
-    ]);
+    if (validFiles.length > 0) {
+      setForm((prev) => ({
+        ...prev,
+        images: [...(Array.isArray(prev.images) ? prev.images : []), ...validFiles],
+      }));
+      setImagePreviews((prev) => [
+        ...prev,
+        ...validFiles.map((file) => URL.createObjectURL(file)),
+      ]);
+    }
+
+    if (files.length > availableSlots) {
+      alert(`Solo se han agregado ${availableSlots} imágenes para no exceder el límite de 4 imágenes.`);
+    }
   }
 
   function handleRemoveImage(idx) {
@@ -584,14 +615,20 @@ export default function EditarPublicacion() {
           </label>
           <input
             type="file"
-            accept="image/*"
+            accept="image/jpeg,image/jpg,image/png,image/webp"
             multiple
             ref={fileInputRef}
             onChange={handleImageChange}
             disabled={uploading}
-            className={styles.input}
+            className={styles.publicarInput}
             style={{ marginBottom: 8 }}
           />
+          <div className={styles.imageDescriptor}>
+            Formatos permitidos: JPG, JPEG, PNG, WEBP
+          </div>
+          <div className={styles.imageDescriptor}>
+            Tamaño máximo por imagen: 5MB
+          </div>
           <div
             style={{
               display: "flex",

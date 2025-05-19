@@ -75,37 +75,75 @@ export default function Busqueda() {
   // Nueva función para buscar manualmente
   const handleBuscar = fetchProductos;
 
+  // Nueva función para resetear filtros y traer todos los resultados
+  const handleReset = () => {
+    setTipo("");
+    setCategoria("");
+    setQ("");
+    setTimeout(() => {
+      fetchProductosWithEmptyFilters();
+    }, 0);
+  };
+
+  const fetchProductosWithEmptyFilters = async () => {
+    setLoading(true);
+    const res = await fetch(`/api/busqueda`);
+    const data = await res.json();
+    setProductos(data.publicaciones || []);
+    setCategorias(data.categorias || []);
+    setTipos(data.tipos || []);
+    setLoading(false);
+  };
+
   return (
     <div className={styles.busquedaContainer}>
       <h1 className={styles.busquedaHeader}>Buscar en Entre Estudiantes</h1>
       <div className={styles.busquedaFiltros}>
-        <select
-          className={styles.busquedaSelect}
-          value={tipo}
-          onChange={handleTipoChange}
-        >
-          <option value="">Todos los tipos</option>
-          <option value="producto">Productos</option>
-          <option value="servicio">Servicios</option>
-        </select>
-        <select
-          className={styles.busquedaSelect}
-          value={categoria}
-          onChange={e => setCategoria(e.target.value)}
-        >
-          <option value="">Todas las categorías</option>
-          {getCategoriasByTipo().map(cat => (
-            <option key={cat.value} value={cat.value}>{cat.label}</option>
-          ))}
-        </select>
-        <input
-          className={styles.busquedaInput}
-          type="text"
-          placeholder="Buscar por nombre, descripción o tags"
-          value={q}
-          onChange={e => setQ(e.target.value)}
-        />
-        <button className={styles.busquedaButton} onClick={handleBuscar}>Buscar</button>
+        <div style={{ display: 'flex', flex: 1, gap: '1rem', alignItems: 'center' }}>
+          <select
+            className={styles.busquedaSelect}
+            value={tipo}
+            onChange={handleTipoChange}
+          >
+            <option value="">Todos los tipos</option>
+            <option value="producto">Productos</option>
+            <option value="servicio">Servicios</option>
+          </select>
+          <select
+            className={styles.busquedaSelect}
+            value={categoria}
+            onChange={e => setCategoria(e.target.value)}
+          >
+            <option value="">Todas las categorías</option>
+            {getCategoriasByTipo().map(cat => (
+              <option key={cat.value} value={cat.value}>{cat.label}</option>
+            ))}
+          </select>
+          <input
+            className={styles.busquedaInput}
+            type="text"
+            placeholder="Buscar por nombre o descripción"
+            value={q}
+            onChange={e => setQ(e.target.value)}
+            onKeyDown={e => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                handleBuscar();
+              }
+            }}
+          />
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'row', gap: '0.5rem', alignItems: 'center' }}>
+          <button className={styles.busquedaButton} onClick={handleBuscar}>Buscar</button>
+          <button
+            className={styles.busquedaResetButton}
+            type="button"
+            onClick={handleReset}
+            style={{ marginLeft: '0.5rem', background: '#e2e8f0', color: '#334155', fontWeight: 500 }}
+          >
+            Resetear
+          </button>
+        </div>
       </div>
       {loading ? (
         <p>Cargando...</p>
@@ -159,7 +197,15 @@ export default function Busqueda() {
                   {prod.price && <p className={styles.precio}><b>Precio:</b> ${formatNumber(prod.price)}</p>}
                   <p className={styles.contacto}>
                     {contactoHref ? (
-                      <a href={contactoHref} target="_blank" rel="noopener noreferrer" className="whatsapp-link">{contactoIcon}</a>
+                      <a
+                        href={contactoHref}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="whatsapp-link"
+                        onClick={e => e.stopPropagation()} // Prevent card click when clicking the link
+                      >
+                        {contactoIcon}
+                      </a>
                     ) : (
                       <span>{contactoIcon}</span>
                     )}

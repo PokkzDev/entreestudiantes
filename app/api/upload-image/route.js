@@ -15,6 +15,9 @@ export async function POST(req) {
   if (!file) {
     return NextResponse.json({ success: false, error: "No file uploaded" }, { status: 400 });
   }
+  if (file.size && file.size > 5 * 1024 * 1024) {
+    return NextResponse.json({ success: false, error: "El archivo supera el tamaño máximo de 5MB." }, { status: 400 });
+  }
   const buffer = Buffer.from(await file.arrayBuffer());
   try {
     const uploadRes = await new Promise((resolve, reject) => {

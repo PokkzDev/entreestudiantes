@@ -7,13 +7,19 @@ export default function StepImagenes({ imagePreviews, handleImageChange, handleR
       <label className={styles.publicarLabel}>Sube imágenes (opcional, máximo 4):</label>
       <input
         type="file"
-        accept="image/*"
+        accept="image/jpeg,image/jpg,image/png,image/webp"
         multiple
         onChange={handleImageChange}
         disabled={uploading || imagePreviews.length >= 4}
         className={styles.publicarInput}
         style={{ marginBottom: 8 }}
       />
+      <div className={styles.imageDescriptor}>
+        Formatos permitidos: JPG, JPEG, PNG, WEBP
+      </div>
+      <div className={styles.imageDescriptor}>
+        Tamaño máximo por imagen: 2MB
+      </div>
       <div className={styles.imagePreviewGrid}>
         {imagePreviews.map((src, idx) => (
           <div key={idx} className={styles.imagePreviewItem}>
