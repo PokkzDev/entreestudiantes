@@ -37,6 +37,40 @@
   border-radius: 12px;
   box-shadow: 0 2px 12px rgba(0,0,0,0.04);
   align-items: center;
+  border: 1.5px solid #e2e8f0;
+  transition: box-shadow 0.2s, border-color 0.2s;
+}
+
+.busquedaFiltros:focus-within {
+  box-shadow: 0 4px 24px rgba(99,102,241,0.10);
+  border-color: #6366f1;
+}
+
+@media (max-width: 900px) {
+  .busquedaFiltros {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.7rem;
+    padding: 1rem 0.5rem;
+  }
+  .busquedaSelect, .busquedaInput {
+    min-width: 100%;
+    width: 100%;
+    box-sizing: border-box;
+  }
+  .busquedaButton, .busquedaResetButton {
+    width: 100%;
+    min-width: unset;
+    margin-left: 0;
+    margin-top: 0.5rem;
+    height: 44px;
+    justify-content: center;
+  }
+  .busquedaFiltros > div {
+    flex-direction: column !important;
+    gap: 0.7rem !important;
+    width: 100%;
+  }
 }
 
 .busquedaSelect {
@@ -44,7 +78,10 @@
   border-radius: 8px;
   border: 1px solid #e2e8f0;
   font-size: 0.95rem;
-  min-width: 180px;
+  width: 200px; /* Fixed width to prevent resizing */
+  min-width: 200px;
+  max-width: 200px;
+  flex-shrink: 0;
   background: white;
   color: #334155;
   box-shadow: 0 2px 6px rgba(0,0,0,0.03);
