@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import ProfileEditSection from "@/components/configuraciones/ProfileEditSection";
 import ChangePasswordSection from "@/components/configuraciones/ChangePasswordSection";
 import DeleteAccountSection from "@/components/configuraciones/DeleteAccountSection";
+import UniversityChangeSection from "@/components/configuraciones/UniversityChangeSection";
 import styles from "./page.module.css";
 
 export default function ConfiguracionesPage() {
@@ -37,6 +38,16 @@ export default function ConfiguracionesPage() {
         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
           <circle cx="12" cy="7" r="4"></circle>
+        </svg>
+      )
+    },
+    {
+      id: "university",
+      label: "Universidad",
+      icon: (
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M22 10v6M2 10l10-5 10 5-10 5z"></path>
+          <path d="M6 12v5c3 3 9 3 12 0v-5"></path>
         </svg>
       )
     },
@@ -76,6 +87,8 @@ export default function ConfiguracionesPage() {
             onProfileUpdate={handleProfileUpdate}
           />
         );
+      case "university":
+        return <UniversityChangeSection />;
       case "security":
         return <ChangePasswordSection />;
       case "account":
@@ -93,7 +106,9 @@ export default function ConfiguracionesPage() {
   const getSectionTitle = () => {
     switch (activeSection) {
       case "profile":
-        return "Información del perfil";
+        return "Información personal";
+      case "university":
+        return "Universidad y Campus";
       case "security":
         return "Seguridad de la cuenta";
       case "account":

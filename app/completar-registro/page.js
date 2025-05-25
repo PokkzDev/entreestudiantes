@@ -4,6 +4,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from 'next/link';
 import styles from '../page.module.css';
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
+import { chileanUniversities } from '../../utils/unicampus';
 
 export default function CompletarRegistroWrapper() {
   return (
@@ -18,6 +19,8 @@ function CompletarRegistro() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [university, setUniversity] = useState("");
+  const [campus, setCampus] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -80,6 +83,14 @@ function CompletarRegistro() {
       setError("El nombre completo no puede estar vacío.");
       return;
     }
+    if (!university) {
+      setError("Debes seleccionar una universidad.");
+      return;
+    }
+    if (!campus) {
+      setError("Debes seleccionar un campus.");
+      return;
+    }
     if (password !== confirmPassword) {
       setError("Las contraseñas no coinciden");
       return;
@@ -100,7 +111,7 @@ function CompletarRegistro() {
       const res = await fetch("/api/complete-registration", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, token, username, name, password }),
+        body: JSON.stringify({ email, token, username, name, password, university, campus }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || "Error al completar el registro");
@@ -257,6 +268,72 @@ function CompletarRegistro() {
                 transition: 'border 0.2s',
               }}
             />
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+            <label htmlFor="university" style={{ fontWeight: 600, color: '#334155' }}>Universidad</label>
+            <select
+              id="university"
+              name="university"
+              required
+              value={university}
+              onChange={(e) => {
+                setUniversity(e.target.value);
+                setCampus(""); // Reset campus when university changes
+              }}
+              style={{
+                padding: '0.85rem 1rem',
+                borderRadius: '10px',
+                border: '1.5px solid #e0e7ef',
+                fontSize: '1.08rem',
+                outline: 'none',
+                background: '#f8fafc',
+                color: '#334155',
+                transition: 'border 0.2s',
+                cursor: 'pointer',
+              }}
+            >
+              <option value="">Selecciona tu universidad</option>
+              {chileanUniversities.map((uni) => (
+                <option key={uni.name} value={uni.name}>
+                  {uni.name}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+            <label htmlFor="campus" style={{ fontWeight: 600, color: '#334155' }}>Campus</label>
+            <select
+              id="campus"
+              name="campus"
+              required
+              value={campus}
+              onChange={(e) => setCampus(e.target.value)}
+              disabled={!university}
+              style={{
+                padding: '0.85rem 1rem',
+                borderRadius: '10px',
+                border: '1.5px solid #e0e7ef',
+                fontSize: '1.08rem',
+                outline: 'none',
+                background: university ? '#f8fafc' : '#f1f5f9',
+                color: university ? '#334155' : '#64748b',
+                transition: 'border 0.2s',
+                cursor: university ? 'pointer' : 'not-allowed',
+              }}
+            >
+              <option value="">
+                {university ? 'Selecciona tu campus' : 'Primero selecciona una universidad'}
+              </option>
+              {university && 
+                chileanUniversities
+                  .find(uni => uni.name === university)
+                  ?.campuses.map((campusName) => (
+                    <option key={campusName} value={campusName}>
+                      {campusName}
+                    </option>
+                  ))
+              }
+            </select>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
             <label htmlFor="password" style={{ fontWeight: 600, color: '#334155' }}>Contraseña</label>

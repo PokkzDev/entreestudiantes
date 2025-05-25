@@ -21,6 +21,8 @@ model User {
   password            String
   image               String?
   bio                 String?   @db.Text
+  university          String?   // Universidad del usuario
+  campus              String?   // Campus de la universidad
   createdAt           DateTime  @default(now())
   updatedAt           DateTime  @updatedAt
   verificationToken   String?  // Token para verificar email
@@ -30,6 +32,7 @@ model User {
   resetPasswordTokenExpiry DateTime?
   nameChangeCount     Int      @default(0)
   usernameChangeCount Int      @default(0)
+  universityChangeCount Int    @default(0)
 }
 
 model Publicacion {
@@ -47,6 +50,8 @@ model Publicacion {
   tags          String   // Comma-separated tags
   views         Int      @default(0)
   featured      Boolean  @default(false)
+  university    String?  // Universidad del autor al momento de crear la publicación
+  campus        String?  // Campus del autor al momento de crear la publicación
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
   author        User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
@@ -83,6 +88,8 @@ model DeletedPublicationLog {
   contactInfo   String
   location      String?
   tags          String    // Comma-separated tags
+  university    String?   // Universidad del autor al momento de crear la publicación
+  campus        String?   // Campus del autor al momento de crear la publicación
   ipAddress     String?   // IP address that requested deletion
   userAgent     String?   @db.Text // Browser/device info
   reason        String?   @db.Text // Reason for deletion (if provided)

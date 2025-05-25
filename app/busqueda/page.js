@@ -13,6 +13,12 @@ export default function Busqueda() {
   const [loading, setLoading] = useState(false);
   const [tipo, setTipo] = useState("");
   const [tipos, setTipos] = useState([]);
+  const [universidad, setUniversidad] = useState("");
+  const [campus, setCampus] = useState("");
+  const [universidades, setUniversidades] = useState([]);
+  const [campuses, setCampuses] = useState([]);
+  const [userUniversity, setUserUniversity] = useState(null);
+  const [userCampus, setUserCampus] = useState(null);
   // Nuevo estado para controlar la búsqueda manual
   const [buscar, setBuscar] = useState(false);
   
@@ -58,11 +64,26 @@ export default function Busqueda() {
     if (categoria) params.append("categoria", categoria);
     if (q) params.append("q", q);
     if (tipo) params.append("tipo", tipo);
+    if (universidad) params.append("universidad", universidad);
+    if (campus) params.append("campus", campus);
     const res = await fetch(`/api/busqueda?${params.toString()}`);
     const data = await res.json();
     setProductos(data.publicaciones || []);
     setCategorias(data.categorias || []);
     setTipos(data.tipos || []);
+    setUniversidades(data.universidades || []);
+    setCampuses(data.campuses || []);
+    
+    // Set user defaults only on initial load
+    if (!userUniversity && data.userUniversity) {
+      setUserUniversity(data.userUniversity);
+      setUniversidad(data.userUniversity);
+    }
+    if (!userCampus && data.userCampus) {
+      setUserCampus(data.userCampus);
+      setCampus(data.userCampus);
+    }
+    
     setLoading(false);
   };
 
@@ -80,6 +101,8 @@ export default function Busqueda() {
     setTipo("");
     setCategoria("");
     setQ("");
+    setUniversidad("");
+    setCampus("");
     setTimeout(() => {
       fetchProductosWithEmptyFilters();
     }, 0);
@@ -92,6 +115,8 @@ export default function Busqueda() {
     setProductos(data.publicaciones || []);
     setCategorias(data.categorias || []);
     setTipos(data.tipos || []);
+    setUniversidades(data.universidades || []);
+    setCampuses(data.campuses || []);
     setLoading(false);
   };
 
@@ -123,6 +148,35 @@ export default function Busqueda() {
               </optgroup>
             ))}
           </select>
+          <select
+            className={styles.busquedaSelect}
+            value={universidad}
+            onChange={e => {
+              setUniversidad(e.target.value);
+              setCampus(""); // Reset campus when university changes
+            }}
+          >
+            <option value="">Todas las universidades</option>
+            {universidades.map(uni => (
+              <option key={uni} value={uni}>
+                {uni}
+                {uni === userUniversity ? " (Tu universidad)" : ""}
+              </option>
+            ))}
+          </select>
+          <select
+            className={styles.busquedaSelect}
+            value={campus}
+            onChange={e => setCampus(e.target.value)}
+          >
+            <option value="">Todos los campus</option>
+            {campuses.map(camp => (
+              <option key={camp} value={camp}>
+                {camp}
+                {camp === userCampus ? " (Tu campus)" : ""}
+              </option>
+            ))}
+          </select>
           <input
             className={styles.busquedaInput}
             type="text"
@@ -149,6 +203,36 @@ export default function Busqueda() {
           </button>
         </div>
       </div>
+      {(universidad || campus) && (
+        <div className={styles.busquedaInfo}>
+          <div className={styles.busquedaInfoIcon}>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="20"
+              height="20"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
+              />
+            </svg>
+          </div>
+          <div className={styles.busquedaInfoText}>
+            <strong>Filtrando por:</strong>
+            {universidad && <span> Universidad: {universidad}</span>}
+            {campus && <span> Campus: {campus}</span>}
+            {universidad === userUniversity && campus === userCampus && (
+              <span className={styles.busquedaInfoHighlight}> (Tu institución)</span>
+            )}
+          </div>
+        </div>
+      )}
+      
       {loading ? (
         <p>Cargando...</p>
       ) : (
@@ -174,29 +258,46 @@ export default function Busqueda() {
                 contactoIcon = <FaRegAddressCard className={styles.contactIcon} style={{ color: '#64748b' }} />;
               }
               return (
-                <div key={prod.id} className={styles.busquedaCard} data-type={prod.type} onClick={() => window.location.href = `/publicacion/${prod.id}`} style={{ cursor: 'pointer' }}>
+                <div 
+                  key={prod.id} 
+                  className={styles.busquedaCard} 
+                  data-type={prod.type} 
+                  onClick={() => window.location.href = `/publicacion/${prod.id}`} 
+                  style={{ 
+                    cursor: 'pointer',
+                    '--card-index': index
+                  }}
+                >
                   <span className={styles.tipoLabel}>{prod.type === 'producto' ? 'Producto' : 'Servicio'}</span>
                   {prod.images && prod.images.length > 0 ? (
-                    <Image
-                      src={(() => {
-                        const img = prod.images.split(",")[0].trim();
-                        if (!img) return "";
-                        // If already starts with /images/ or is a full URL, use as is
-                        if (img.startsWith("/images/") || img.startsWith("http")) return img;
-                        // Otherwise, prepend /images/
-                        return `/images/${img.replace(/^\/+/, "")}`;
-                      })()}
-                      alt={prod.title}
-                      width={300}
-                      height={200}
-                      style={{ width: '100%', height: 150, objectFit: 'cover', borderTopLeftRadius: 16, borderTopRightRadius: 16 }}
-                      priority={index < 4}
-                    />
+                    <div className={styles.imageContainer}>
+                      <Image
+                        src={(() => {
+                          const img = prod.images.split(",")[0].trim();
+                          if (!img) return "";
+                          // If already starts with /images/ or is a full URL, use as is
+                          if (img.startsWith("/images/") || img.startsWith("http")) return img;
+                          // Otherwise, prepend /images/
+                          return `/images/${img.replace(/^\/+/, "")}`;
+                        })()}
+                        alt={prod.title}
+                        width={300}
+                        height={200}
+                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                        priority={index < 4}
+                      />
+                    </div>
                   ) : (
                     <div className={styles.noImage}>Sin imagen</div>
                   )}
                   <h3>{prod.title}</h3>
                   <p className={styles.categoria}><b>Categoría:</b> {getCategoryLabel(prod.category)}</p>
+                  {(prod.university || prod.campus) && (
+                    <p className={styles.universidad}>
+                      <b>Institución:</b> {prod.university}
+                      {prod.campus && <span> - {prod.campus}</span>}
+                    </p>
+                  )}
                   <p>{prod.description}</p>
                   {prod.price && <p className={styles.precio}><b>Precio:</b> ${formatNumber(prod.price)}</p>}
                   <p className={styles.contacto}>

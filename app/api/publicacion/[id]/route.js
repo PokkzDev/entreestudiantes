@@ -17,9 +17,22 @@ export async function GET(req, context) {
     // Extraer y esperar el parámetro id
     const { id } = await context.params;
     
-    // Obtener la publicación
+    // Obtener la publicación con información del autor
     const publicacion = await prisma.publicacion.findUnique({
-      where: { id }
+      where: { id },
+      include: {
+        author: {
+          select: {
+            id: true,
+            username: true,
+            name: true,
+            image: true,
+            university: true,
+            campus: true,
+            createdAt: true
+          }
+        }
+      }
     });
 
     if (!publicacion) {
@@ -199,6 +212,8 @@ export async function DELETE(req, context) {
         contactInfo: existingPublication.contactInfo,
         location: existingPublication.location || "",
         tags: existingPublication.tags,
+        university: existingPublication.university,
+        campus: existingPublication.campus,
         ipAddress,
         userAgent,
         reason: "Eliminación manual por usuario",
