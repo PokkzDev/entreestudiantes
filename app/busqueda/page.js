@@ -30,17 +30,17 @@ export default function Busqueda() {
     return decimalPart ? `${integerPart},${decimalPart}` : integerPart;
   };
 
-  // Obtener categorías según el tipo seleccionado
+  // Obtener categorías según el tipo seleccionado (manteniendo la estructura de grupos)
   const getCategoriasByTipo = () => {
     if (tipo === "producto") {
-      return getProductCategories().flatMap(group => group.options);
+      return getProductCategories();
     } else if (tipo === "servicio") {
-      return getServiceCategories().flatMap(group => group.options);
+      return getServiceCategories();
     } else {
       // Si no hay tipo seleccionado, mostrar todas las categorías
       return [
-        ...getProductCategories().flatMap(group => group.options),
-        ...getServiceCategories().flatMap(group => group.options)
+        ...getProductCategories(),
+        ...getServiceCategories()
       ];
     }
   };
@@ -115,8 +115,12 @@ export default function Busqueda() {
             onChange={e => setCategoria(e.target.value)}
           >
             <option value="">Todas las categorías</option>
-            {getCategoriasByTipo().map(cat => (
-              <option key={cat.value} value={cat.value}>{cat.label}</option>
+            {getCategoriasByTipo().map(groupObj => (
+              <optgroup key={groupObj.group} label={groupObj.group}>
+                {groupObj.options.map(opt => (
+                  <option key={opt.value} value={opt.value}>{opt.label}</option>
+                ))}
+              </optgroup>
             ))}
           </select>
           <input
@@ -152,7 +156,7 @@ export default function Busqueda() {
           {productos.length === 0 ? (
             <p className={styles.busquedaEmpty}>No hay publicaciones disponibles.</p>
           ) : (
-            productos.map(prod => {
+            productos.map((prod, index) => {
               let contactoHref = null;
               let contactoIcon = null;
               if (prod.contactMethod === 'whatsapp') {
@@ -186,7 +190,7 @@ export default function Busqueda() {
                       width={300}
                       height={200}
                       style={{ width: '100%', height: 150, objectFit: 'cover', borderTopLeftRadius: 16, borderTopRightRadius: 16 }}
-                      priority={false}
+                      priority={index < 4}
                     />
                   ) : (
                     <div className={styles.noImage}>Sin imagen</div>
