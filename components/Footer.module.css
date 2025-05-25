@@ -164,6 +164,18 @@
   text-align: center;
 }
 
+.devAttribution {
+  color: #b91c1c; /* deep red */
+  font-weight: 600;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.devAttribution:hover {
+  color: #7f1d1d; /* darker red on hover */
+  text-decoration: underline;
+}
+
 /* Estilos responsive */
 @media (max-width: 900px) {
   .footerGrid {

@@ -1,130 +1,178 @@
-import React, { useState } from "react";
+"use client";
+
+import { useState } from "react";
+import { signOut } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import styles from "./DeleteAccountSection.module.css";
 
 export default function DeleteAccountSection() {
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [deleteAccountLoading, setDeleteAccountLoading] = useState(false);
-  const [deleteAccountError, setDeleteAccountError] = useState("");
-  const [deleteReason, setDeleteReason] = useState("");
+  const [showConfirmation, setShowConfirmation] = useState(false);
+  const [confirmText, setConfirmText] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState("");
+  const [messageType, setMessageType] = useState("");
+  const [reason, setReason] = useState("");
+  const router = useRouter();
 
-  const handleDeleteAccountClick = () => {
-    setShowDeleteModal(true);
-    setDeleteAccountError("");
+  const handleDeleteRequest = () => {
+    setShowConfirmation(true);
   };
 
-  const handleCloseDeleteModal = () => {
-    setShowDeleteModal(false);
-    setDeleteAccountError("");
-    setDeleteReason("");
+  const handleCancel = () => {
+    setShowConfirmation(false);
+    setConfirmText("");
+    setReason("");
+    setMessage("");
   };
 
-  const handleConfirmDelete = async () => {
-    setDeleteAccountLoading(true);
-    setDeleteAccountError("");
+  const handleDeleteConfirm = async () => {
+    if (confirmText.toLowerCase() !== "eliminar") {
+      setMessage("Debes escribir 'eliminar' para confirmar");
+      setMessageType("error");
+      return;
+    }
+
+    setLoading(true);
+    setMessage("");
+
     try {
-      const res = await fetch("/api/delete-account", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ reason: deleteReason }),
+      const response = await fetch("/api/delete-account", {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ 
+          reason: reason || "Usuario solicitó eliminación de cuenta" 
+        }),
       });
-      if (res.ok) {
-        window.location.href = "/";
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setMessage("Cuenta eliminada exitosamente. Cerrando sesión...");
+        setMessageType("success");
+        
+        // Wait a moment to show the success message, then sign out and redirect
+        setTimeout(async () => {
+          try {
+            // Sign out and redirect to home page
+            await signOut({ 
+              callbackUrl: "/",
+              redirect: true 
+            });
+          } catch (signOutError) {
+            console.error("Error during sign out:", signOutError);
+            // Fallback: force redirect to home page
+            window.location.href = "/";
+          }
+        }, 2000);
       } else {
-        const data = await res.json();
-        setDeleteAccountError(data.error || "Error al eliminar la cuenta. Inténtalo de nuevo.");
+        setMessage(data.error || "Error al eliminar la cuenta");
+        setMessageType("error");
       }
-    } catch (err) {
-      setDeleteAccountError("Error de red. Inténtalo de nuevo.");
+    } catch (error) {
+      console.error("Error deleting account:", error);
+      setMessage("Error de red al eliminar la cuenta");
+      setMessageType("error");
     } finally {
-      setDeleteAccountLoading(false);
+      setLoading(false);
     }
   };
 
   return (
-    <section className={styles.section}>
-      <h2 className={styles.sectionTitle}>
-        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <circle cx="12" cy="12" r="10"></circle>
-          <line x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line>
-        </svg>
-        Acciones permanentes
-      </h2>
-      <ul className={styles.actionsList}>
-        <li>
-          <button
-            className={`${styles.actionButton} ${styles.actionButtonEnabled}`}
-            onClick={handleDeleteAccountClick}
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M3 6h18"></path>
-              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-            </svg>
-            Eliminar cuenta
-          </button>
-        </li>
-      </ul>
-      {showDeleteModal && (
-        <div className={styles.modalOverlay}>
-          <div className={styles.modal}>
-            <div className={styles.modalHeader}>
-              <h3>Eliminar cuenta</h3>
-              <button className={styles.closeButton} onClick={handleCloseDeleteModal}>
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <line x1="18" y1="6" x2="6" y2="18"></line>
-                  <line x1="6" y1="6" x2="18" y2="18"></line>
-                </svg>
-              </button>
+    <div className={styles.section}>
+      <h3 className={styles.sectionTitle}>Eliminar Cuenta</h3>
+      <p className={styles.sectionDescription}>
+        Una vez que elimines tu cuenta, no hay vuelta atrás. Esta acción es permanente.
+      </p>
+
+      {!showConfirmation ? (
+        <div className={styles.warningBox}>
+          <div className={styles.warningIcon}>⚠️</div>
+          <div>
+            <h4 className={styles.warningTitle}>¿Estás seguro?</h4>
+            <p className={styles.warningText}>
+              Al eliminar tu cuenta se perderán permanentemente:
+            </p>
+            <ul className={styles.warningList}>
+              <li>Tu perfil y información personal</li>
+              <li>Todas tus publicaciones</li>
+              <li>Todas las imágenes asociadas</li>
+              <li>Tu historial de actividad</li>
+              <li>Cualquier contenido asociado</li>
+            </ul>
+          </div>
+        </div>
+      ) : (
+        <div className={styles.confirmationBox}>
+          <h4 className={styles.confirmationTitle}>Confirmar eliminación</h4>
+          <p className={styles.confirmationText}>
+            Para confirmar la eliminación de tu cuenta, escribe{" "}
+            <strong>&quot;eliminar&quot;</strong> en el campo de abajo:
+          </p>
+          
+          <div className={styles.inputGroup}>
+            <input
+              type="text"
+              value={confirmText}
+              onChange={(e) => setConfirmText(e.target.value)}
+              placeholder="Escribe 'eliminar' para confirmar"
+              className={styles.confirmInput}
+              disabled={loading}
+            />
+          </div>
+
+          <div className={styles.inputGroup}>
+            <label htmlFor="reason" className={styles.label}>
+              Razón de eliminación (opcional)
+            </label>
+            <textarea
+              id="reason"
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+              placeholder="¿Por qué quieres eliminar tu cuenta? (opcional)"
+              className={styles.reasonTextarea}
+              disabled={loading}
+              rows={3}
+            />
+          </div>
+
+          {message && (
+            <div className={`${styles.message} ${styles[messageType]}`}>
+              {message}
             </div>
-            <div className={styles.modalContent}>
-              <div className={styles.warningIcon}>
-                <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
-                  <line x1="12" y1="9" x2="12" y2="13"></line>
-                  <line x1="12" y1="17" x2="12.01" y2="17"></line>
-                </svg>
-              </div>
-              <p className={styles.modalText}>
-                <strong>Advertencia:</strong> Estás a punto de eliminar permanentemente tu cuenta. Esta acción no se puede deshacer.
-              </p>
-              <p className={styles.modalText}>
-                Se eliminará toda tu información incluyendo tus publicaciones y mensajes.
-              </p>
-              <p className={styles.modalText}>
-                ¿Estás seguro de que deseas continuar?
-              </p>
-              <div className={styles.formGroup}>
-                <label htmlFor="deleteReason">Razón de eliminación (opcional):</label>
-                <textarea
-                  id="deleteReason"
-                  className={styles.textarea}
-                  placeholder="Ayúdanos a mejorar contándonos por qué eliminas tu cuenta..."
-                  value={deleteReason}
-                  onChange={(e) => setDeleteReason(e.target.value)}
-                ></textarea>
-              </div>
-              {deleteAccountError && (
-                <div className={styles.errorMsg}>{deleteAccountError}</div>
-              )}
-            </div>
-            <div className={styles.modalFooter}>
-              <button
-                className={styles.cancelButton}
-                onClick={handleCloseDeleteModal}
-                disabled={deleteAccountLoading}
-              >
-                Cancelar
-              </button>
-              <button
-                className={styles.deleteButton}
-                onClick={handleConfirmDelete}
-                disabled={deleteAccountLoading}
-              >
-                {deleteAccountLoading ? "Eliminando..." : "Eliminar definitivamente"}
-              </button>
-            </div>
+          )}
+
+          <div className={styles.buttonGroup}>
+            <button
+              type="button"
+              onClick={handleCancel}
+              disabled={loading}
+              className={styles.cancelButton}
+            >
+              Cancelar
+            </button>
+            <button
+              type="button"
+              onClick={handleDeleteConfirm}
+              disabled={loading || confirmText.toLowerCase() !== "eliminar"}
+              className={styles.deleteButton}
+            >
+              {loading ? "Eliminando..." : "Eliminar Cuenta"}
+            </button>
           </div>
         </div>
       )}
-    </section>
+
+      {!showConfirmation && (
+        <button
+          type="button"
+          onClick={handleDeleteRequest}
+          className={styles.deleteButton}
+        >
+          Eliminar mi cuenta
+        </button>
+      )}
+    </div>
   );
 }

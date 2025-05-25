@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import Image from "next/image";
 import { useSession, signOut } from "next-auth/react";
 import { useState, useRef, useEffect } from "react";
 import styles from "./Navbar.module.css";
@@ -11,10 +12,63 @@ export default function Navbar() {
   const dropdownRef = useRef(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const mobileMenuRef = useRef(null);
+  const [userImage, setUserImage] = useState(null);
+  const [userName, setUserName] = useState(null);
+  const [userUsername, setUserUsername] = useState(null);
+  const [userEmail, setUserEmail] = useState(null);
+  const [imageKey, setImageKey] = useState(Date.now()); // For cache busting
+
+  // Helper function to add cache busting to image URLs
+  const getCacheBustedImageUrl = (imageUrl) => {
+    if (!imageUrl || imageUrl.trim() === "") return "";
+    const separator = imageUrl.includes('?') ? '&' : '?';
+    return `${imageUrl}${separator}v=${imageKey}`;
+  };
+
+  useEffect(() => {
+    // Initialize user data from session and update when session changes
+    if (session?.user) {
+      setUserImage(session.user.image || null);
+      setUserName(session.user.name || null);
+      setUserUsername(session.user.username || null);
+      setUserEmail(session.user.email || null);
+      setImageKey(Date.now()); // Update cache busting key when session changes
+    }
+  }, [session?.user]); // React to changes in user data
+
+  useEffect(() => {
+    // Listen for profile updates
+    function handleProfileUpdated(event) {
+      const updatedUser = event.detail;
+      if (updatedUser) {
+        setUserImage(updatedUser.image || null);
+        setUserName(updatedUser.name || null);
+        setUserUsername(updatedUser.username || null);
+        setUserEmail(updatedUser.email || null);
+      } else {
+        // Fallback to session data if no detail provided
+        if (session?.user) {
+          setUserImage(session.user.image || null);
+          setUserName(session.user.name || null);
+          setUserUsername(session.user.username || null);
+          setUserEmail(session.user.email || null);
+        }
+      }
+      setImageKey(Date.now()); // Update cache busting key
+    }
+    
+    window.addEventListener("profile-updated", handleProfileUpdated);
+    // Keep the old event for backward compatibility
+    window.addEventListener("profile-image-updated", handleProfileUpdated);
+    
+    return () => {
+      window.removeEventListener("profile-updated", handleProfileUpdated);
+      window.removeEventListener("profile-image-updated", handleProfileUpdated);
+    };
+  }, [session?.user]); // React to changes in user data
 
   useEffect(() => {
     function handleClickOutside(event) {
-      // Verificamos si el clic fue en el botón de hamburguesa para evitar conflictos
       const isHamburgerButton = event.target.closest(`.${styles.hamburgerBtn}`);
       
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -37,7 +91,6 @@ export default function Navbar() {
     };
   }, [dropdownOpen, mobileMenuOpen]);
 
-  // Desactivar el scroll cuando el menú móvil está abierto
   useEffect(() => {
     if (mobileMenuOpen) {
       document.body.style.overflow = 'hidden';
@@ -88,16 +141,31 @@ export default function Navbar() {
                 style={{ cursor: "pointer" }}
               >
                 <span className={styles.userAvatar}>
-                  {session.user?.name
-                    ? session.user.name.charAt(0).toUpperCase()
-                    : session.user?.email?.charAt(0).toUpperCase()}
+                  {userImage && userImage.trim() !== "" ? (
+                    <Image
+                      key={`navbar-avatar-${imageKey}`}
+                      src={getCacheBustedImageUrl(userImage)}
+                      alt={session.user?.name || session.user?.email || 'Avatar'}
+                      fill
+                      sizes="36px"
+                      style={{ objectFit: 'cover' }}
+                    />
+                  ) : (
+                    <Image
+                      src="/pageImages/placeholder_userimage.png"
+                      alt="Avatar por defecto"
+                      fill
+                      sizes="36px"
+                      style={{ objectFit: 'cover' }}
+                    />
+                  )}
                 </span>
                 <div className={styles.userDetails}>
                   <span className={styles.userName}>
-                    {session.user?.username || session.user?.name || session.user?.email}
+                    {userUsername || userName || userEmail}
                   </span>
                   <span className={styles.userEmail}>
-                    {session.user?.email}
+                    {userEmail}
                   </span>
                 </div>
                 <svg width="18" height="18" viewBox="0 0 20 20" fill="none" style={{marginLeft: 8}} aria-hidden>
@@ -108,8 +176,7 @@ export default function Navbar() {
                 <div className={styles.userDropdown}>
                   <Link href="/publicar" className={styles.btnDropdown} onClick={() => setDropdownOpen(false)}>
                     Publicar
-                  </Link>
-                  <Link href="/mis-publicaciones" className={styles.btnDropdown} onClick={() => setDropdownOpen(false)}>
+                  </Link>                  <Link href="/mis-publicaciones" className={styles.btnDropdown} onClick={() => setDropdownOpen(false)}>
                     Mis Publicaciones
                   </Link>
                   <Link href="/configuraciones" className={styles.btnDropdown} onClick={() => setDropdownOpen(false)}>
@@ -137,7 +204,6 @@ export default function Navbar() {
           <div 
             className={styles.mobileMenuOverlay} 
             onClick={(e) => {
-              // Evitar que el clic se propague a elementos superiores
               e.stopPropagation();
               setMobileMenuOpen(false);
             }}
@@ -160,8 +226,7 @@ export default function Navbar() {
                   <>
                     <Link href="/publicar" className={styles.mobileNavLink} onClick={() => setMobileMenuOpen(false)}>
                       Publicar
-                    </Link>
-                    <Link href="/mis-publicaciones" className={styles.mobileNavLink} onClick={() => setMobileMenuOpen(false)}>
+                    </Link>                    <Link href="/mis-publicaciones" className={styles.mobileNavLink} onClick={() => setMobileMenuOpen(false)}>
                       Mis Publicaciones
                     </Link>
                     <Link href="/configuraciones" className={styles.mobileNavLink} onClick={() => setMobileMenuOpen(false)}>
@@ -175,16 +240,31 @@ export default function Navbar() {
                 {!loading && (session ? (
                   <div className={styles.mobileUserInfo}>
                     <div className={styles.mobileUserAvatar}>
-                      {session.user?.name
-                        ? session.user.name.charAt(0).toUpperCase()
-                        : session.user?.email?.charAt(0).toUpperCase()}
+                      {userImage && userImage.trim() !== "" ? (
+                        <Image
+                          key={`navbar-mobile-avatar-${imageKey}`}
+                          src={getCacheBustedImageUrl(userImage)}
+                          alt={session.user?.name || session.user?.email || 'Avatar'}
+                          fill
+                          sizes="40px"
+                          style={{ objectFit: 'cover' }}
+                        />
+                      ) : (
+                        <Image
+                          src="/pageImages/placeholder_userimage.png"
+                          alt="Avatar por defecto"
+                          fill
+                          sizes="40px"
+                          style={{ objectFit: 'cover' }}
+                        />
+                      )}
                     </div>
                     <div className={styles.mobileUserDetails}>
                       <span className={styles.mobileUserName}>
-                        {session.user?.username || session.user?.name || session.user?.email}
+                        {userUsername || userName || userEmail}
                       </span>
                       <span className={styles.mobileUserEmail}>
-                        {session.user?.email}
+                        {userEmail}
                       </span>
                     </div>
                   </div>

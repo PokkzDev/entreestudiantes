@@ -39,25 +39,73 @@ export const authOptions = {
         token.id = user.id;
         token.isVerified = user.isVerified;
         token.name = user.name;
-        token.username = user.username; // Add username to token
+        token.username = user.username;
         token.email = user.email;
         token.createdAt = user.createdAt;
-        // Pass remember to token for session callback
+        token.image = user.image;
+        // Add these lines to include change counts in the token
+        token.nameChangeCount = user.nameChangeCount;
+        token.usernameChangeCount = user.usernameChangeCount;
         if (user.remember !== undefined) token.remember = user.remember;
       }
-      
-      // On session update, fetch the latest user data from database
-      if (trigger === "update" && token?.email) {
-        const dbUser = await prisma.user.findUnique({
-          where: { email: token.email }
-        });
-        if (dbUser) {
-          token.username = dbUser.username;
-          token.name = dbUser.name;
-          token.isVerified = dbUser.isVerified;
+
+      // On session update, update token with new data or fetch from database
+      if (trigger === "update") {
+        if (user?.name) token.name = user.name;
+        if (user?.username) token.username = user.username;
+        if (user?.image !== undefined) token.image = user.image;
+        if (user?.nameChangeCount !== undefined) token.nameChangeCount = user.nameChangeCount;
+        if (user?.usernameChangeCount !== undefined) token.usernameChangeCount = user.usernameChangeCount;
+        // Fetch latest user data for counts if not provided
+        if (!user?.nameChangeCount || !user?.usernameChangeCount) {
+          if (token?.email) {
+            const dbUser = await prisma.user.findUnique({
+              where: { email: token.email }
+            });
+            if (dbUser) {
+              token.nameChangeCount = dbUser.nameChangeCount;
+              token.usernameChangeCount = dbUser.usernameChangeCount;
+            }
+          }
         }
       }
-      
+
+      // Always fetch fresh user data from database to ensure UI reflects current state
+      // This ensures that profile image changes are immediately visible on page reload
+      if (token?.id && !user) { // Only fetch if this is not the initial login
+        try {
+          const dbUser = await prisma.user.findUnique({
+            where: { id: token.id },
+            select: {
+              id: true,
+              name: true,
+              username: true,
+              email: true,
+              image: true,
+              isVerified: true,
+              nameChangeCount: true,
+              usernameChangeCount: true,
+              createdAt: true
+            }
+          });
+          
+          if (dbUser) {
+            // Update token with fresh data from database
+            token.name = dbUser.name;
+            token.username = dbUser.username;
+            token.email = dbUser.email;
+            token.image = dbUser.image;
+            token.isVerified = dbUser.isVerified;
+            token.nameChangeCount = dbUser.nameChangeCount;
+            token.usernameChangeCount = dbUser.usernameChangeCount;
+            token.createdAt = dbUser.createdAt;
+          }
+        } catch (error) {
+          console.error("Error fetching fresh user data:", error);
+          // Continue with existing token data if database fetch fails
+        }
+      }
+
       return token;
     },
     async session({ session, token }) {
@@ -65,9 +113,13 @@ export const authOptions = {
         session.user.id = token.id;
         session.user.isVerified = token.isVerified;
         session.user.name = token.name;
-        session.user.username = token.username; // Add username to session
+        session.user.username = token.username;
         session.user.email = token.email;
         session.user.createdAt = token.createdAt;
+        session.user.image = token.image;
+        // Add these lines to include change counts in the session
+        session.user.nameChangeCount = token.nameChangeCount;
+        session.user.usernameChangeCount = token.usernameChangeCount;
       }
       return session;
     }

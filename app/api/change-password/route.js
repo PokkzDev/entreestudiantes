@@ -26,10 +26,38 @@ export async function POST(request) {
       );
     }
 
-    // Validar la complejidad de la contraseña
+    // Validar la complejidad de la contraseña usando los mismos criterios que el registro
     if (newPassword.length < 8) {
       return NextResponse.json(
         { error: 'La nueva contraseña debe tener al menos 8 caracteres' },
+        { status: 400 }
+      );
+    }
+
+    if (!/[A-Z]/.test(newPassword)) {
+      return NextResponse.json(
+        { error: 'La nueva contraseña debe contener al menos una letra mayúscula' },
+        { status: 400 }
+      );
+    }
+
+    if (!/[a-z]/.test(newPassword)) {
+      return NextResponse.json(
+        { error: 'La nueva contraseña debe contener al menos una letra minúscula' },
+        { status: 400 }
+      );
+    }
+
+    if (!/[0-9]/.test(newPassword)) {
+      return NextResponse.json(
+        { error: 'La nueva contraseña debe contener al menos un número' },
+        { status: 400 }
+      );
+    }
+
+    if (!/[^A-Za-z0-9]/.test(newPassword)) {
+      return NextResponse.json(
+        { error: 'La nueva contraseña debe contener al menos un símbolo' },
         { status: 400 }
       );
     }

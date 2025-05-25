@@ -1,0 +1,367 @@
+/* Profile edit section styles */
+.section {
+  width: 100%;
+}
+
+.sectionTitle {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin-bottom: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+/* Profile Card */
+.profileCard {
+  background: #f8fafc;
+  padding: 2rem;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  margin-bottom: 2rem;
+}
+
+.profileHeader {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.avatarSection {
+  flex-shrink: 0;
+}
+
+.avatarContainer {
+  width: 6rem;
+  height: 6rem;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 3px solid #e2e8f0;
+  background: #f1f5f9;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.avatar {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.avatarPlaceholder {
+  color: #9ca3af;
+  font-size: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.profileInfo {
+  flex-grow: 1;
+}
+
+.profileName {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin: 0 0 4px 0;
+}
+
+.profileUsername {
+  font-size: 0.95rem;
+  color: #2563eb;
+  margin: 0 0 4px 0;
+  font-weight: 500;
+}
+
+.profileEmail {
+  font-size: 0.9rem;
+  color: #64748b;
+  margin: 0;
+}
+
+.profileStats {
+  display: flex;
+  gap: 24px;
+  margin-bottom: 20px;
+  padding: 16px;
+  background: white;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+}
+
+.statItem {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.statLabel {
+  font-size: 0.85rem;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.statValue {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.editButton {
+  background: #2563eb;
+  color: white;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.95rem;
+}
+
+.editButton:hover {
+  background: #1d4ed8;
+}
+
+/* Edit Form */
+.editForm {
+  background: white;
+  padding: 2rem;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  margin-top: 1rem;
+}
+
+.avatarEditSection {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+  padding: 1.5rem;
+  background: #f8fafc;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+}
+
+.avatarActions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.imageButton {
+  background: #2563eb;
+  color: white;
+  border: none;
+  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+}
+
+.imageButton:hover {
+  background: #1d4ed8;
+}
+
+.imageButton:disabled {
+  background: #93c5fd;
+  cursor: not-allowed;
+}
+
+.removeImageButton {
+  background: #dc2626;
+  color: white;
+  border: none;
+  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+}
+
+.removeImageButton:hover {
+  background: #b91c1c;
+}
+
+.removeImageButton:disabled {
+  background: #fca5a5;
+  cursor: not-allowed;
+}
+
+.formGroup {
+  margin-bottom: 1.5rem;
+}
+
+.label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+  color: #374151;
+  font-size: 0.95rem;
+}
+
+.input {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  border: 1px solid #d1d5db;
+  background-color: #fff;
+  transition: all 0.2s ease;
+  font-size: 0.95rem;
+}
+
+.input:focus {
+  outline: none;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.inputDisabled {
+  background-color: #f9fafb;
+  color: #6b7280;
+  cursor: not-allowed;
+}
+
+.fieldHint {
+  display: block;
+  margin-top: 0.25rem;
+  font-size: 0.85rem;
+  color: #6b7280;
+}
+
+.limitReached {
+  color: #dc2626 !important;
+  font-weight: 500;
+}
+
+.buttonRow {
+  display: flex;
+  gap: 1rem;
+  margin-top: 2rem;
+}
+
+.saveButton {
+  background: #16a34a;
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  font-size: 0.95rem;
+}
+
+.saveButton:hover {
+  background: #15803d;
+}
+
+.saveButton:disabled {
+  background: #86efac;
+  cursor: not-allowed;
+}
+
+.cancelButton {
+  background: #f1f5f9;
+  color: #475569;
+  border: 1px solid #e2e8f0;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 0.95rem;
+}
+
+.cancelButton:hover {
+  background: #e2e8f0;
+}
+
+.cancelButton:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.successMsg {
+  color: #16a34a;
+  background-color: #dcfce7;
+  border: 1px solid #bbf7d0;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  margin-top: 1rem;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.errorMsg {
+  color: #dc2626;
+  background-color: #fee2e2;
+  border: 1px solid #fecaca;
+  padding: 0.75rem 1rem;  border-radius: 8px;
+  margin-top: 1rem;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .profileHeader {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+  
+  .avatarEditSection {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+  
+  .avatarActions {
+    flex-direction: row;
+    gap: 0.75rem;
+  }
+  
+  .profileStats {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+  
+  .buttonRow {
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 480px) {
+  .profileCard,
+  .editForm {
+    padding: 1rem;
+  }
+  
+  .avatarContainer {
+    width: 4rem;
+    height: 4rem;
+  }
+  
+  .avatarActions {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+}
