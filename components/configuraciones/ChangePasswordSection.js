@@ -105,7 +105,6 @@ export default function ChangePasswordSection() {
 
   return (
     <div className={styles.section}>
-      <h3 className={styles.sectionTitle}>Cambiar Contraseña</h3>
       <p className={styles.sectionDescription}>
         Actualiza tu contraseña para mantener tu cuenta segura
       </p>

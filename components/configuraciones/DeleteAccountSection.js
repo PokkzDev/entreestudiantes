@@ -81,7 +81,6 @@ export default function DeleteAccountSection() {
 
   return (
     <div className={styles.section}>
-      <h3 className={styles.sectionTitle}>Eliminar Cuenta</h3>
       <p className={styles.sectionDescription}>
         Una vez que elimines tu cuenta, no hay vuelta atrás. Esta acción es permanente.
       </p>

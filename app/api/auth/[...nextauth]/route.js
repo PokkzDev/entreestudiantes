@@ -43,9 +43,12 @@ export const authOptions = {
         token.email = user.email;
         token.createdAt = user.createdAt;
         token.image = user.image;
+        token.university = user.university;
+        token.campus = user.campus;
         // Add these lines to include change counts in the token
         token.nameChangeCount = user.nameChangeCount;
         token.usernameChangeCount = user.usernameChangeCount;
+        token.universityChangeCount = user.universityChangeCount;
         if (user.remember !== undefined) token.remember = user.remember;
       }
 
@@ -54,10 +57,13 @@ export const authOptions = {
         if (user?.name) token.name = user.name;
         if (user?.username) token.username = user.username;
         if (user?.image !== undefined) token.image = user.image;
+        if (user?.university !== undefined) token.university = user.university;
+        if (user?.campus !== undefined) token.campus = user.campus;
         if (user?.nameChangeCount !== undefined) token.nameChangeCount = user.nameChangeCount;
         if (user?.usernameChangeCount !== undefined) token.usernameChangeCount = user.usernameChangeCount;
+        if (user?.universityChangeCount !== undefined) token.universityChangeCount = user.universityChangeCount;
         // Fetch latest user data for counts if not provided
-        if (!user?.nameChangeCount || !user?.usernameChangeCount) {
+        if (!user?.nameChangeCount || !user?.usernameChangeCount || !user?.universityChangeCount) {
           if (token?.email) {
             const dbUser = await prisma.user.findUnique({
               where: { email: token.email }
@@ -65,6 +71,9 @@ export const authOptions = {
             if (dbUser) {
               token.nameChangeCount = dbUser.nameChangeCount;
               token.usernameChangeCount = dbUser.usernameChangeCount;
+              token.universityChangeCount = dbUser.universityChangeCount;
+              token.university = dbUser.university;
+              token.campus = dbUser.campus;
             }
           }
         }
@@ -83,8 +92,11 @@ export const authOptions = {
               email: true,
               image: true,
               isVerified: true,
+              university: true,
+              campus: true,
               nameChangeCount: true,
               usernameChangeCount: true,
+              universityChangeCount: true,
               createdAt: true
             }
           });
@@ -96,8 +108,11 @@ export const authOptions = {
             token.email = dbUser.email;
             token.image = dbUser.image;
             token.isVerified = dbUser.isVerified;
+            token.university = dbUser.university;
+            token.campus = dbUser.campus;
             token.nameChangeCount = dbUser.nameChangeCount;
             token.usernameChangeCount = dbUser.usernameChangeCount;
+            token.universityChangeCount = dbUser.universityChangeCount;
             token.createdAt = dbUser.createdAt;
           }
         } catch (error) {
@@ -117,9 +132,12 @@ export const authOptions = {
         session.user.email = token.email;
         session.user.createdAt = token.createdAt;
         session.user.image = token.image;
+        session.user.university = token.university;
+        session.user.campus = token.campus;
         // Add these lines to include change counts in the session
         session.user.nameChangeCount = token.nameChangeCount;
         session.user.usernameChangeCount = token.usernameChangeCount;
+        session.user.universityChangeCount = token.universityChangeCount;
       }
       return session;
     }

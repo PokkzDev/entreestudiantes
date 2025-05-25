@@ -11,6 +11,7 @@ import StepCategoria from './StepCategoria';
 import StepDetalles from './StepDetalles';
 import StepImagenes from './StepImagenes';
 import StepContacto from './StepContacto';
+import StepUniversidad from './StepUniversidad';
 import StepConfirmar from './StepConfirmar';
 import { formatNumber } from './publicarUtils';
 
@@ -21,6 +22,7 @@ const steps = [
   "Detalles",
   "Imágenes",
   "Contacto",
+  "Universidad",
   "Confirmar"
 ];
 
@@ -251,6 +253,10 @@ export default function PublicarPage() {
       }
       return form.contactMethod && form.contactInfo.trim();
     }
+    if (step === 5) {
+      // University step is always valid (read-only)
+      return true;
+    }
     return true;
   }
 
@@ -315,6 +321,9 @@ export default function PublicarPage() {
             <StepContacto form={form} handleChange={handleChange} setForm={setForm} styles={styles} />
           )}
           {step === 5 && (
+            <StepUniversidad session={session} styles={styles} />
+          )}
+          {step === 6 && (
             <StepConfirmar form={form} imagePreviews={imagePreviews} styles={styles} formatNumber={formatNumber} getCategoryLabel={getCategoryLabel} />
           )}
           <div className={styles.publicarButtonRow}>

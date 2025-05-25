@@ -4,7 +4,7 @@ import prisma from '@/lib/prisma';
 
 export async function POST(request) {
   try {
-    const { email, token, username, name, password } = await request.json();
+    const { email, token, username, name, password, university, campus } = await request.json();
 
     // Backend validation
     if (!username || typeof username !== 'string' || username.length < 4) {
@@ -16,6 +16,18 @@ export async function POST(request) {
     if (!name || typeof name !== 'string' || name.trim().length === 0) {
       return NextResponse.json(
         { message: 'El nombre completo no puede estar vacío.' },
+        { status: 400 }
+      );
+    }
+    if (!university || typeof university !== 'string' || university.trim().length === 0) {
+      return NextResponse.json(
+        { message: 'Debes seleccionar una universidad.' },
+        { status: 400 }
+      );
+    }
+    if (!campus || typeof campus !== 'string' || campus.trim().length === 0) {
+      return NextResponse.json(
+        { message: 'Debes seleccionar un campus.' },
         { status: 400 }
       );
     }
@@ -79,6 +91,8 @@ export async function POST(request) {
         username,
         name,
         password: hashedPassword,
+        university,
+        campus,
         isVerified: true,
         verificationToken: null,
       },

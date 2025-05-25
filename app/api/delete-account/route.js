@@ -76,6 +76,8 @@ export async function DELETE(request) {
             contactInfo: publicacion.contactInfo,
             location: publicacion.location,
             tags: publicacion.tags,
+            university: publicacion.university,
+            campus: publicacion.campus,
             ipAddress,
             userAgent,
             reason: "Eliminación de cuenta",

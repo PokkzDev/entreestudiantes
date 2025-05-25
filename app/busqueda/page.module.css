@@ -46,7 +46,7 @@
   border-color: #6366f1;
 }
 
-@media (max-width: 900px) {
+@media (max-width: 1200px) {
   .busquedaFiltros {
     flex-direction: column;
     align-items: stretch;
@@ -78,9 +78,9 @@
   border-radius: 8px;
   border: 1px solid #e2e8f0;
   font-size: 0.95rem;
-  width: 200px; /* Fixed width to prevent resizing */
-  min-width: 200px;
-  max-width: 200px;
+  width: 180px; /* Reduced width to fit more dropdowns */
+  min-width: 180px;
+  max-width: 180px;
   flex-shrink: 0;
   background: white;
   color: #334155;
@@ -139,177 +139,344 @@
 
 .busquedaGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 1.5rem;
-  margin-top: 1rem;
+  margin-top: 1.5rem;
 }
 
 .busquedaCard {
   position: relative;
   display: flex;
   flex-direction: column;
-  background: white;
-  border-radius: 16px;
+  background: linear-gradient(145deg, #ffffff 0%, #fafbfc 100%);
+  border-radius: 20px;
   overflow: hidden;
-  box-shadow: 0 6px 24px rgba(99,102,241,0.08), 0 1.5px 6px rgba(0,0,0,0.04);
-  transition: transform 0.25s, box-shadow 0.25s, border-color 0.25s;
+  box-shadow: 
+    0 10px 40px rgba(0, 0, 0, 0.08),
+    0 4px 12px rgba(0, 0, 0, 0.05),
+    0 1px 3px rgba(0, 0, 0, 0.1);
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   height: 100%;
-  border: 2.5px solid #e2e8f0;
-  border-left-width: 2.5px;
-  border-left-color: #e2e8f0;
-  background: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(10px);
+  cursor: pointer;
+  transform: translateY(0);
+  will-change: transform, box-shadow;
+  animation: cardEntrance 0.6s ease-out forwards;
+  animation-delay: calc(var(--card-index, 0) * 0.1s);
+}
+
+.busquedaCard .imageContainer {
+  position: relative;
+  width: 100%;
+  height: 160px;
+  overflow: hidden;
+  background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+}
+
+.busquedaCard:hover {
+  transform: translateY(-8px) scale(1.02);
+  box-shadow: 
+    0 25px 60px rgba(0, 0, 0, 0.12),
+    0 12px 24px rgba(0, 0, 0, 0.08),
+    0 4px 8px rgba(0, 0, 0, 0.06);
+  border-color: rgba(99, 102, 241, 0.2);
 }
 
 .busquedaCard[data-type="producto"] {
-  --busqueda-card-border: #10b981;
+  --accent-color: #10b981;
+  --accent-light: rgba(16, 185, 129, 0.1);
+  --accent-gradient: linear-gradient(135deg, #10b981 0%, #059669 100%);
 }
+
+.busquedaCard[data-type="producto"] .tipoLabel {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+}
+
+.busquedaCard[data-type="producto"] .precio {
+  color: #000000 !important;
+}
+
+.busquedaCard[data-type="producto"] .precio::before {
+  background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+}
+
 .busquedaCard[data-type="servicio"] {
-  --busqueda-card-border: #6366f1;
+  --accent-color: #6366f1;
+  --accent-light: rgba(99, 102, 241, 0.1);
+  --accent-gradient: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
 }
 
-.busquedaCard img {
+.busquedaCard[data-type="servicio"] .tipoLabel {
+  background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+}
+
+.busquedaCard[data-type="servicio"] .precio {
+  color: #000000 !important;
+}
+
+.busquedaCard[data-type="servicio"] .precio::before {
+  background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%);
+}
+
+.busquedaCard::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: var(--accent-gradient);
+  z-index: 1;
+}
+
+.busquedaCard .imageContainer img {
   width: 100%;
-  height: 150px;
+  height: 100%;
   object-fit: cover;
-  background: #e0e7ef;
-  border-bottom: 1.5px solid #f1f5f9;
-  transition: filter 0.2s;
+  object-position: center;
+  transition: all 0.3s ease;
+  will-change: transform, filter;
+  display: block;
 }
 
-.busquedaCard:hover img {
-  filter: brightness(0.95) saturate(1.1);
+.busquedaCard:hover .imageContainer img {
+  filter: brightness(1.05) saturate(1.1) contrast(1.02);
+  transform: scale(1.05);
 }
 
 .busquedaCard .noImage {
   width: 100%;
-  height: 150px;
-  background: repeating-linear-gradient(135deg, #f1f5f9, #e0e7ef 20px);
+  height: 160px;
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 50%, #f1f5f9 100%);
   color: #94a3b8;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.95rem;
-  font-style: italic;
-  border-bottom: 1.5px solid #f1f5f9;
+  font-size: 1rem;
+  font-weight: 500;
+  position: relative;
+  overflow: hidden;
+}
+
+.busquedaCard .noImage::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: repeating-linear-gradient(
+    45deg,
+    transparent,
+    transparent 10px,
+    rgba(148, 163, 184, 0.1) 10px,
+    rgba(148, 163, 184, 0.1) 20px
+  );
 }
 
 .busquedaCard h3 {
-  font-size: 1.18rem;
+  font-size: 1.125rem;
   font-weight: 700;
   color: #1e293b;
   margin: 0;
-  padding: 1rem 1.1rem 0.3rem;
-  line-height: 1.25;
-  letter-spacing: -0.5px;
+  padding: 1.25rem 1.25rem 0.3rem;
+  line-height: 1.3;
+  letter-spacing: -0.025em;
+  background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  user-select: text;
 }
 
 .busquedaCard .precio {
-  color: #10b981;
-  font-weight: 700;
-  font-size: 1.05rem;
-  margin: 0.2rem 0 0.5rem 0;
-  padding: 0 1.1rem;
-  letter-spacing: -0.5px;
+  color: #000000 !important;
+  font-weight: 900;
+  font-size: 1.375rem;
+  margin: 0.3rem 0 0.5rem 0;
+  padding: 0 1.25rem;
+  letter-spacing: -0.025em;
+  position: relative;
+}
+
+.busquedaCard .precio::before {
+  content: '';
+  position: absolute;
+  left: 1.25rem;
+  bottom: -2px;
+  width: 40px;
+  height: 3px;
+  background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+  border-radius: 1.5px;
 }
 
 .busquedaCard .categoria {
   color: #6366f1;
-  font-size: 0.88rem;
+  font-size: 0.8rem;
+  font-weight: 600;
   display: flex;
   align-items: center;
-  gap: 0.3rem;
-  padding: 0 1.1rem;
-  margin-bottom: 0.2rem;
+  justify-content: flex-start;
+  gap: 0.4rem;
+  margin-bottom: 0.3rem;
+  background: rgba(99, 102, 241, 0.05);
+  margin-left: 1.25rem;
+  margin-right: 1.25rem;
+  border-radius: 6px;
+  padding: 0.4rem 0.6rem;
+  border: 1px solid rgba(99, 102, 241, 0.1);
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
 }
 
 .busquedaCard .categoria b {
   color: #475569;
+  font-weight: 700;
+}
+
+.busquedaCard .categoria::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, transparent 50%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.busquedaCard:hover .categoria::before {
+  opacity: 1;
+}
+
+.busquedaCard .universidad {
+  color: #6366f1;
+  font-size: 0.8rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.4rem;
+  margin-bottom: 0.3rem;
+  background: rgba(99, 102, 241, 0.05);
+  margin-left: 1.25rem;
+  margin-right: 1.25rem;
+  border-radius: 6px;
+  padding: 0.4rem 0.6rem;
+  border: 1px solid rgba(99, 102, 241, 0.1);
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.busquedaCard .universidad b {
+  color: #475569;
+  font-weight: 700;
+}
+
+.busquedaCard .universidad::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, transparent 50%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.busquedaCard:hover .universidad::before {
+  opacity: 1;
 }
 
 .busquedaCard p {
-  padding: 0 1.1rem;
-  margin: 0.2rem 0;
-  color: #475569;
-  font-size: 0.93rem;
-  line-height: 1.5;
+  padding: 0 1.25rem;
+  margin: 0.3rem 0;
+  color: #64748b;
+  font-size: 0.9rem;
+  line-height: 1.4;
+  font-weight: 400;
+  user-select: text;
 }
 
 .busquedaCard .tipoLabel {
   position: absolute;
-  top: 12px;
-  right: 12px;
-  background: #6366f1;
+  top: 16px;
+  right: 16px;
+  background: var(--accent-gradient);
   color: white;
-  font-weight: 600;
-  font-size: 0.78rem;
-  padding: 0.28rem 0.9rem;
-  border-radius: 20px;
-  z-index: 2;
-  box-shadow: 0 2px 8px rgba(99,102,241,0.18);
+  font-weight: 700;
+  font-size: 0.75rem;
+  padding: 0.5rem 1rem;
+  border-radius: 25px;
+  z-index: 10;
+  box-shadow: 
+    0 4px 12px rgba(0, 0, 0, 0.15),
+    0 2px 4px rgba(0, 0, 0, 0.1);
   letter-spacing: 0.5px;
+  text-transform: uppercase;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  transition: all 0.3s ease;
+}
+
+.busquedaCard:hover .tipoLabel {
+  transform: scale(1.05);
+  box-shadow: 
+    0 6px 20px rgba(0, 0, 0, 0.2),
+    0 3px 6px rgba(0, 0, 0, 0.15);
 }
 
 .busquedaCard .contacto {
   margin-top: auto;
-  padding: 0.9rem 1.1rem;
-  border-top: 1.5px solid #e0e7ef;
-  background: #f3f4f6;
-  color: #6366f1;
-  font-size: 0.93rem;
+  padding: 1rem;
+  background: #f8fafc;
+  border-top: 1px solid #e2e8f0;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.5rem;
-  font-weight: 500;
 }
 
-/* Estilo para enlaces de contacto */
+/* Simple contact button */
 .busquedaCard .contacto a,
-.busquedaCard .contacto a:visited,
-.busquedaCard .contacto a:active,
-.busquedaCard .contacto a:focus {
-  text-decoration: none !important;
-  color: #25d366;
-  display: flex;
+.busquedaCard .contacto span {
+  display: inline-flex;
   align-items: center;
-  gap: 0.3rem;
-  font-weight: 500;
-  transition: color 0.18s;
-  outline: none;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  background: #ffffff;
+  border: 1px solid #d1d5db;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  color: #6b7280;
 }
 
 .busquedaCard .contacto a:hover {
-  color: #128c7e;
+  background: #f3f4f6;
+  border-color: #9ca3af;
+  transform: translateY(-1px);
+}
+
+.busquedaCard .contacto a:hover .contactIcon {
+  animation: pulseGlow 1.5s infinite;
 }
 
 .contactIcon {
-  font-size: 2.2em;
-  min-width: 32px;
-  min-height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  font-size: 1.1rem;
+  color: inherit;
 }
 
-.busquedaCard .contacto a .whatsapp-icon {
-  color: #25d366;
-  font-size: inherit;
-  display: flex;
-  align-items: center;
-  margin-right: 0.08em;
-  filter: drop-shadow(0 1px 2px rgba(37,211,102,0.13));
-  transition: transform 0.15s, filter 0.15s;
-}
+/* Removed specific whatsapp icon styling - using simple approach */
 
-.busquedaCard .contacto a:hover .whatsapp-icon {
-  color: #128c7e;
-  transform: scale(1.12) rotate(-6deg);
-  filter: drop-shadow(0 2px 4px rgba(18,140,126,0.18));
-}
+/* Removed complex hover animations for simplicity */
 
-.busquedaCard .contacto a:visited {
-  color: #25d366;
-}
+/* Removed old visited styling - handled by specific contact type styles */
 
 /* Descripción truncada para mostrar solo 2 líneas */
 .busquedaCard p:nth-of-type(2) {
@@ -319,31 +486,57 @@
   -webkit-box-orient: vertical;
   overflow: hidden;
   text-overflow: ellipsis;
-  margin-bottom: 0.8rem;
+  margin-bottom: 0.5rem;
+  min-height: 2.5rem;
 }
 
 /* Responsive ajustes */
 @media (max-width: 768px) {
   .busquedaGrid {
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 1.25rem;
   }
   .busquedaSelect, .busquedaInput {
     min-width: 100%;
   }
   .busquedaCard {
-    border-radius: 12px;
+    border-radius: 16px;
     padding: 0;
   }
   .busquedaCard h3 {
-    font-size: 1.05rem;
-    padding: 0.8rem 0.7rem 0.2rem;
+    font-size: 1rem;
+    padding: 1rem 1rem 0.4rem;
   }
-  .busquedaCard .precio, .busquedaCard .categoria, .busquedaCard p {
-    padding-left: 0.7rem;
-    padding-right: 0.7rem;
+  .busquedaCard .precio {
+    font-size: 1.25rem;
+    padding: 0 1rem;
+  }
+  .busquedaCard .categoria, .busquedaCard .universidad {
+    margin-left: 1rem;
+    margin-right: 1rem;
+    padding: 0.35rem 0.5rem;
+    font-size: 0.75rem;
+  }
+  .busquedaCard p {
+    padding-left: 1rem;
+    padding-right: 1rem;
+    font-size: 0.85rem;
   }
   .busquedaCard .contacto {
-    padding: 0.7rem;
+    padding: 0.8rem;
+  }
+  
+  .busquedaCard .contacto a,
+  .busquedaCard .contacto span {
+    width: 36px;
+    height: 36px;
+  }
+  
+  .contactIcon {
+    font-size: 1rem;
+  }
+  .busquedaCard .imageContainer, .busquedaCard .noImage {
+    height: 140px;
   }
   .busquedaFiltros {
     flex-direction: column;
@@ -415,3 +608,125 @@
   transform: translateY(-2px) scale(1.03);
   outline: none;
 }
+
+.busquedaInfo {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: #f0f9ff;
+  border: 1px solid #bae6fd;
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  margin-bottom: 1.5rem;
+  color: #0c4a6e;
+  font-size: 0.9rem;
+}
+
+.busquedaInfoIcon {
+  color: #0284c7;
+  flex-shrink: 0;
+}
+
+.busquedaInfoText {
+  line-height: 1.4;
+}
+
+.busquedaInfoHighlight {
+  color: #059669;
+  font-weight: 600;
+}
+
+/* Add subtle animations and improvements */
+@keyframes cardEntrance {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes pulseGlow {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(37, 211, 102, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 8px rgba(37, 211, 102, 0);
+  }
+}
+
+/* Removed old complex animations for cleaner design */
+
+/* Improved focus states for accessibility */
+.busquedaCard:focus-visible {
+  outline: 3px solid rgba(99, 102, 241, 0.5);
+  outline-offset: 2px;
+}
+
+.busquedaCard .contacto a:focus-visible {
+  outline: 2px solid rgba(37, 211, 102, 0.6);
+  outline-offset: 2px;
+}
+
+/* Enhanced loading state */
+.busquedaCard.loading {
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+.busquedaCard.loading::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+  animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+/* Improved text selection */
+.busquedaCard h3,
+.busquedaCard .precio,
+.busquedaCard p {
+  user-select: text;
+}
+
+/* Enhanced category and university badges */
+.busquedaCard .categoria,
+.busquedaCard .universidad {
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.busquedaCard .categoria::before,
+.busquedaCard .universidad::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, transparent 50%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.busquedaCard:hover .categoria::before,
+.busquedaCard:hover .universidad::before {
+  opacity: 1;
+}
+
+/* Removed conflicting price styling that was making text transparent */

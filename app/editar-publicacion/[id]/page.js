@@ -23,6 +23,8 @@ export default function EditarPublicacion() {
     location: "",
     tags: "",
   });
+  const [university, setUniversity] = useState("");
+  const [campus, setCampus] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
@@ -68,6 +70,8 @@ export default function EditarPublicacion() {
               location: pub.location || "",
               tags: pub.tags || "",
             });
+            setUniversity(pub.university || "");
+            setCampus(pub.campus || "");
             setImagePreviews(pub.images ? (Array.isArray(pub.images) ? pub.images : pub.images.split(",")) : []);
             setRemovedImages([]);
             setError(null);
@@ -346,6 +350,46 @@ export default function EditarPublicacion() {
             className={styles.input}
           />
         </div>
+
+        {(university || campus) && (
+          <div className={styles.formGroup}>
+            <label>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="20"
+                height="20"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
+                />
+              </svg>
+              Universidad y Campus
+            </label>
+            <div className={styles.universityInfo}>
+              {university && (
+                <div className={styles.infoItem}>
+                  <span className={styles.infoLabel}>Universidad:</span>
+                  <span className={styles.infoValue}>{university}</span>
+                </div>
+              )}
+              {campus && (
+                <div className={styles.infoItem}>
+                  <span className={styles.infoLabel}>Campus:</span>
+                  <span className={styles.infoValue}>{campus}</span>
+                </div>
+              )}
+            </div>
+            <p className={styles.fieldDescription}>
+              Esta información se estableció cuando se creó la publicación y no se puede modificar.
+            </p>
+          </div>
+        )}
 
         <div className={styles.formGroup}>
           <label htmlFor="category">

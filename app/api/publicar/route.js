@@ -15,6 +15,22 @@ export async function POST(req) {
         error: "No estás autenticado. Debes iniciar sesión para publicar." 
       }, { status: 401 });
     }
+
+    // Get user's current university and campus information
+    const user = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: {
+        university: true,
+        campus: true,
+      },
+    });
+
+    if (!user) {
+      return NextResponse.json({ 
+        success: false, 
+        error: "Usuario no encontrado." 
+      }, { status: 404 });
+    }
     
     const data = await req.json();
     let price = null;
@@ -72,6 +88,8 @@ export async function POST(req) {
         tags: data.tags || "",
         views: 0,
         featured: false,
+        university: user.university, // Grab user's current university
+        campus: user.campus, // Grab user's current campus
         authorId: session.user.id, // Use the authenticated user's ID
       },
     });
