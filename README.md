@@ -2,11 +2,39 @@
 
 Entre Estudiantes es una plataforma web para estudiantes universitarios, diseñada para facilitar la compraventa de productos, la oferta de servicios y la conexión directa entre miembros de la comunidad académica. El objetivo es crear un entorno seguro, confiable y sin intermediarios, donde los estudiantes puedan encontrar lo que necesitan y potenciar sus oportunidades.
 
+## Tech Stack
+
+Entre Estudiantes está construido con las siguientes tecnologías:
+
+- Next.js (React)
+- JavaScript (ES6+)
+- PostgreSQL (Prisma ORM)
+- NextAuth.js
+- CSS Modules
+- Nodemailer / Resend
+- Vercel
+
+## Novedades y mejoras recientes
+
+- **Gestión avanzada de publicaciones**: Pausa o reactiva tus publicaciones sin eliminarlas, controlando su visibilidad temporalmente.
+- **Vista de imágenes tipo carrusel**: Publicaciones con múltiples imágenes y visualización en modal/carrousel.
+- **Rango de precios**: Para productos, puedes elegir entre precio fijo o rango de precios.
+- **Filtros de búsqueda mejorados**: Búsqueda por tipo, categoría y palabras clave, con opción de resetear filtros rápidamente.
+- **Categorías ampliadas**: Nuevas categorías para productos y servicios, incluyendo tecnología, tutorías, diseño, traducción, desarrollo, bienestar, etc.
+- **Validaciones de seguridad**: Contraseñas con requisitos de seguridad (mayúsculas, minúsculas, número, símbolo, longitud mínima).
+- **Eliminación segura de cuenta y publicaciones**: Borrado definitivo y registro de motivo opcional.
+- **Panel de usuario centralizado**: Gestión de datos personales, publicaciones y configuración desde un solo lugar.
+- **Contacto directo mejorado**: Opción de contacto por WhatsApp, email o teléfono según preferencia del anunciante.
+- **Mejoras visuales y de usabilidad**: Interfaz más intuitiva, responsiva y moderna.
+- **Soporte para recuperación y cambio de contraseña**: Flujo robusto y seguro.
+- **Verificación de email obligatoria**: Para mayor seguridad y confianza.
+- **Soporte para múltiples métodos de contacto**: (en desarrollo).
+
 ## Funcionalidades principales
 
 - **Registro y autenticación segura**: Crea tu cuenta con verificación de correo electrónico. Completa tu perfil con nombre, usuario y contraseña robusta. Inicia sesión usando correo o nombre de usuario, con opción "Recuérdame".
 - **Recuperación y cambio de contraseña**: Solicita restablecimiento de contraseña por email y cámbiala desde tu panel de usuario.
-- **Publicación de productos y servicios**: Publica productos (libros, tecnología, ropa, arte, etc.) o servicios (tutorías, diseño, traducción, etc.) con fotos, descripciones, precios, categorías y datos de contacto.
+- **Publicación de productos y servicios**: Publica productos (libros, tecnología, ropa, arte, etc.) o servicios (tutorías, diseño, traducción, etc.) con fotos, descripciones, precios (fijo o rango), categorías y datos de contacto.
 - **Gestión de publicaciones**: Edita, pausa/reactiva, elimina o revisa tus publicaciones desde el panel personal. Visualiza el estado (activo/pausado) y accede a estadísticas básicas.
 - **Búsqueda avanzada**: Filtra publicaciones por tipo (producto o servicio), categoría y palabras clave. Accede a detalles completos de cada publicación.
 - **Panel de usuario**: Administra tu información personal, publicaciones y configuraciones de cuenta desde un panel centralizado.

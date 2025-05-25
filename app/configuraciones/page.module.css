@@ -1,191 +1,182 @@
-.pageWrapper {
-  display: flex;
-  min-height: 100vh;
-  background: linear-gradient(120deg, #f1f5fa 0%, #e0e7ef 100%);
-}
-
-.sidebar {
-  width: 250px;
-  background: #fff;
-  border-right: 2px solid #e5e7eb;
-  padding: 40px 0 0 0;
-  position: sticky;
-  top: 0;
-  height: 100vh;
-  box-shadow: 2px 0 16px rgba(0,0,0,0.04);
-  z-index: 20;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  transition: box-shadow 0.2s;
-}
-
-.sidebarList {
-  list-style: none;
-  padding: 0 24px;
-  margin: 0;
-  width: 100%;
-}
-
-.sidebarLink {
-  width: 100%;
-  background: none;
-  border: none;
-  color: #334155;
-  font-size: 16px;
-  font-weight: 500;
-  padding: 16px 18px;
-  text-align: left;
-  border-radius: 8px;
-  margin-bottom: 10px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  cursor: pointer;
-  transition: background 0.18s, color 0.18s;
-  outline: none;
-}
-
-.sidebarLink:hover, .sidebarLink:focus {
-  background: #e0e7ef;
-  color: #2563eb;
-}
-
-.activeSidebarLink {
-  background: #e0e7ef;
-  color: #2563eb;
-  font-weight: 600;
-  border-left: 4px solid #2563eb;
-}
-
-.sidebarIcon {
-  font-size: 20px;
-  display: inline-block;
+/* Main configurations page styles */
+.page {
+  min-height: 80vh;
+  background: #f8fafc;
+  padding: 2rem 1rem;
 }
 
 .container {
-  max-width: 900px;
-  margin: 40px auto;
-  padding: 40px 32px 32px 32px;
-  min-height: 80vh;
-  background: rgba(255,255,255,0.98);
-  border-radius: 20px;
-  box-shadow: 0 6px 32px rgba(0, 0, 0, 0.10);
-  flex: 1;
+  max-width: 1200px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: 2rem;
+  align-items: start;
+}
+
+.pageTitle {
+  font-size: 2rem;
+  font-weight: 800;
+  color: #1e293b;
+  margin-bottom: 2rem;
+  text-align: center;
+  letter-spacing: -0.02em;
+}
+
+/* Sidebar Navigation */
+.sidebar {
+  background: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+  height: fit-content;
+  position: sticky;
+  top: 2rem;
+}
+
+.sidebarTitle {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #334155;
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.navList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
   display: flex;
   flex-direction: column;
-  margin-left: 32px;
+  gap: 0.5rem;
 }
 
-.sectionCard {
-  background: #f8fafc;
-  border-radius: 16px;
-  box-shadow: 0 2px 12px rgba(0,0,0,0.04);
-  padding: 32px 28px;
-  margin-bottom: 48px;
-  border: 1px solid #e2e8f0;
-  transition: box-shadow 0.2s;
+.navItem {
+  border-radius: 8px;
+  overflow: hidden;
 }
 
-.sectionCard:last-child {
-  margin-bottom: 0;
-}
-
-.sectionCard:hover, .sectionCard:focus-within {
-  box-shadow: 0 4px 24px rgba(37,99,235,0.08);
-}
-
-.loadingContainer {
-  padding: 32px;
+.navButton {
+  width: 100%;
+  background: none;
+  border: none;
+  padding: 0.75rem 1rem;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: #475569;
   display: flex;
-  justify-content: center;
   align-items: center;
-  min-height: 60vh;
+  gap: 0.75rem;
 }
 
-.header {
-  margin-bottom: 32px;
-  border-bottom: 1px solid #e5e7eb;
-  padding-bottom: 16px;
+.navButton:hover {
+  background: #f1f5f9;
+  color: #334155;
 }
 
-.title {
-  font-size: 28px;
+.navButtonActive {
+  background: #2563eb;
+  color: white;
+}
+
+.navButtonActive:hover {
+  background: #1d4ed8;
+}
+
+/* Main Content */
+.content {
+  background: white;
+  border-radius: 12px;
+  padding: 2rem;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+  min-height: 500px;
+}
+
+.contentTitle {
+  font-size: 1.5rem;
   font-weight: 700;
-  color: #0f172a;
-  margin-bottom: 8px;
+  color: #1e293b;
+  margin-bottom: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
 }
 
-.subtitle {
-  font-size: 16px;
-  color: #64748b;
-  font-weight: 400;
-}
-
-@media (max-width: 1100px) {
+/* Responsive Design */
+@media (max-width: 768px) {
+  .page {
+    padding: 1rem 0.5rem;
+  }
+  
   .container {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
     max-width: 100%;
-    padding: 32px 10px;
-    margin-left: 0;
   }
+  
   .sidebar {
-    width: 180px;
-    padding: 24px 0 0 0;
+    position: static;
+    padding: 1rem;
+  }
+  
+  .navList {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+  
+  .navItem {
+    flex: 1;
+    min-width: 120px;
+  }
+  
+  .navButton {
+    padding: 0.75rem 0.5rem;
+    font-size: 0.9rem;
+    justify-content: center;
+    text-align: center;
+  }
+  
+  .content {
+    padding: 1.5rem;
+  }
+  
+  .pageTitle {
+    font-size: 1.5rem;
+    margin-bottom: 1.5rem;
   }
 }
 
-@media (max-width: 900px) {
-  .pageWrapper {
+@media (max-width: 480px) {
+  .page {
+    padding: 0.5rem;
+  }
+  
+  .navList {
     flex-direction: column;
   }
+  
+  .navItem {
+    flex: none;
+  }
+  
+  .navButton {
+    justify-content: flex-start;
+    text-align: left;
+    padding: 0.75rem;
+  }
+  
   .sidebar {
-    width: 100%;
-    height: auto;
-    border-right: none;
-    border-bottom: 2px solid #e5e7eb;
-    flex-direction: row;
-    align-items: flex-start;
-    box-shadow: none;
-    padding: 0;
-    position: static;
+    padding: 1rem;
   }
-  .sidebarList {
-    display: flex;
-    flex-direction: row;
-    justify-content: space-around;
-    width: 100%;
-    padding: 0;
-  }
-  .sidebarLink {
-    margin-bottom: 0;
-    padding: 12px 8px;
-    font-size: 15px;
-    border-radius: 0;
-    border-left: none;
-    border-bottom: 2px solid transparent;
-  }
-  .sidebarLink:hover, .sidebarLink:focus {
-    background: #e0e7ef;
-    color: #2563eb;
-    border-bottom: 2px solid #2563eb;
-  }
-  .activeSidebarLink {
-    border-bottom: 2px solid #2563eb;
-    border-left: none;
-  }
-}
-
-@media (max-width: 600px) {
-  .container {
-    padding: 12px 2px;
-    border-radius: 0;
-    margin-left: 0;
-  }
-  .sectionCard {
-    padding: 18px 6px;
-    border-radius: 10px;
-  }
-  .sidebar {
-    padding: 0;
+  
+  .content {
+    padding: 1rem;
   }
 }

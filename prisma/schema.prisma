@@ -28,6 +28,8 @@ model User {
   publicaciones       Publicacion[]
   resetPasswordToken       String?
   resetPasswordTokenExpiry DateTime?
+  nameChangeCount     Int      @default(0)
+  usernameChangeCount Int      @default(0)
 }
 
 model Publicacion {

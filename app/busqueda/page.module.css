@@ -113,6 +113,20 @@
   box-shadow: 0 0 0 3px rgba(99,102,241,0.15);
 }
 
+.busquedaSelect optgroup {
+  font-weight: 600;
+  color: #475569;
+  background: #f8fafc;
+  font-size: 0.9rem;
+  padding: 0.5rem 0;
+}
+
+.busquedaSelect option {
+  padding: 0.5rem 1rem;
+  color: #334155;
+  background: white;
+}
+
 .busquedaEmpty {
   text-align: center;
   padding: 3rem 0;

@@ -77,6 +77,7 @@ export default function PublicacionDetalle(props) {
                   onClick={() => setShowCarousel(true)}
                   width={600}
                   height={400}
+                  priority={true}
                 />
               </div>
               {publicacion.images.split(",").length > 1 && (
