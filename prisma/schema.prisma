@@ -97,3 +97,16 @@ model DeletedPublicationLog {
   publicationCreatedAt DateTime // When the publication was originally created
   deletedAt     DateTime @default(now()) // When the publication was deleted
 }
+
+model Admin {
+  id        String   @id @default(cuid())
+  username  String  @unique
+  password  String
+  email     String  @unique
+  isActive  Boolean @default(true)
+  isSuper   Boolean @default(false) // Flag for super admin
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  otpSecret   String? // Secret for TOTP (2FA)
+  otpEnabled  Boolean @default(false) // Is 2FA enabled?
+}
