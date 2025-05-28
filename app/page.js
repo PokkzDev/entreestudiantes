@@ -29,7 +29,7 @@ export default function Home() {
         <div className="container">
           <div className={styles.heroContent}>
             <div className={styles.heroText}>
-              <h1 className={styles.heroTitle}>¡Conecta, vende y encuentra lo que necesitas entre estudiantes universitarios!</h1>
+              <h1 className={styles.heroTitle}>¡Conecta, vende y encuentra lo que necesitas entre estudiantes de educación superior!</h1>
               <p className={styles.heroSubtitle}>La comunidad donde tus ideas, productos y servicios encuentran a otros estudiantes como tú. ¡Haz crecer tu red y tus oportunidades!</p>
               <div className={styles.heroCtas}>
                 {status !== "loading" && !session && (
@@ -92,7 +92,7 @@ export default function Home() {
               <div className={styles.stepNumber}>1</div>
               <div className={styles.stepContent}>
                 <h3>Crea tu cuenta</h3>
-                <p>Regístrate gratis y crea un perfil con tu información universitaria.</p>
+                <p>Regístrate gratis y crea un perfil con tu información académica.</p>
               </div>
             </div>
             <div className={styles.step}>
