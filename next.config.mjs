@@ -29,10 +29,9 @@ const nextConfig = {
     }
     return config;
   },
-  // Ensure proper environment detection
-  env: {
-    NODE_ENV: process.env.NODE_ENV,
-  },
+  // Additional production optimizations
+  poweredByHeader: false,
+  compress: true,
 };
 
 export default nextConfig;
