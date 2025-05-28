@@ -7,6 +7,11 @@ import AuthProvider from "../components/AuthProvider";
 export const metadata = {
   title: "Entre Estudiantes",
   description: "Plataforma para estudiantes, ventas, servicios y más",
+  icons: {
+    icon: '/favicon.ico',
+    shortcut: '/favicon.ico',
+    apple: '/apple-touch-icon.png',
+  },
 };
 
 export default function RootLayout({ children }) {
