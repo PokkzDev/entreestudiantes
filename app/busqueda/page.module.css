@@ -424,6 +424,34 @@
   transition: all 0.3s ease;
 }
 
+.reportButtonCard {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid #e5e7eb;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #6b7280;
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  z-index: 10;
+  backdrop-filter: blur(10px);
+}
+
+.reportButtonCard:hover {
+  background: #fef2f2;
+  border-color: #fca5a5;
+  color: #dc2626;
+  transform: scale(1.05);
+  box-shadow: 0 2px 8px rgba(220, 38, 38, 0.15);
+}
+
 .busquedaCard:hover .tipoLabel {
   transform: scale(1.05);
   box-shadow: 
@@ -471,6 +499,8 @@
   font-size: 1.1rem;
   color: inherit;
 }
+
+
 
 /* Removed specific whatsapp icon styling - using simple approach */
 
@@ -530,6 +560,14 @@
   .busquedaCard .contacto span {
     width: 36px;
     height: 36px;
+  }
+  
+  .reportButtonCard {
+    width: 28px;
+    height: 28px;
+    font-size: 0.7rem;
+    top: 12px;
+    left: 12px;
   }
   
   .contactIcon {

@@ -1,34 +1,38 @@
 import { NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import prisma from '@/lib/prisma';
-import { Resend } from 'resend';
 import { sendEmail } from '@/lib/sendEmail';
-
-const resend = new Resend(process.env.RESEND_API_KEY);
+import { validateEmailDomain } from '@/lib/emailValidation';
 
 export async function POST(request) {
   try {
-    const { email, username } = await request.json();
+    const { email } = await request.json();
 
-    // Check if user already exists by email or username
+    // Validate email domain first
+    const domainValidation = await validateEmailDomain(email);
+    if (!domainValidation.isValid) {
+      return NextResponse.json(
+        { message: domainValidation.message },
+        { status: 400 }
+      );
+    }
+
+    // Check if user already exists by email
     const existingUser = await prisma.user.findFirst({
       where: {
-        OR: [
-          { email },
-          { username }
-        ]
+        email
       },
     });
 
     if (existingUser) {
       if (existingUser.isVerified) {
         return NextResponse.json(
-          { message: 'El correo electrónico o nombre de usuario ya está registrado y verificado.' },
+          { message: 'El correo electrónico ya está registrado y verificado.' },
           { status: 400 }
         );
       } else {
         return NextResponse.json(
-          { message: 'El correo electrónico o nombre de usuario ya está registrado pero no verificado.' },
+          { message: 'El correo electrónico ya está registrado pero no verificado.' },
           { status: 400 }
         );
       }
@@ -44,7 +48,7 @@ export async function POST(request) {
     const user = await prisma.user.create({
       data: {
         email,
-        username,
+        username: `temp_${Date.now()}`, // Temporary username, will be updated during completion
         password: tempPassword,
         verificationToken: verificationToken,
       },

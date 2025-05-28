@@ -1,31 +1,30 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import { getServerSession } from "next-auth";
-import { authOptions } from "../auth/[...nextauth]/route";
+import { requirePostAuth } from "@/lib/authHelpers";
 
 export async function POST(req) {
   try {
-    // Get the user session
-    const session = await getServerSession(authOptions);
-    
-    // Make sure the user is authenticated
-    if (!session?.user?.id) {
+    // Check if user is authenticated and can post
+    const authResult = await requirePostAuth(req);
+    if (!authResult.authorized) {
       return NextResponse.json({ 
         success: false, 
-        error: "No estás autenticado. Debes iniciar sesión para publicar." 
-      }, { status: 401 });
+        error: authResult.error 
+      }, { status: authResult.status });
     }
+    
+    const { user } = authResult;
 
     // Get user's current university and campus information
-    const user = await prisma.user.findUnique({
-      where: { id: session.user.id },
+    const userDetails = await prisma.user.findUnique({
+      where: { id: user.id },
       select: {
         university: true,
         campus: true,
       },
     });
 
-    if (!user) {
+    if (!userDetails) {
       return NextResponse.json({ 
         success: false, 
         error: "Usuario no encontrado." 
@@ -88,9 +87,9 @@ export async function POST(req) {
         tags: data.tags || "",
         views: 0,
         featured: false,
-        university: user.university, // Grab user's current university
-        campus: user.campus, // Grab user's current campus
-        authorId: session.user.id, // Use the authenticated user's ID
+        university: userDetails.university, // Grab user's current university
+        campus: userDetails.campus, // Grab user's current campus
+        authorId: user.id, // Use the authenticated user's ID
       },
     });
     return NextResponse.json({ success: true, publicacion });

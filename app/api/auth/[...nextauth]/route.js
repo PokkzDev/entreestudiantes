@@ -24,12 +24,55 @@ export const authOptions = {
             ]
           }
         });
-        if (user && await bcrypt.compare(credentials.password, user.password)) {
-          // Attach remember to user object for use in callbacks
-          user.remember = credentials.remember === true || credentials.remember === 'true';
-          return user;
+        
+        if (!user || !await bcrypt.compare(credentials.password, user.password)) {
+          return null;
         }
-        return null;
+
+        // Check if account is banned
+        if (user.isBanned) {
+          throw new Error("Tu cuenta ha sido suspendida permanentemente. Contacta al soporte si crees que esto es un error.");
+        }
+
+        // Check if account is inactive
+        if (!user.isActive) {
+          throw new Error("Tu cuenta está desactivada. Contacta al soporte para más información.");
+        }
+
+        // Check if account is suspended and if suspension is still active
+        if (user.isSuspended) {
+          if (user.suspensionEndsAt && new Date() < user.suspensionEndsAt) {
+            const endDate = user.suspensionEndsAt.toLocaleDateString('es-ES');
+            throw new Error(`Tu cuenta está suspendida hasta el ${endDate}. Razón: ${user.suspensionReason || 'No especificada'}`);
+          } else if (user.suspensionEndsAt && new Date() >= user.suspensionEndsAt) {
+            // Suspension has expired, automatically lift it
+            await prisma.user.update({
+              where: { id: user.id },
+              data: {
+                isSuspended: false,
+                suspensionReason: null,
+                suspensionEndsAt: null
+              }
+            });
+            // Continue with login since suspension has expired
+          } else {
+            // Indefinite suspension
+            throw new Error(`Tu cuenta está suspendida indefinidamente. Razón: ${user.suspensionReason || 'No especificada'}`);
+          }
+        }
+
+        // Update last login timestamp
+        await prisma.user.update({
+          where: { id: user.id },
+          data: {
+            lastLoginAt: new Date(),
+            lastActivityAt: new Date()
+          }
+        });
+
+        // Attach remember to user object for use in callbacks
+        user.remember = credentials.remember === true || credentials.remember === 'true';
+        return user;
       }
     })
   ],
@@ -49,6 +92,16 @@ export const authOptions = {
         token.nameChangeCount = user.nameChangeCount;
         token.usernameChangeCount = user.usernameChangeCount;
         token.universityChangeCount = user.universityChangeCount;
+        // Add moderation status fields
+        token.isBanned = user.isBanned;
+        token.isSuspended = user.isSuspended;
+        token.isRestricted = user.isRestricted;
+        token.isMuted = user.isMuted;
+        token.isWarned = user.isWarned;
+        token.isFlagged = user.isFlagged;
+        token.isActive = user.isActive;
+        token.suspensionEndsAt = user.suspensionEndsAt;
+        token.suspensionReason = user.suspensionReason;
         if (user.remember !== undefined) token.remember = user.remember;
       }
 
@@ -97,7 +150,16 @@ export const authOptions = {
               nameChangeCount: true,
               usernameChangeCount: true,
               universityChangeCount: true,
-              createdAt: true
+              createdAt: true,
+              isBanned: true,
+              isSuspended: true,
+              isRestricted: true,
+              isMuted: true,
+              isWarned: true,
+              isFlagged: true,
+              isActive: true,
+              suspensionEndsAt: true,
+              suspensionReason: true
             }
           });
           
@@ -114,6 +176,16 @@ export const authOptions = {
             token.usernameChangeCount = dbUser.usernameChangeCount;
             token.universityChangeCount = dbUser.universityChangeCount;
             token.createdAt = dbUser.createdAt;
+            // Update moderation status fields
+            token.isBanned = dbUser.isBanned;
+            token.isSuspended = dbUser.isSuspended;
+            token.isRestricted = dbUser.isRestricted;
+            token.isMuted = dbUser.isMuted;
+            token.isWarned = dbUser.isWarned;
+            token.isFlagged = dbUser.isFlagged;
+            token.isActive = dbUser.isActive;
+            token.suspensionEndsAt = dbUser.suspensionEndsAt;
+            token.suspensionReason = dbUser.suspensionReason;
           }
         } catch (error) {
           console.error("Error fetching fresh user data:", error);
@@ -138,6 +210,16 @@ export const authOptions = {
         session.user.nameChangeCount = token.nameChangeCount;
         session.user.usernameChangeCount = token.usernameChangeCount;
         session.user.universityChangeCount = token.universityChangeCount;
+        // Add moderation status fields to session
+        session.user.isBanned = token.isBanned;
+        session.user.isSuspended = token.isSuspended;
+        session.user.isRestricted = token.isRestricted;
+        session.user.isMuted = token.isMuted;
+        session.user.isWarned = token.isWarned;
+        session.user.isFlagged = token.isFlagged;
+        session.user.isActive = token.isActive;
+        session.user.suspensionEndsAt = token.suspensionEndsAt;
+        session.user.suspensionReason = token.suspensionReason;
       }
       return session;
     }

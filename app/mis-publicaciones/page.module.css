@@ -453,3 +453,23 @@
     padding: 1.5rem 0.5rem 1.5rem 0.5rem;
   }
 }
+
+/* Hidden by reports warning */
+.hiddenWarning {
+  background-color: #fef3c7;
+  border: 1px solid #f59e0b;
+  border-radius: 8px;
+  padding: 0.75rem;
+  margin-top: 0.75rem;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  color: #92400e;
+  line-height: 1.4;
+}
+
+.warningIcon {
+  font-size: 1rem;
+  flex-shrink: 0;
+}

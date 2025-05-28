@@ -37,14 +37,20 @@ export default function Register() {
         body: JSON.stringify({ email }),
       });
 
-      const responseData = await response.json();
+      let responseData;
+      try {
+        responseData = await response.json();
+      } catch (jsonError) {
+        console.error('Error parsing JSON response:', jsonError);
+        throw new Error('Error de servidor. Por favor, intenta nuevamente.');
+      }
 
       if (!response.ok) {
-        if (response.status === 400 && responseData.message.includes('ya está registrado y verificado')) {
+        if (response.status === 400 && responseData.message && responseData.message.includes('ya está registrado y verificado')) {
           setError('Este correo ya está registrado. Inicia sesión.');
           return;
         }
-        if (response.status === 400 && responseData.message.includes('ya está registrado pero no verificado')) {
+        if (response.status === 400 && responseData.message && responseData.message.includes('ya está registrado pero no verificado')) {
           setExistingUser(true);
           setError('Este correo ya está registrado pero no fue verificado. Puedes reenviar el correo.');
           return;
@@ -96,6 +102,11 @@ export default function Register() {
         <p className={styles.subtitle}>
           Ingresa tu correo electrónico para comenzar
         </p>
+        <div className={styles.emailInfo}>
+          <p className={styles.emailInfoText}>
+            📧 Solo se permiten correos institucionales autorizados
+          </p>
+        </div>
         <form onSubmit={handleSubmit} className={styles.form}>
           <div className={styles.inputGroup}>
             <label htmlFor="email" className={styles.label}>Correo electrónico</label>
@@ -126,7 +137,15 @@ export default function Register() {
                       },
                       body: JSON.stringify({ email }),
                     });
-                    const data = await response.json();
+                    
+                    let data;
+                    try {
+                      data = await response.json();
+                    } catch (jsonError) {
+                      console.error('Error parsing JSON response:', jsonError);
+                      throw new Error('Error de servidor. Por favor, intenta nuevamente.');
+                    }
+                    
                     if (!response.ok) {
                       throw new Error(data.message || "Error al reenviar el correo");
                     }

@@ -1,24 +1,38 @@
 "use client";
 import { signIn } from "next-auth/react";
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from 'next/link';
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
 import styles from '../page.module.css';
 
-export default function Login() {
+function LoginForm() {
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [remember, setRemember] = useState(false);
   const router = useRouter();
+  const searchParams = useSearchParams();
+
+  // Check for message parameter in URL
+  useEffect(() => {
+    const urlMessage = searchParams.get('message');
+    if (urlMessage) {
+      setMessage(decodeURIComponent(urlMessage));
+      // Clear the message after 10 seconds
+      const timer = setTimeout(() => setMessage(""), 10000);
+      return () => clearTimeout(timer);
+    }
+  }, [searchParams]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError("");
+    setMessage(""); // Clear any existing messages
     const res = await signIn("credentials", {
       redirect: false,
       identifier,
@@ -27,7 +41,12 @@ export default function Login() {
     });
     setLoading(false);
     if (res?.error) {
-      setError("Correo, usuario o contraseña incorrectos");
+      // Show specific error message from authentication, or generic message for credential errors
+      if (res.error === "CredentialsSignin") {
+        setError("Correo, usuario o contraseña incorrectos");
+      } else {
+        setError(res.error);
+      }
     } else {
       router.push("/");
     }
@@ -54,6 +73,24 @@ export default function Login() {
           marginBottom: '0.5rem',
           letterSpacing: '-0.02em',
         }}>Iniciar sesión</h1>
+        
+        {/* Display message from URL parameter (e.g., account suspension) */}
+        {message && (
+          <div style={{
+            background: '#fef2f2',
+            border: '1px solid #fecaca',
+            color: '#dc2626',
+            padding: '1rem',
+            borderRadius: '10px',
+            fontSize: '0.95rem',
+            textAlign: 'center',
+            width: '100%',
+            marginBottom: '-1rem'
+          }}>
+            {message}
+          </div>
+        )}
+        
         <form onSubmit={handleSubmit} style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '1.2rem' }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
             <label htmlFor="identifier" style={{ fontWeight: 600, color: '#334155' }}>Correo electrónico o nombre de usuario</label>
@@ -168,5 +205,13 @@ export default function Login() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function Login() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <LoginForm />
+    </Suspense>
   );
 }
