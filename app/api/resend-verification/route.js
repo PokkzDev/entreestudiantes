@@ -1,12 +1,20 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
-import { Resend } from 'resend';
-
-const resend = new Resend(process.env.RESEND_API_KEY);
+import { validateEmailDomain } from '@/lib/emailValidation';
+import { sendEmail } from '@/lib/sendEmail';
 
 export async function POST(request) {
   try {
     const { email } = await request.json();
+
+    // Validate email domain first
+    const domainValidation = await validateEmailDomain(email);
+    if (!domainValidation.isValid) {
+      return NextResponse.json(
+        { message: domainValidation.message },
+        { status: 400 }
+      );
+    }
 
     // Check if user exists
     const existingUser = await prisma.user.findUnique({
@@ -38,10 +46,9 @@ export async function POST(request) {
     // Create verification URL
     const verificationUrl = `${process.env.NEXTAUTH_URL}/completar-registro?token=${verificationToken}&email=${encodeURIComponent(email)}`;
 
-    // Send email with verification link using correct Resend API usage
-    await resend.emails.send({
-      from: 'Entreestudiantes <onboarding@resend.dev>',
-      to: [email],
+    // Send email with verification link using reusable sendEmail function
+    const emailResponse = await sendEmail({
+      to: email,
       subject: 'Completa tu registro en Entreestudiantes',
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; color: #333;">
@@ -56,8 +63,16 @@ export async function POST(request) {
             <p>Entreestudiantes - La plataforma para estudiantes universitarios</p>
           </div>
         </div>
-      `,
+      `
     });
+
+    if (emailResponse.error) {
+      console.error('Error enviando email de verificación:', emailResponse.error);
+      return NextResponse.json(
+        { message: 'No se pudo enviar el correo de verificación. Intenta nuevamente más tarde.' },
+        { status: 500 }
+      );
+    }
 
     return NextResponse.json({ 
       success: true, 

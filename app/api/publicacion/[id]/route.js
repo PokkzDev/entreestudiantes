@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import { getServerSession } from "next-auth";
-import { authOptions } from "../../auth/[...nextauth]/route";
+import { requireAuth, requirePostAuth } from "@/lib/authHelpers";
 import { v2 as cloudinary } from "cloudinary";
 
 // Configuración de Cloudinary
@@ -29,7 +28,11 @@ export async function GET(req, context) {
             image: true,
             university: true,
             campus: true,
-            createdAt: true
+            createdAt: true,
+            isBanned: true,
+            isSuspended: true,
+            isActive: true,
+            suspensionEndsAt: true
           }
         }
       }
@@ -42,9 +45,36 @@ export async function GET(req, context) {
       }, { status: 404 });
     }
 
+    // Hide publications that have been hidden due to reports
+    if (publicacion.hiddenByReports) {
+      return NextResponse.json({ 
+        success: false, 
+        error: "Esta publicación no está disponible" 
+      }, { status: 404 });
+    }
+
+    // Check if the author is banned, inactive, or currently suspended
+    const now = new Date();
+    const isCurrentlySuspended = publicacion.author.isSuspended && 
+      (!publicacion.author.suspensionEndsAt || now < new Date(publicacion.author.suspensionEndsAt));
+    
+    if (publicacion.author.isBanned || !publicacion.author.isActive || isCurrentlySuspended) {
+      return NextResponse.json({ 
+        success: false, 
+        error: "Esta publicación no está disponible" 
+      }, { status: 404 });
+    }
+
+    // Remove moderation fields from author object before returning
+    const { isBanned, isSuspended, isActive, suspensionEndsAt, ...publicAuthor } = publicacion.author;
+    const publicacionToReturn = {
+      ...publicacion,
+      author: publicAuthor
+    };
+
     return NextResponse.json({
       success: true,
-      publicacion
+      publicacion: publicacionToReturn
     });
   } catch (error) {
     return NextResponse.json({ 
@@ -59,15 +89,17 @@ export async function PUT(req, context) {
   try {
     // Extraer y esperar el parámetro id
     const { id } = await context.params;
-    const session = await getServerSession(authOptions);
     
-    // Verificar que el usuario esté autenticado
-    if (!session?.user?.id) {
+    // Check if user is authenticated and can post
+    const authResult = await requirePostAuth(req);
+    if (!authResult.authorized) {
       return NextResponse.json({ 
         success: false, 
-        error: "No estás autenticado" 
-      }, { status: 401 });
+        error: authResult.error 
+      }, { status: authResult.status });
     }
+    
+    const { user } = authResult;
 
     // Verificar si la publicación existe y pertenece al usuario
     const existingPublication = await prisma.publicacion.findUnique({
@@ -81,7 +113,7 @@ export async function PUT(req, context) {
       }, { status: 404 });
     }
 
-    if (existingPublication.authorId !== session.user.id) {
+    if (existingPublication.authorId !== user.id) {
       return NextResponse.json({ 
         success: false, 
         error: "No tienes permiso para editar esta publicación" 
@@ -153,15 +185,17 @@ export async function DELETE(req, context) {
   try {
     // Extraer y esperar el parámetro id
     const { id } = await context.params;
-    const session = await getServerSession(authOptions);
     
-    // Verificar que el usuario esté autenticado
-    if (!session?.user?.id) {
+    // Check if user is authenticated
+    const authResult = await requireAuth(req);
+    if (!authResult.authorized) {
       return NextResponse.json({ 
         success: false, 
-        error: "No estás autenticado" 
-      }, { status: 401 });
+        error: authResult.error 
+      }, { status: authResult.status });
     }
+    
+    const { user } = authResult;
 
     // Verificar si la publicación existe y pertenece al usuario
     const existingPublication = await prisma.publicacion.findUnique({
@@ -183,7 +217,7 @@ export async function DELETE(req, context) {
       }, { status: 404 });
     }
 
-    if (existingPublication.authorId !== session.user.id) {
+    if (existingPublication.authorId !== user.id) {
       return NextResponse.json({ 
         success: false, 
         error: "No tienes permiso para eliminar esta publicación" 

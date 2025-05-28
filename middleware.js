@@ -1,0 +1,102 @@
+import { withAuth } from "next-auth/middleware";
+import { NextResponse } from "next/server";
+
+export default withAuth(
+  function middleware(req) {
+    const token = req.nextauth.token;
+    
+    // If user is banned, suspended (and suspension hasn't expired), or inactive, redirect to login
+    // Note: We need to explicitly check for false, not just falsy values
+    if (token && (
+      token.isBanned === true || 
+      token.isActive === false ||
+      (token.isSuspended === true && token.suspensionEndsAt && new Date() < new Date(token.suspensionEndsAt)) ||
+      (token.isSuspended === true && !token.suspensionEndsAt) // Indefinite suspension
+    )) {
+      // Determine the appropriate message based on the user's status
+      let message = "Tu sesión ha expirado";
+      if (token.isBanned === true) {
+        message = "Tu cuenta ha sido suspendida permanentemente. Contacta al soporte si crees que esto es un error.";
+      } else if (token.isActive === false) {
+        message = "Tu cuenta está desactivada. Contacta al soporte para más información.";
+      } else if (token.isSuspended === true && token.suspensionEndsAt) {
+        const endDate = new Date(token.suspensionEndsAt).toLocaleDateString('es-ES');
+        message = `Tu cuenta está suspendida hasta el ${endDate}. Razón: ${token.suspensionReason || 'No especificada'}`;
+      } else if (token.isSuspended === true) {
+        message = `Tu cuenta está suspendida indefinidamente. Razón: ${token.suspensionReason || 'No especificada'}`;
+      }
+      
+      // Redirect directly to login with the message, avoiding NextAuth signout flow
+      const url = req.nextUrl.clone();
+      url.pathname = '/login';
+      url.searchParams.set('message', message);
+      url.searchParams.set('suspended', 'true'); // Flag to indicate this is a suspension redirect
+      
+      const response = NextResponse.redirect(url);
+      
+      // Clear the NextAuth session cookies to ensure clean logout
+      response.cookies.delete('next-auth.session-token');
+      response.cookies.delete('__Secure-next-auth.session-token');
+      response.cookies.delete('next-auth.csrf-token');
+      response.cookies.delete('__Host-next-auth.csrf-token');
+      
+      return response;
+    }
+    
+    return NextResponse.next();
+  },
+  {
+    callbacks: {
+      authorized: ({ token, req }) => {
+        // Define public routes that don't require authentication
+        const publicRoutes = [
+          '/', // Home page
+          '/login', 
+          '/registro', 
+          '/completar-registro', 
+          '/recuperar-contrasena', 
+          '/reset-contrasena',
+          '/busqueda', // Search page should be public
+          '/publicacion' // Individual publication pages should be public (will be handled by API)
+        ];
+        
+        const isPublicRoute = publicRoutes.some(route => {
+          if (route === '/') {
+            return req.nextUrl.pathname === '/';
+          }
+          return req.nextUrl.pathname.startsWith(route);
+        });
+        
+        if (isPublicRoute) {
+          return true;
+        }
+        
+        // For protected routes, require a valid token
+        return !!token;
+      },
+    },
+  }
+);
+
+export const config = {
+  matcher: [
+    /*
+     * Match all request paths except for the ones starting with:
+     * - api/auth (NextAuth.js routes)
+     * - api/register (registration API)
+     * - api/resend-verification (resend verification API)
+     * - api/complete-registration (complete registration API)
+     * - api/allowed-domains (allowed domains API)
+     * - api/busqueda (public search API)
+     * - api/publicacion (public publication API)
+     * - api/check-session (session validation API)
+     * - api/check-verified (check verification status API)
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico (favicon file)
+     * - pageImages (static images in public folder)
+     * - images (uploaded images)
+     */
+    "/((?!api/auth|api/register|api/resend-verification|api/complete-registration|api/allowed-domains|api/busqueda|api/publicacion|api/check-session|api/check-verified|_next/static|_next/image|favicon.ico|pageImages|images).*)",
+  ],
+}; 

@@ -14,6 +14,22 @@ export async function GET(req) {
 
   const where = {
     status: "activo",
+    hiddenByReports: false, // Exclude publications hidden due to reports
+    // Filter out publications from banned, suspended, or inactive users
+    author: {
+      isBanned: false,
+      isActive: true,
+      OR: [
+        { isSuspended: false },
+        {
+          AND: [
+            { isSuspended: true },
+            { suspensionEndsAt: { not: null } },
+            { suspensionEndsAt: { lt: new Date() } }
+          ]
+        }
+      ]
+    },
     ...(tipo ? { type: tipo } : {}),
     ...(categoria ? { category: categoria } : {}),
     ...(universidad ? { university: universidad } : {}),
@@ -32,37 +48,113 @@ export async function GET(req) {
   const publicaciones = await prisma.publicacion.findMany({
     where,
     orderBy: { createdAt: "desc" },
+    include: {
+      author: {
+        select: {
+          id: true,
+          username: true,
+          name: true,
+          image: true,
+          university: true,
+          campus: true,
+          isBanned: true,
+          isSuspended: true,
+          isActive: true,
+          suspensionEndsAt: true
+        }
+      }
+    }
   });
 
-  // Extraer categorías únicas
+  // Extraer categorías únicas (only from active users)
   const categorias = await prisma.publicacion.findMany({
-    where: { status: "activo" },
+    where: { 
+      status: "activo",
+      author: {
+        isBanned: false,
+        isActive: true,
+        OR: [
+          { isSuspended: false },
+          {
+            AND: [
+              { isSuspended: true },
+              { suspensionEndsAt: { not: null } },
+              { suspensionEndsAt: { lt: new Date() } }
+            ]
+          }
+        ]
+      }
+    },
     select: { category: true },
     distinct: ["category"],
   });
 
-  // Extraer tipos únicos
+  // Extraer tipos únicos (only from active users)
   const tipos = await prisma.publicacion.findMany({
-    where: { status: "activo" },
+    where: { 
+      status: "activo",
+      author: {
+        isBanned: false,
+        isActive: true,
+        OR: [
+          { isSuspended: false },
+          {
+            AND: [
+              { isSuspended: true },
+              { suspensionEndsAt: { not: null } },
+              { suspensionEndsAt: { lt: new Date() } }
+            ]
+          }
+        ]
+      }
+    },
     select: { type: true },
     distinct: ["type"],
   });
 
-  // Extraer universidades únicas
+  // Extraer universidades únicas (only from active users)
   const universidades = await prisma.publicacion.findMany({
     where: { 
       status: "activo",
-      university: { not: null }
+      university: { not: null },
+      author: {
+        isBanned: false,
+        isActive: true,
+        OR: [
+          { isSuspended: false },
+          {
+            AND: [
+              { isSuspended: true },
+              { suspensionEndsAt: { not: null } },
+              { suspensionEndsAt: { lt: new Date() } }
+            ]
+          }
+        ]
+      }
     },
     select: { university: true },
     distinct: ["university"],
   });
 
-  // Extraer campus únicos
+  // Extraer campus únicos (only from active users)
   const campuses = await prisma.publicacion.findMany({
     where: { 
       status: "activo",
-      campus: { not: null }
+      campus: { not: null },
+      author: {
+        isBanned: false,
+        isActive: true,
+        OR: [
+          { isSuspended: false },
+          {
+            AND: [
+              { isSuspended: true },
+              { suspensionEndsAt: { not: null } },
+              { suspensionEndsAt: { lt: new Date() } }
+            ]
+          }
+        ]
+      }
     },
     select: { campus: true },
     distinct: ["campus"],

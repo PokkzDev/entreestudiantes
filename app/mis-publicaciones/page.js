@@ -4,6 +4,7 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import styles from "./page.module.css";
+import RestrictionModal from "../../components/RestrictionModal";
 
 export default function MisPublicaciones() {
   const [publicaciones, setPublicaciones] = useState([]);
@@ -11,6 +12,8 @@ export default function MisPublicaciones() {
   const [message, setMessage] = useState(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [toDeleteId, setToDeleteId] = useState(null);
+  const [showRestrictionModal, setShowRestrictionModal] = useState(false);
+  const [restrictionData, setRestrictionData] = useState(null);
   const { data: session, status } = useSession();
   const router = useRouter();
 
@@ -88,6 +91,40 @@ export default function MisPublicaciones() {
     setToDeleteId(null);
   }
 
+  const checkPostPermissions = async () => {
+    try {
+      const response = await fetch("/api/check-post-permission");
+      const data = await response.json();
+      
+      if (!data.success || !data.canPost) {
+        // User is restricted, show modal
+        setRestrictionData({
+          reason: data.restrictionReason,
+          endsAt: data.restrictionEndsAt,
+          error: data.error
+        });
+        setShowRestrictionModal(true);
+        return false;
+      }
+      return true;
+    } catch (error) {
+      console.error("Error checking post permissions:", error);
+      // On error, allow user to proceed (fail open)
+      return true;
+    }
+  };
+
+  const handleNewPublication = async () => {
+    const canPost = await checkPostPermissions();
+    if (canPost) {
+      router.push("/publicar");
+    }
+  };
+
+  const handleRestrictionModalClose = () => {
+    setShowRestrictionModal(false);
+  };
+
   // Función para cambiar el estado (activo/inactivo)
   async function handleToggleStatus(id, currentStatus) {
     try {
@@ -145,6 +182,14 @@ export default function MisPublicaciones() {
 
   return (
     <div className={styles.container}>
+      {/* Modal de restricción */}
+      <RestrictionModal
+        isOpen={showRestrictionModal}
+        onClose={handleRestrictionModalClose}
+        restrictionReason={restrictionData?.reason}
+        restrictionEndsAt={restrictionData?.endsAt}
+      />
+      
       {/* Modal de confirmación de eliminación */}
       {showDeleteModal && (
         <div className={styles.modalOverlay}>
@@ -165,7 +210,7 @@ export default function MisPublicaciones() {
         <h1 className={styles.title}>Mis Publicaciones</h1>
         <button 
           className={styles.newButton}
-          onClick={() => router.push("/publicar")}
+          onClick={handleNewPublication}
         >
           Nueva Publicación
         </button>
@@ -176,7 +221,7 @@ export default function MisPublicaciones() {
           <p>Aún no tienes publicaciones.</p>
           <button 
             className={styles.startButton}
-            onClick={() => router.push("/publicar")}
+            onClick={handleNewPublication}
           >
             Crear mi primera publicación
           </button>
@@ -226,6 +271,13 @@ export default function MisPublicaciones() {
                     {pub.status === 'activo' ? 'Activo' : 'Pausado'}
                   </span>
                 </p>
+                
+                {pub.hiddenByReports && (
+                  <div className={styles.hiddenWarning}>
+                    <span className={styles.warningIcon}>⚠️</span>
+                    <span>Esta publicación está oculta debido a múltiples reportes y está siendo revisada por nuestro equipo.</span>
+                  </div>
+                )}
               </div>
               
               <div className={styles.publicacionActions}>

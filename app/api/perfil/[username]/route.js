@@ -17,7 +17,11 @@ export async function GET(req, context) {
         image: true,
         university: true,
         campus: true,
-        createdAt: true
+        createdAt: true,
+        isBanned: true,
+        isSuspended: true,
+        isActive: true,
+        suspensionEndsAt: true
       }
     });
 
@@ -28,11 +32,23 @@ export async function GET(req, context) {
       }, { status: 404 });
     }
 
+    // Check if user is banned, inactive, or currently suspended
+    const now = new Date();
+    const isCurrentlySuspended = user.isSuspended && (!user.suspensionEndsAt || now < new Date(user.suspensionEndsAt));
+    
+    if (user.isBanned || !user.isActive || isCurrentlySuspended) {
+      return NextResponse.json({ 
+        success: false, 
+        error: "Este perfil no está disponible" 
+      }, { status: 404 });
+    }
+
     // Obtener las publicaciones activas del usuario
     const publicaciones = await prisma.publicacion.findMany({
       where: { 
         authorId: user.id,
-        status: "activo"
+        status: "activo",
+        hiddenByReports: false
       },
       orderBy: { createdAt: 'desc' },
       select: {
@@ -47,9 +63,12 @@ export async function GET(req, context) {
       }
     });
 
+    // Remove moderation fields from user object before returning
+    const { isBanned, isSuspended, isActive, suspensionEndsAt, ...publicUser } = user;
+
     return NextResponse.json({
       success: true,
-      user,
+      user: publicUser,
       publicaciones
     });
   } catch (error) {

@@ -13,6 +13,7 @@ import StepImagenes from './StepImagenes';
 import StepContacto from './StepContacto';
 import StepUniversidad from './StepUniversidad';
 import StepConfirmar from './StepConfirmar';
+import RestrictionModal from '../../components/RestrictionModal';
 import { formatNumber } from './publicarUtils';
 
 // Move "Imágenes" step before "Contacto"
@@ -43,16 +44,65 @@ export default function PublicarPage() {
   });
   const [imagePreviews, setImagePreviews] = useState([]);
   const [uploading, setUploading] = useState(false);
+  const [showRestrictionModal, setShowRestrictionModal] = useState(false);
+  const [restrictionData, setRestrictionData] = useState(null);
+  const [checkingPermissions, setCheckingPermissions] = useState(true);
   const router = useRouter();
   const { data: session, status } = useSession();
 
-  // Redirect if not authenticated, render nothing while loading
+  // Check posting permissions when user is authenticated
   useEffect(() => {
     if (status === "unauthenticated") {
       router.replace("/login");
+      return;
+    }
+    
+    if (status === "authenticated") {
+      checkPostPermissions();
     }
   }, [status, router]);
-  if (status === "loading") return null;
+
+  const checkPostPermissions = async () => {
+    try {
+      setCheckingPermissions(true);
+      const response = await fetch("/api/check-post-permission");
+      const data = await response.json();
+      
+      if (!data.success || !data.canPost) {
+        // User is restricted, show modal
+        setRestrictionData({
+          reason: data.restrictionReason,
+          endsAt: data.restrictionEndsAt,
+          error: data.error
+        });
+        setShowRestrictionModal(true);
+      }
+    } catch (error) {
+      console.error("Error checking post permissions:", error);
+      // On error, allow user to proceed (fail open)
+    } finally {
+      setCheckingPermissions(false);
+    }
+  };
+
+  const handleRestrictionModalClose = () => {
+    setShowRestrictionModal(false);
+    router.push("/busqueda");
+  };
+
+  // Show loading while checking permissions or session
+  if (status === "loading" || checkingPermissions) {
+    return (
+      <div className={styles.publicarPageWrapper}>
+        <div className={styles.publicarContainer}>
+          <div style={{ textAlign: 'center', padding: '2rem' }}>
+            <p>Verificando permisos...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+  
   if (status === "unauthenticated") return null;
 
   function handleNext() {
@@ -261,8 +311,16 @@ export default function PublicarPage() {
   }
 
   return (
-    <div className={styles.publicarPageWrapper}>
-      <div className={styles.publicarProgressBarWrapper}>
+    <>
+      <RestrictionModal
+        isOpen={showRestrictionModal}
+        onClose={handleRestrictionModalClose}
+        restrictionReason={restrictionData?.reason}
+        restrictionEndsAt={restrictionData?.endsAt}
+      />
+      
+      <div className={styles.publicarPageWrapper}>
+        <div className={styles.publicarProgressBarWrapper}>
         <div className={styles.progressBarColumn}>
           <div className={styles.progressBarRow}>
             {steps.map((label, idx) => (
@@ -353,5 +411,6 @@ export default function PublicarPage() {
         </form>
       </div>
     </div>
+    </>
   );
 }

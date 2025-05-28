@@ -1,8 +1,9 @@
 "use client";
 import { useEffect, useState } from "react";
 import styles from "./page.module.css";
-import { FaWhatsapp, FaEnvelope, FaPhone, FaRegAddressCard } from "react-icons/fa";
+import { FaWhatsapp, FaEnvelope, FaPhone, FaRegAddressCard, FaFlag } from "react-icons/fa";
 import Image from "next/image";
+import ReportModal from "@/components/ReportModal";
 import { getCategoryLabel, getProductCategories, getServiceCategories } from "../../lib/categoryOptions";
 
 export default function Busqueda() {
@@ -21,6 +22,9 @@ export default function Busqueda() {
   const [userCampus, setUserCampus] = useState(null);
   // Nuevo estado para controlar la búsqueda manual
   const [buscar, setBuscar] = useState(false);
+  // Estados para el modal de reportes
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [reportingPublication, setReportingPublication] = useState(null);
   
   // Función para formatear números con puntos para separar miles y comas para decimales
   const formatNumber = (num) => {
@@ -118,6 +122,18 @@ export default function Busqueda() {
     setUniversidades(data.universidades || []);
     setCampuses(data.campuses || []);
     setLoading(false);
+  };
+
+  // Función para manejar el reporte de publicaciones
+  const handleReport = (e, publicacion) => {
+    e.stopPropagation(); // Evitar que se abra la publicación
+    setReportingPublication(publicacion);
+    setShowReportModal(true);
+  };
+
+  const handleCloseReportModal = () => {
+    setShowReportModal(false);
+    setReportingPublication(null);
   };
 
   return (
@@ -269,6 +285,13 @@ export default function Busqueda() {
                   }}
                 >
                   <span className={styles.tipoLabel}>{prod.type === 'producto' ? 'Producto' : 'Servicio'}</span>
+                  <button
+                    className={styles.reportButtonCard}
+                    onClick={(e) => handleReport(e, prod)}
+                    title="Reportar publicación"
+                  >
+                    <FaFlag />
+                  </button>
                   {prod.images && prod.images.length > 0 ? (
                     <div className={styles.imageContainer}>
                       <Image
@@ -321,6 +344,14 @@ export default function Busqueda() {
           )}
         </div>
       )}
+      
+      {/* Modal de reporte */}
+      <ReportModal
+        isOpen={showReportModal}
+        onClose={handleCloseReportModal}
+        publicacionId={reportingPublication?.id}
+        publicacionTitle={reportingPublication?.title}
+      />
     </div>
   );
 }

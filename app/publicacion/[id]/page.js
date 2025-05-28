@@ -3,9 +3,10 @@ import React from "react";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import styles from "./page.module.css";
-import { FaWhatsapp, FaEnvelope, FaPhone, FaRegAddressCard, FaMapMarkerAlt, FaTag, FaTags, FaCalendarAlt, FaIdCard, FaDollarSign, FaChevronLeft, FaChevronRight, FaTimes, FaArrowLeft, FaUniversity } from "react-icons/fa";
+import { FaWhatsapp, FaEnvelope, FaPhone, FaRegAddressCard, FaMapMarkerAlt, FaTag, FaTags, FaCalendarAlt, FaIdCard, FaDollarSign, FaChevronLeft, FaChevronRight, FaTimes, FaArrowLeft, FaUniversity, FaFlag } from "react-icons/fa";
 import Image from 'next/image';
 import { getCategoryLabel } from "@/lib/categoryOptions";
+import ReportModal from "@/components/ReportModal";
 
 export default function PublicacionDetalle(props) {
   // Next.js 14+: params es una promesa, usar React.use() para obtener el valor
@@ -16,6 +17,7 @@ export default function PublicacionDetalle(props) {
   const [loading, setLoading] = useState(true);
   const [selectedImage, setSelectedImage] = useState(0);
   const [showCarousel, setShowCarousel] = useState(false);
+  const [showReportModal, setShowReportModal] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -49,6 +51,15 @@ export default function PublicacionDetalle(props) {
     const month = (date.getMonth() + 1).toString().padStart(2, '0');
     const year = date.getFullYear();
     return `${day}/${month}/${year}`;
+  };
+
+  // Report handlers
+  const handleReport = () => {
+    setShowReportModal(true);
+  };
+
+  const handleCloseReportModal = () => {
+    setShowReportModal(false);
   };
 
   if (loading) {
@@ -287,16 +298,26 @@ export default function PublicacionDetalle(props) {
 
           {/* Footer info */}
           <div className={styles.footerInfo}>
-            {publicacion.createdAt && (
-              <span className={styles.fechaPublicacion}>
-                <FaCalendarAlt />
-                Publicado el {formatDate(publicacion.createdAt)}
+            <div className={styles.footerLeft}>
+              {publicacion.createdAt && (
+                <span className={styles.fechaPublicacion}>
+                  <FaCalendarAlt />
+                  Publicado el {formatDate(publicacion.createdAt)}
+                </span>
+              )}
+              <span className={styles.publicacionId}>
+                <FaIdCard />
+                ID: {publicacion.id}
               </span>
-            )}
-            <span className={styles.publicacionId}>
-              <FaIdCard />
-              ID: {publicacion.id}
-            </span>
+            </div>
+            <button
+              className={styles.reportButton}
+              onClick={handleReport}
+              title="Reportar esta publicación"
+            >
+              <FaFlag />
+              <span>Reportar</span>
+            </button>
           </div>
         </div>
       </div>
@@ -347,6 +368,14 @@ export default function PublicacionDetalle(props) {
           </div>
         </div>
       )}
+
+      {/* Report modal */}
+      <ReportModal
+        isOpen={showReportModal}
+        onClose={handleCloseReportModal}
+        publicacionId={publicacion?.id}
+        publicacionTitle={publicacion?.title}
+      />
     </div>
   );
 }

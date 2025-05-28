@@ -28,11 +28,54 @@ model User {
   verificationToken   String?  // Token para verificar email
   isVerified          Boolean   @default(false) // Indica si el usuario ya completó el registro
   publicaciones       Publicacion[]
+  reports             Report[]  // Reports made by this user
   resetPasswordToken       String?
   resetPasswordTokenExpiry DateTime?
   nameChangeCount     Int      @default(0)
   usernameChangeCount Int      @default(0)
   universityChangeCount Int    @default(0)
+  
+  // User moderation flags
+  isBanned            Boolean  @default(false) // Permanently banned user
+  isSuspended         Boolean  @default(false) // Temporarily suspended user
+  isRestricted        Boolean  @default(false) // Limited functionality (can't post, comment, etc.)
+  isMuted             Boolean  @default(false) // Can't send messages or comments
+  isWarned            Boolean  @default(false) // Has received a warning
+  isFlagged           Boolean  @default(false) // Flagged for review by admin
+  
+  // Moderation tracking
+  banReason           String?  @db.Text // Reason for ban
+  suspensionReason    String?  @db.Text // Reason for suspension
+  restrictionReason   String?  @db.Text // Reason for restriction
+  muteReason          String?  @db.Text // Reason for mute
+  warningReason       String?  @db.Text // Reason for warning
+  flagReason          String?  @db.Text // Reason for flagging
+  
+  // Moderation dates
+  bannedAt            DateTime? // When user was banned
+  suspendedAt         DateTime? // When user was suspended
+  suspensionEndsAt    DateTime? // When suspension expires
+  restrictedAt        DateTime? // When user was restricted
+  restrictionEndsAt   DateTime? // When restriction expires
+  mutedAt             DateTime? // When user was muted
+  muteEndsAt          DateTime? // When mute expires
+  warnedAt            DateTime? // When user was warned
+  flaggedAt           DateTime? // When user was flagged
+  
+  // Admin tracking
+  moderatedBy         String?  // Admin ID who applied the moderation
+  moderationNotes     String?  @db.Text // Internal admin notes
+  
+  // User behavior tracking
+  reportsMade         Int      @default(0) // Number of reports this user has made
+  reportsReceived     Int      @default(0) // Number of times this user has been reported
+  warningCount        Int      @default(0) // Total warnings received
+  suspensionCount     Int      @default(0) // Total times suspended
+  
+  // Account status
+  isActive            Boolean  @default(true) // General account status
+  lastLoginAt         DateTime? // Last login timestamp
+  lastActivityAt      DateTime? // Last activity timestamp
 }
 
 model Publicacion {
@@ -50,12 +93,18 @@ model Publicacion {
   tags          String   // Comma-separated tags
   views         Int      @default(0)
   featured      Boolean  @default(false)
+  flagged       Boolean  @default(false) // Auto-flagged when reports exceed threshold
+  flaggedAt     DateTime? // When it was flagged
+  hiddenByReports Boolean @default(false) // Auto-hidden when reports reach 10
+  hiddenAt      DateTime? // When it was hidden due to reports
+  reportCount   Int      @default(0) // Cache of report count for performance
   university    String?  // Universidad del autor al momento de crear la publicación
   campus        String?  // Campus del autor al momento de crear la publicación
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
   author        User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
   authorId      String
+  reports       Report[] // Reports made against this publication
 }
 
 model DeletedAccountLog {
@@ -109,4 +158,46 @@ model Admin {
   updatedAt DateTime @updatedAt
   otpSecret   String? // Secret for TOTP (2FA)
   otpEnabled  Boolean @default(false) // Is 2FA enabled?
+}
+
+model Report {
+  id            String    @id @default(cuid())
+  publicacionId String    // ID of the reported publication
+  reporterId    String?   // ID of the user who reported (null if anonymous)
+  reason        String    // Reason for the report
+  description   String?   @db.Text // Optional additional description
+  status        String    @default("pending") // "pending", "reviewed", "resolved", "dismissed"
+  ipAddress     String?   // IP address of the reporter
+  userAgent     String?   @db.Text // Browser/device info
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+  // Relations
+  publicacion   Publicacion @relation(fields: [publicacionId], references: [id], onDelete: Cascade)
+  reporter      User?       @relation(fields: [reporterId], references: [id], onDelete: SetNull)
+}
+
+model AllowedEmailDomain {
+  id          String   @id @default(cuid())
+  domain      String   @unique // e.g., "inacapmail.cl", "inacap.cl"
+  description String?  @db.Text // Optional description for the domain
+  isActive    Boolean  @default(true) // Whether this domain is currently allowed
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@index([domain])
+  @@index([isActive])
+}
+
+model AppConfig {
+  id                        String   @id @default(cuid())
+  key                       String   @unique // Configuration key identifier
+  value                     String   @db.Text // Configuration value (JSON string for complex values)
+  description               String?  @db.Text // Description of what this config does
+  isActive                  Boolean  @default(true) // Whether this config is currently active
+  createdAt                 DateTime @default(now())
+  updatedAt                 DateTime @updatedAt
+  
+  @@index([key])
+  @@index([isActive])
 }
