@@ -163,7 +163,15 @@ export default function PlanDetailsSection() {
   };
 
   const handleCancelSubscription = async () => {
-    if (!confirm("¿Estás seguro que deseas cancelar tu suscripción? Esta acción no se puede deshacer.")) {
+    // Create a modal-like experience with a textarea for reason
+    const reason = prompt(
+      "¿Estás seguro que deseas cancelar tu suscripción?\n\n" +
+      "Esta acción no se puede deshacer.\n\n" +
+      "Opcionalmente, puedes contarnos por qué cancelas (esto nos ayuda a mejorar):"
+    );
+
+    // If user clicked Cancel on the prompt, don't proceed
+    if (reason === null) {
       return;
     }
 
@@ -174,6 +182,9 @@ export default function PlanDetailsSection() {
         headers: {
           "Content-Type": "application/json",
         },
+        body: JSON.stringify({ 
+          reason: reason?.trim() || "Sin razón especificada"
+        }),
       });
 
       const data = await response.json();

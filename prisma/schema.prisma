@@ -159,6 +159,27 @@ model DeletedPublicationLog {
   deletedAt     DateTime @default(now()) // When the publication was deleted
 }
 
+model SubscriptionCancellationLog {
+  id                   String    @id @default(cuid())
+  userId               String    // User who cancelled the subscription
+  username             String?   // Username at time of cancellation
+  email                String    // Email at time of cancellation
+  name                 String?   // Name at time of cancellation
+  subscriptionId       String?   // Original subscription ID (if available)
+  planId               String    // Plan that was cancelled ("basic", "premium", "elite")
+  previousAccountTier  String    // Account tier before cancellation
+  reason               String?   @db.Text // Reason for cancellation
+  ipAddress            String?   // IP address at time of cancellation
+  userAgent            String?   @db.Text // Browser/device info
+  subscriptionStartDate DateTime? // When the cancelled subscription started
+  subscriptionEndDate   DateTime? // When the cancelled subscription was supposed to end
+  cancelledAt          DateTime  @default(now()) // When the cancellation occurred
+  
+  @@index([userId])
+  @@index([planId])
+  @@index([cancelledAt])
+}
+
 model Admin {
   id        String   @id @default(cuid())
   username  String  @unique

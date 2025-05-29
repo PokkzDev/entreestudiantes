@@ -16,15 +16,37 @@ export async function POST(request) {
       );
     }
 
-    const { reason } = await request.json();
+    // Safely parse JSON with fallback
+    let requestData = {};
+    try {
+      const text = await request.text();
+      if (text && text.trim() !== '') {
+        requestData = JSON.parse(text);
+      }
+    } catch (jsonError) {
+      console.warn("Invalid JSON in request body, proceeding with empty data:", jsonError.message);
+      // Continue with empty data instead of throwing error
+    }
 
-    // Get user data
+    const { reason } = requestData;
+
+    // Get user data with subscription information
     const user = await prisma.user.findUnique({
       where: { email: session.user.email },
       select: {
         id: true,
+        username: true,
+        name: true,
+        email: true,
         accountTier: true,
-        subscriptionStatus: true
+        subscriptionStatus: true,
+        tierStartDate: true,
+        tierEndDate: true,
+        subscriptions: {
+          where: { status: 'active' },
+          orderBy: { startDate: 'desc' },
+          take: 1
+        }
       }
     });
 
@@ -50,8 +72,17 @@ export async function POST(request) {
       );
     }
 
-    // Begin transaction to update user and subscription records
+    // Get request metadata for logging
+    const userAgent = request.headers.get('user-agent') || '';
+    const forwarded = request.headers.get('x-forwarded-for');
+    const realIp = request.headers.get('x-real-ip');
+    const ipAddress = forwarded ? forwarded.split(',')[0].trim() : realIp || 'unknown';
+
+    // Begin transaction to update user, subscription records, and create log
     await prisma.$transaction(async (tx) => {
+      // Get the active subscription for logging
+      const activeSubscription = user.subscriptions[0];
+
       // Update user to free tier
       await tx.user.update({
         where: { id: user.id },
@@ -76,9 +107,27 @@ export async function POST(request) {
           updatedAt: new Date()
         }
       });
+
+      // Create cancellation log entry
+      await tx.subscriptionCancellationLog.create({
+        data: {
+          userId: user.id,
+          username: user.username,
+          email: user.email,
+          name: user.name,
+          subscriptionId: activeSubscription?.id,
+          planId: activeSubscription?.planId || user.accountTier,
+          previousAccountTier: user.accountTier,
+          reason: reason || 'No se proporcionó razón',
+          ipAddress: ipAddress,
+          userAgent: userAgent,
+          subscriptionStartDate: activeSubscription?.startDate || user.tierStartDate,
+          subscriptionEndDate: activeSubscription?.endDate || user.tierEndDate,
+        }
+      });
     });
 
-    console.log(`Subscription cancelled for user ${user.id}. Reason: ${reason || 'No reason provided'}`);
+    console.log(`Subscription cancelled for user ${user.id} (${user.email}). Reason: ${reason || 'No reason provided'}`);
 
     return NextResponse.json({
       success: true,
