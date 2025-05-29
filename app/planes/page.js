@@ -169,9 +169,10 @@ function PlanesContent() {
       
       if (data.success) {
         // Redirect to MercadoPago Checkout Pro
-        const checkoutUrl = process.env.NODE_ENV === 'development' 
-          ? data.preference.sandbox_init_point 
-          : data.preference.init_point;
+        // Use MERCADOPAGO_ENVIRONMENT to determine which URL to use
+        const checkoutUrl = process.env.NEXT_PUBLIC_MERCADOPAGO_ENVIRONMENT === 'production' 
+          ? data.preference.init_point
+          : data.preference.sandbox_init_point;
         
         window.location.href = checkoutUrl;
       } else {
