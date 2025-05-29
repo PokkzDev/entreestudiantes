@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, Suspense } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -15,7 +15,7 @@ const iconMap = {
   "crown": faCrown
 };
 
-export default function Planes() {
+function PlanesContent() {
   const [accountInfo, setAccountInfo] = useState(null);
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(null); // Track which plan is being processed
@@ -24,13 +24,62 @@ export default function Planes() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
+  const fetchAccountInfo = useCallback(async () => {
+    try {
+      const res = await fetch("/api/check-publication-limits");
+      const data = await res.json();
+      
+      if (data.success) {
+        setAccountInfo(data);
+      }
+    } catch (error) {
+      console.error("Error al cargar información de cuenta:", error);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const handlePaymentSuccess = useCallback(async (paymentId) => {
+    try {
+      const response = await fetch('/api/payments/verify', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ paymentId }),
+      });
+      
+      const data = await response.json();
+      
+      if (data.success && data.subscriptionUpdated) {
+        setMessage({
+          type: 'success',
+          text: '¡Pago confirmado! Tu plan ha sido actualizado exitosamente.'
+        });
+        // Refresh account info immediately
+        fetchAccountInfo();
+      } else {
+        setMessage({
+          type: 'warning',
+          text: 'Pago recibido. La actualización del plan puede tomar unos minutos.'
+        });
+      }
+    } catch (error) {
+      console.error('Error verifying payment:', error);
+      setMessage({
+        type: 'warning',
+        text: 'Pago recibido. La actualización del plan puede tomar unos minutos.'
+      });
+    }
+  }, [fetchAccountInfo]);
+
   useEffect(() => {
     if (status === "authenticated") {
       fetchAccountInfo();
     } else if (status !== "loading") {
       setLoading(false);
     }
-  }, [status]);
+  }, [status, fetchAccountInfo]);
 
   useEffect(() => {
     // Check for payment status in URL params
@@ -77,22 +126,7 @@ export default function Planes() {
         setMessage(null);
       }, 5000);
     }
-  }, [searchParams, session, router]);
-
-  async function fetchAccountInfo() {
-    try {
-      const res = await fetch("/api/check-publication-limits");
-      const data = await res.json();
-      
-      if (data.success) {
-        setAccountInfo(data);
-      }
-    } catch (error) {
-      console.error("Error al cargar información de cuenta:", error);
-    } finally {
-      setLoading(false);
-    }
-  }
+  }, [searchParams, session, router, handlePaymentSuccess, fetchAccountInfo]);
 
   const formatPrice = (price) => {
     if (price === 0) return "Gratis";
@@ -167,40 +201,6 @@ export default function Planes() {
     const iconName = getTierIcon(tierKey);
     const icon = iconMap[iconName];
     return icon ? <FontAwesomeIcon icon={icon} /> : null;
-  };
-
-  const handlePaymentSuccess = async (paymentId) => {
-    try {
-      const response = await fetch('/api/payments/verify', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ paymentId }),
-      });
-      
-      const data = await response.json();
-      
-      if (data.success && data.subscriptionUpdated) {
-        setMessage({
-          type: 'success',
-          text: '¡Pago confirmado! Tu plan ha sido actualizado exitosamente.'
-        });
-        // Refresh account info immediately
-        fetchAccountInfo();
-      } else {
-        setMessage({
-          type: 'warning',
-          text: 'Pago recibido. La actualización del plan puede tomar unos minutos.'
-        });
-      }
-    } catch (error) {
-      console.error('Error verifying payment:', error);
-      setMessage({
-        type: 'warning',
-        text: 'Pago recibido. La actualización del plan puede tomar unos minutos.'
-      });
-    }
   };
 
   return (
@@ -313,5 +313,26 @@ export default function Planes() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function Planes() {
+  return (
+    <Suspense fallback={
+      <div className={styles.container}>
+        <div className={styles.hero}>
+          <h1 className={styles.title}>Elige tu Plan</h1>
+          <p className={styles.subtitle}>
+            Encuentra el plan perfecto para tus necesidades y comienza a publicar más contenido
+          </p>
+        </div>
+        <div className={styles.loadingContainer}>
+          <div className={styles.loadingSpinner}></div>
+          <p>Cargando planes disponibles...</p>
+        </div>
+      </div>
+    }>
+      <PlanesContent />
+    </Suspense>
   );
 } 

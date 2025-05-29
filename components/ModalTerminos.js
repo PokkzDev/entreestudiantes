@@ -20,7 +20,7 @@ export default function ModalTerminos({ open, onClose }) {
           style={{ maxHeight: "70vh", overflowY: "auto", paddingRight: "1rem" }}
         >
           <h2 className={styles.legalTitle}>
-            TÉRMINOS DE USO DE "entreestudiantes.cl"
+            TÉRMINOS DE USO DE &quot;entreestudiantes.cl&quot;
           </h2>
           <p className={styles.legalDate}>
             Fecha de última actualización: 15 de mayo de 2025
@@ -81,9 +81,9 @@ export default function ModalTerminos({ open, onClose }) {
             <div className={styles.legalSection}>
               <h3 className={styles.legalSectionTitle}>Partes</h3>
               <p className={styles.legalParagraph}>
-                El sitio web <strong>entreestudiantes.cl</strong> (en adelante, "la Plataforma")
+                El sitio web <strong>entreestudiantes.cl</strong> (en adelante, &quot;la Plataforma&quot;)
                 y toda persona natural o jurídica que accede o utiliza los servicios ofrecidos
-                en la Plataforma (en adelante, "el Usuario" o "los Usuarios") acuerdan regirse
+                en la Plataforma (en adelante, &quot;el Usuario&quot; o &quot;los Usuarios&quot;) acuerdan regirse
                 por estos Términos de Uso.
               </p>
             </div>
@@ -91,12 +91,12 @@ export default function ModalTerminos({ open, onClose }) {
             <div className={styles.legalSection}>
               <h3 className={styles.legalSectionTitle}>Definiciones</h3>
               <p className={styles.legalParagraph}>
-                Para efectos de estos Términos, se entenderá por "Cuenta" el conjunto de
+                Para efectos de estos Términos, se entenderá por &quot;Cuenta&quot; el conjunto de
                 credenciales que el Usuario crea para acceder a la Plataforma; por
-                "Publicación" el anuncio de producto o servicio que el Usuario genera,
+                &quot;Publicación&quot; el anuncio de producto o servicio que el Usuario genera,
                 incluyendo texto, imágenes, precios, categorías y datos de contacto; por
-                "Contenido de Usuario" todo texto, imagen o archivo multimedia que el
-                Usuario publique; y por "Servicios" el conjunto de funcionalidades disponibles
+                &quot;Contenido de Usuario&quot; todo texto, imagen o archivo multimedia que el
+                Usuario publique; y por &quot;Servicios&quot; el conjunto de funcionalidades disponibles
                 (registro, autenticación, publicación, búsqueda, mensajería, panel de usuario, etc.).
               </p>
             </div>
@@ -128,7 +128,7 @@ export default function ModalTerminos({ open, onClose }) {
                 completar el registro, el Usuario recibirá un correo de verificación que
                 deberá confirmar. El Usuario es responsable de la confidencialidad de sus
                 credenciales y de cualquier actividad bajo su Cuenta. La opción
-                "Recuérdame" permite mantener la sesión iniciada en el dispositivo seleccionado.
+                &quot;Recuérdame&quot; permite mantener la sesión iniciada en el dispositivo seleccionado.
               </p>
             </div>
 
@@ -155,7 +155,7 @@ export default function ModalTerminos({ open, onClose }) {
             <div className={styles.legalSection}>
               <h3 className={styles.legalSectionTitle}>Gestión y Control de Publicaciones</h3>
               <p className={styles.legalParagraph}>
-                Desde "Mis Publicaciones" el Usuario puede editar, pausar, reactivar o
+                Desde &quot;Mis Publicaciones&quot; el Usuario puede editar, pausar, reactivar o
                 eliminar sus anuncios y consultar estadísticas básicas. La Plataforma se
                 reserva el derecho de eliminar cualquier publicación que incumpla estos
                 Términos o la ley, sin previo aviso.
@@ -235,8 +235,8 @@ export default function ModalTerminos({ open, onClose }) {
             <div className={styles.legalSection}>
               <h3 className={styles.legalSectionTitle}>Exención de Garantías y Limitación de Responsabilidad</h3>
               <p className={styles.legalParagraph}>
-                La Plataforma y sus servicios se ofrecen "tal cual" y "según
-                disponibilidad", sin garantías expresa o implícitas. Entreestudiantes.cl no
+                La Plataforma y sus servicios se ofrecen &quot;tal cual&quot; y &quot;según
+                disponibilidad&quot;, sin garantías expresa o implícitas. Entreestudiantes.cl no
                 será responsable por daños directos o indirectos derivados del uso de la
                 Plataforma o de los contenidos de Usuario.
               </p>
