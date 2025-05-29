@@ -14,6 +14,7 @@ This document summarizes the MercadoPago payment integration and the new Plan De
    - Webhook handling for payment notifications
    - Payment verification and validation
    - Environment support (sandbox/production)
+   - Automatic return URLs with auto-redirect for approved payments
 
 2. **Database Schema**
    - `PaymentIntent` model for tracking payment attempts
