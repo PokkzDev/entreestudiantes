@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '../../auth/[...nextauth]/route';
 import { verifyPayment, parseExternalReference } from '@/lib/mercadopago';
+import { createSubscriptionSafely } from '@/lib/dbUtils';
 import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
@@ -66,78 +67,47 @@ export async function POST(request) {
       );
     }
 
-    // Check if subscription already exists for this payment to prevent duplicate processing
-    const existingSubscription = await prisma.subscription.findUnique({
-      where: {
-        userId_paymentId: {
-          userId: referenceData.userId,
-          paymentId: payment.id.toString()
-        }
-      }
-    });
-
-    if (existingSubscription) {
-      console.log(`⚠️  Subscription already exists for payment ${payment.id}, returning existing subscription info`);
-      return NextResponse.json({
-        success: true,
-        payment: {
-          status: payment.status,
-          amount: payment.transaction_amount,
-          currency: payment.currency_id
-        },
-        subscriptionUpdated: true,
-        message: 'Payment already processed'
-      });
-    }
-
     let subscriptionUpdated = false;
 
     // If payment is approved, update user's subscription
     if (payment.status === 'approved') {
       console.log(`Payment approved, updating subscription for user ${referenceData.userId}`);
       
-      const startDate = new Date();
-      const endDate = new Date();
-      endDate.setDate(startDate.getDate() + 30); // Add exactly 30 days
-      
-      await prisma.user.update({
-        where: { id: referenceData.userId },
-        data: {
-          accountTier: referenceData.planId,
-          subscriptionStatus: 'active',
-          tierStartDate: startDate,
-          tierEndDate: endDate,
-          updatedAt: new Date()
-        }
+      const subscriptionResult = await createSubscriptionSafely({
+        userId: referenceData.userId,
+        planId: referenceData.planId,
+        paymentId: payment.id,
+        amount: payment.transaction_amount,
+        currency: payment.currency_id,
+        context: 'api'
       });
-      
-      // Create or update subscription record
-      await prisma.subscription.upsert({
-        where: {
-          userId_paymentId: {
-            userId: referenceData.userId,
-            paymentId: payment.id.toString()
-          }
-        },
-        create: {
-          userId: referenceData.userId,
-          planId: referenceData.planId,
-          status: 'active',
-          startDate: startDate,
-          endDate: endDate,
-          amount: payment.transaction_amount,
-          currency: payment.currency_id,
-          paymentId: payment.id.toString(),
-          createdAt: new Date()
-        },
-        update: {
-          status: 'active',
-          updatedAt: new Date()
+
+      if (subscriptionResult.success) {
+        subscriptionUpdated = true;
+        if (subscriptionResult.alreadyExists) {
+          console.log(`Payment ${payment.id} already processed, returning existing subscription info`);
+          return NextResponse.json({
+            success: true,
+            payment: {
+              status: payment.status,
+              amount: payment.transaction_amount,
+              currency: payment.currency_id
+            },
+            subscriptionUpdated: true,
+            message: subscriptionResult.message
+          });
         }
-      });
-      
-      subscriptionUpdated = true;
-      console.log(`Subscription updated successfully for user ${referenceData.userId} (30 days: ${startDate.toISOString()} - ${endDate.toISOString()})`);
+      } else {
+        console.error(`Failed to create subscription: ${subscriptionResult.error}`);
+        return NextResponse.json(
+          { 
+            success: false, 
+            error: 'Error creando la suscripción',
+            details: subscriptionResult.message
+          },
+          { status: 500 }
+        );
+      }
     }
 
     return NextResponse.json({

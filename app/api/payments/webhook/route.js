@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { verifyPayment, parseExternalReference, verifyWebhookSignature } from '@/lib/mercadopago';
+import { createSubscriptionSafely } from '@/lib/dbUtils';
 import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
@@ -69,21 +70,6 @@ export async function POST(request) {
         return NextResponse.json({ success: false, error: 'Invalid external reference' }, { status: 400 });
       }
       
-      // Check if subscription already exists for this payment to prevent duplicate processing
-      const existingSubscription = await prisma.subscription.findUnique({
-        where: {
-          userId_paymentId: {
-            userId: referenceData.userId,
-            paymentId: payment.id.toString()
-          }
-        }
-      });
-      
-      if (existingSubscription) {
-        console.log(`⚠️  Subscription already exists for payment ${payment.id}, skipping duplicate processing`);
-        return NextResponse.json({ success: true, message: 'Payment already processed' });
-      }
-      
       // Update payment intent in database
       const paymentIntent = await prisma.paymentIntent.findFirst({
         where: {
@@ -110,61 +96,19 @@ export async function POST(request) {
       
       // Handle different payment statuses
       if (payment.status === 'approved') {
-        try {
-          const startDate = new Date();
-          const endDate = new Date();
-          endDate.setDate(startDate.getDate() + 30); // Add exactly 30 days
-          
-          // Update user's subscription
-          await prisma.user.update({
-            where: { id: referenceData.userId },
-            data: {
-              accountTier: referenceData.planId,
-              subscriptionStatus: 'active',
-              tierStartDate: startDate,
-              tierEndDate: endDate,
-              updatedAt: new Date()
-            }
-          });
-          
-          // Create or update subscription record - use upsert to prevent duplicates
-          await prisma.subscription.upsert({
-            where: {
-              userId_paymentId: {
-                userId: referenceData.userId,
-                paymentId: payment.id.toString()
-              }
-            },
-            create: {
-              userId: referenceData.userId,
-              planId: referenceData.planId,
-              status: 'active',
-              startDate: startDate,
-              endDate: endDate,
-              amount: payment.transaction_amount,
-              currency: payment.currency_id,
-              paymentId: payment.id.toString(),
-              createdAt: new Date()
-            },
-            update: {
-              status: 'active',
-              updatedAt: new Date()
-            }
-          });
-          
-          console.log(`✅ Subscription activated for user ${referenceData.userId} to plan ${referenceData.planId} (30 days: ${startDate.toISOString()} - ${endDate.toISOString()})`);
-        } catch (subscriptionError) {
-          console.error('Error creating subscription:', subscriptionError);
-          // Don't return error here - payment was processed, subscription update failed
-          // This should be handled separately
-          
-          // Check if it's a unique constraint error (race condition)
-          if (subscriptionError.code === 'P2002') {
-            console.log(`⚠️  Subscription creation race condition detected for payment ${payment.id}, but payment was processed successfully`);
-          } else {
-            // Log other types of errors for investigation
-            console.error(`❌ Unexpected error creating subscription for payment ${payment.id}:`, subscriptionError);
-          }
+        const subscriptionResult = await createSubscriptionSafely({
+          userId: referenceData.userId,
+          planId: referenceData.planId,
+          paymentId: payment.id,
+          amount: payment.transaction_amount,
+          currency: payment.currency_id,
+          context: 'webhook'
+        });
+
+        if (!subscriptionResult.success) {
+          console.error(`Failed to create subscription in webhook: ${subscriptionResult.error}`);
+          // Don't return error here - payment was processed successfully
+          // This is just a logging issue that should be investigated separately
         }
       } else if (payment.status === 'cancelled' || payment.status === 'rejected') {
         // Handle failed payments
