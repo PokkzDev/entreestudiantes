@@ -96,15 +96,16 @@ export async function POST(request) {
     if (payment.status === 'approved') {
       console.log(`Payment approved, updating subscription for user ${referenceData.userId}`);
       
+      const startDate = new Date();
       const endDate = new Date();
-      endDate.setMonth(endDate.getMonth() + 1); // Add 1 month
+      endDate.setDate(startDate.getDate() + 30); // Add exactly 30 days
       
       await prisma.user.update({
         where: { id: referenceData.userId },
         data: {
           accountTier: referenceData.planId,
           subscriptionStatus: 'active',
-          tierStartDate: new Date(),
+          tierStartDate: startDate,
           tierEndDate: endDate,
           updatedAt: new Date()
         }
@@ -122,7 +123,7 @@ export async function POST(request) {
           userId: referenceData.userId,
           planId: referenceData.planId,
           status: 'active',
-          startDate: new Date(),
+          startDate: startDate,
           endDate: endDate,
           amount: payment.transaction_amount,
           currency: payment.currency_id,
@@ -136,7 +137,7 @@ export async function POST(request) {
       });
       
       subscriptionUpdated = true;
-      console.log(`Subscription updated successfully for user ${referenceData.userId}`);
+      console.log(`Subscription updated successfully for user ${referenceData.userId} (30 days: ${startDate.toISOString()} - ${endDate.toISOString()})`);
     }
 
     return NextResponse.json({

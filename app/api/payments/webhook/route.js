@@ -111,8 +111,9 @@ export async function POST(request) {
       // Handle different payment statuses
       if (payment.status === 'approved') {
         try {
+          const startDate = new Date();
           const endDate = new Date();
-          endDate.setMonth(endDate.getMonth() + 1); // Add 1 month
+          endDate.setDate(startDate.getDate() + 30); // Add exactly 30 days
           
           // Update user's subscription
           await prisma.user.update({
@@ -120,7 +121,7 @@ export async function POST(request) {
             data: {
               accountTier: referenceData.planId,
               subscriptionStatus: 'active',
-              tierStartDate: new Date(),
+              tierStartDate: startDate,
               tierEndDate: endDate,
               updatedAt: new Date()
             }
@@ -138,7 +139,7 @@ export async function POST(request) {
               userId: referenceData.userId,
               planId: referenceData.planId,
               status: 'active',
-              startDate: new Date(),
+              startDate: startDate,
               endDate: endDate,
               amount: payment.transaction_amount,
               currency: payment.currency_id,
@@ -151,7 +152,7 @@ export async function POST(request) {
             }
           });
           
-          console.log(`✅ Subscription activated for user ${referenceData.userId} to plan ${referenceData.planId}`);
+          console.log(`✅ Subscription activated for user ${referenceData.userId} to plan ${referenceData.planId} (30 days: ${startDate.toISOString()} - ${endDate.toISOString()})`);
         } catch (subscriptionError) {
           console.error('Error creating subscription:', subscriptionError);
           // Don't return error here - payment was processed, subscription update failed
