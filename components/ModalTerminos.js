@@ -20,7 +20,7 @@ export default function ModalTerminos({ open, onClose }) {
           style={{ maxHeight: "70vh", overflowY: "auto", paddingRight: "1rem" }}
         >
           <h2 className={styles.legalTitle}>
-            TÉRMINOS DE USO DE “entreestudiantes.cl”
+            TÉRMINOS DE USO DE "entreestudiantes.cl"
           </h2>
           <p className={styles.legalDate}>
             Fecha de última actualización: 15 de mayo de 2025
@@ -81,9 +81,9 @@ export default function ModalTerminos({ open, onClose }) {
             <div className={styles.legalSection}>
               <h3 className={styles.legalSectionTitle}>Partes</h3>
               <p className={styles.legalParagraph}>
-                El sitio web <strong>entreestudiantes.cl</strong> (en adelante, “la Plataforma”)
+                El sitio web <strong>entreestudiantes.cl</strong> (en adelante, "la Plataforma")
                 y toda persona natural o jurídica que accede o utiliza los servicios ofrecidos
-                en la Plataforma (en adelante, “el Usuario” o “los Usuarios”) acuerdan regirse
+                en la Plataforma (en adelante, "el Usuario" o "los Usuarios") acuerdan regirse
                 por estos Términos de Uso.
               </p>
             </div>
@@ -91,12 +91,12 @@ export default function ModalTerminos({ open, onClose }) {
             <div className={styles.legalSection}>
               <h3 className={styles.legalSectionTitle}>Definiciones</h3>
               <p className={styles.legalParagraph}>
-                Para efectos de estos Términos, se entenderá por “Cuenta” el conjunto de
+                Para efectos de estos Términos, se entenderá por "Cuenta" el conjunto de
                 credenciales que el Usuario crea para acceder a la Plataforma; por
-                “Publicación” el anuncio de producto o servicio que el Usuario genera,
+                "Publicación" el anuncio de producto o servicio que el Usuario genera,
                 incluyendo texto, imágenes, precios, categorías y datos de contacto; por
-                “Contenido de Usuario” todo texto, imagen o archivo multimedia que el
-                Usuario publique; y por “Servicios” el conjunto de funcionalidades disponibles
+                "Contenido de Usuario" todo texto, imagen o archivo multimedia que el
+                Usuario publique; y por "Servicios" el conjunto de funcionalidades disponibles
                 (registro, autenticación, publicación, búsqueda, mensajería, panel de usuario, etc.).
               </p>
             </div>
@@ -128,7 +128,7 @@ export default function ModalTerminos({ open, onClose }) {
                 completar el registro, el Usuario recibirá un correo de verificación que
                 deberá confirmar. El Usuario es responsable de la confidencialidad de sus
                 credenciales y de cualquier actividad bajo su Cuenta. La opción
-                “Recuérdame” permite mantener la sesión iniciada en el dispositivo seleccionado.
+                "Recuérdame" permite mantener la sesión iniciada en el dispositivo seleccionado.
               </p>
             </div>
 
@@ -155,7 +155,7 @@ export default function ModalTerminos({ open, onClose }) {
             <div className={styles.legalSection}>
               <h3 className={styles.legalSectionTitle}>Gestión y Control de Publicaciones</h3>
               <p className={styles.legalParagraph}>
-                Desde “Mis Publicaciones” el Usuario puede editar, pausar, reactivar o
+                Desde "Mis Publicaciones" el Usuario puede editar, pausar, reactivar o
                 eliminar sus anuncios y consultar estadísticas básicas. La Plataforma se
                 reserva el derecho de eliminar cualquier publicación que incumpla estos
                 Términos o la ley, sin previo aviso.
@@ -191,6 +191,19 @@ export default function ModalTerminos({ open, onClose }) {
             </div>
 
             <div className={styles.legalSection}>
+              <h3 className={styles.legalSectionTitle}>Responsabilidad de Comunicaciones Externas</h3>
+              <p className={styles.legalParagraph}>
+                <strong>entreestudiantes.cl</strong> es exclusivamente una plataforma digital que conecta personas para facilitar el intercambio de productos y servicios entre estudiantes. No somos intermediarios, vendedores, compradores ni participamos de manera alguna en las transacciones que se realicen entre usuarios.
+              </p>
+              <p className={styles.legalParagraph}>
+                Según nuestros Términos de Uso, cada usuario es completamente responsable de sus comunicaciones externas a la plataforma. <strong>entreestudiantes.cl no se hace responsable por transacciones, fraudes, estafas, problemas de calidad, incumplimientos contractuales, daños, pérdidas o cualquier tipo de inconveniente que puedan surgir en comunicaciones, negociaciones o transacciones realizadas fuera de la plataforma.</strong>
+              </p>
+              <p className={styles.legalParagraph}>
+                Al utilizar los datos de contacto proporcionados por otros usuarios, usted acepta que lo hace bajo su propio riesgo y responsabilidad. La plataforma actúa únicamente como un medio de conexión entre personas y no garantiza la veracidad, confiabilidad o seguridad de los usuarios registrados ni de las transacciones que estos puedan realizar.
+              </p>
+            </div>
+
+            <div className={styles.legalSection}>
               <h3 className={styles.legalSectionTitle}>Eliminación de Cuenta</h3>
               <p className={styles.legalParagraph}>
                 El Usuario puede solicitar en cualquier momento la baja definitiva de su
@@ -222,8 +235,8 @@ export default function ModalTerminos({ open, onClose }) {
             <div className={styles.legalSection}>
               <h3 className={styles.legalSectionTitle}>Exención de Garantías y Limitación de Responsabilidad</h3>
               <p className={styles.legalParagraph}>
-                La Plataforma y sus servicios se ofrecen “tal cual” y “según
-                disponibilidad”, sin garantías expresa o implícitas. Entreestudiantes.cl no
+                La Plataforma y sus servicios se ofrecen "tal cual" y "según
+                disponibilidad", sin garantías expresa o implícitas. Entreestudiantes.cl no
                 será responsable por daños directos o indirectos derivados del uso de la
                 Plataforma o de los contenidos de Usuario.
               </p>

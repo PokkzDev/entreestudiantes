@@ -35,7 +35,7 @@ export default function Home() {
                 {status !== "loading" && !session && (
                   <Link href="/registro" className="btn btn-primary">Registrarte gratis</Link>
                 )}
-                <Link href="/busqueda" className="btn btn-outline">Buscar Productos</Link>
+                <Link href="/busqueda" className="btn btn-outline">Buscar Productos & Servicios</Link>
               </div>
             </div>
             <div className={styles.heroImage} style={{backgroundImage: `url(${heroImages[current]})`}}>

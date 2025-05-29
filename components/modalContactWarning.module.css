@@ -1,0 +1,308 @@
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  padding: 1rem;
+}
+
+.modal {
+  background: white;
+  border-radius: 12px;
+  max-width: 500px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  animation: modalSlideIn 0.3s ease-out;
+}
+
+@keyframes modalSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1.5rem 1.5rem 1rem 1.5rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.warningIcon {
+  font-size: 1.5rem;
+  color: #f59e0b;
+  flex-shrink: 0;
+}
+
+.title {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #111827;
+}
+
+.content {
+  padding: 1.5rem;
+}
+
+.contactInfo {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1rem;
+  background-color: #f3f4f6;
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+  font-weight: 500;
+  color: #374151;
+}
+
+.contactInfo svg {
+  font-size: 1.25rem;
+}
+
+.warningText {
+  margin-bottom: 1.5rem;
+}
+
+.warningText p {
+  margin: 0 0 0.75rem 0;
+  color: #dc2626;
+  font-weight: 600;
+}
+
+.warningText ul {
+  margin: 0;
+  padding-left: 1.25rem;
+  color: #374151;
+  line-height: 1.6;
+}
+
+.warningText li {
+  margin-bottom: 0.5rem;
+}
+
+.legalNote {
+  background-color: #fef3c7;
+  border: 1px solid #f59e0b;
+  border-radius: 8px;
+  padding: 1rem;
+}
+
+.legalNote p {
+  margin: 0 0 0.75rem 0;
+  font-size: 0.875rem;
+  color: #92400e;
+  line-height: 1.5;
+}
+
+.legalNote p:last-child {
+  margin-bottom: 0;
+}
+
+.actions {
+  display: flex;
+  gap: 0.75rem;
+  padding: 1rem 1.5rem 1.5rem 1.5rem;
+  border-top: 1px solid #e5e7eb;
+}
+
+.cancelButton {
+  flex: 1;
+  padding: 0.75rem 1rem;
+  border: 1px solid #d1d5db;
+  background-color: white;
+  color: #374151;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.cancelButton:hover {
+  background-color: #f9fafb;
+  border-color: #9ca3af;
+}
+
+.confirmButton {
+  flex: 2;
+  padding: 0.75rem 1rem;
+  border: none;
+  background-color: #dc2626;
+  color: white;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.confirmButton:hover {
+  background-color: #b91c1c;
+}
+
+.confirmButton:active {
+  transform: translateY(1px);
+}
+
+/* Mobile responsiveness */
+@media (max-width: 640px) {
+  .overlay {
+    padding: 0.5rem;
+  }
+  
+  .modal {
+    max-width: 100%;
+    margin: 0;
+    max-height: 95vh;
+  }
+  
+  .header {
+    padding: 0.75rem 1rem 0.5rem 1rem;
+  }
+  
+  .warningIcon {
+    font-size: 1.25rem;
+  }
+  
+  .title {
+    font-size: 1rem;
+    line-height: 1.3;
+  }
+  
+  .content {
+    padding: 0.75rem 1rem;
+  }
+  
+  .contactInfo {
+    padding: 0.75rem;
+    margin-bottom: 1rem;
+    font-size: 0.9rem;
+  }
+  
+  .contactInfo svg {
+    font-size: 1rem;
+  }
+  
+  .warningText {
+    margin-bottom: 1rem;
+  }
+  
+  .warningText p {
+    font-size: 0.9rem;
+    margin-bottom: 0.5rem;
+  }
+  
+  .warningText ul {
+    padding-left: 1rem;
+    font-size: 0.85rem;
+    line-height: 1.4;
+  }
+  
+  .warningText li {
+    margin-bottom: 0.3rem;
+  }
+  
+  .legalNote {
+    padding: 0.75rem;
+  }
+  
+  .legalNote p {
+    font-size: 0.8rem;
+    line-height: 1.4;
+    margin-bottom: 0.5rem;
+  }
+  
+  .legalNote p:last-child {
+    margin-bottom: 0;
+  }
+  
+  .actions {
+    padding: 0.75rem 1rem 1rem 1rem;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  .cancelButton,
+  .confirmButton {
+    flex: none;
+    padding: 0.6rem 1rem;
+    font-size: 0.9rem;
+  }
+}
+
+/* Very small screens */
+@media (max-width: 480px) {
+  .overlay {
+    padding: 0.25rem;
+  }
+  
+  .modal {
+    border-radius: 8px;
+    max-height: 98vh;
+  }
+  
+  .header {
+    padding: 0.5rem 0.75rem 0.25rem 0.75rem;
+  }
+  
+  .title {
+    font-size: 0.95rem;
+  }
+  
+  .content {
+    padding: 0.5rem 0.75rem;
+  }
+  
+  .contactInfo {
+    padding: 0.5rem;
+    margin-bottom: 0.75rem;
+    font-size: 0.85rem;
+  }
+  
+  .warningText {
+    margin-bottom: 0.75rem;
+  }
+  
+  .warningText p {
+    font-size: 0.85rem;
+  }
+  
+  .warningText ul {
+    font-size: 0.8rem;
+    padding-left: 0.75rem;
+  }
+  
+  .legalNote {
+    padding: 0.5rem;
+  }
+  
+  .legalNote p {
+    font-size: 0.75rem;
+    line-height: 1.3;
+    margin-bottom: 0.4rem;
+  }
+  
+  .actions {
+    padding: 0.5rem 0.75rem 0.75rem 0.75rem;
+  }
+  
+  .cancelButton,
+  .confirmButton {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.85rem;
+  }
+} 

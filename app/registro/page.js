@@ -5,6 +5,7 @@ import Link from 'next/link';
 import styles from './page.module.css';
 import ModalTerminos from "../../components/ModalTerminos";
 import ModalPrivacidad from "../../components/ModalPrivacidad";
+import TurnstileWidget from "../../components/Turnstile";
 
 export default function Register() {
   const [email, setEmail] = useState("");
@@ -16,7 +17,23 @@ export default function Register() {
   const [showPrivacidad, setShowPrivacidad] = useState(false);
   const [acceptedTerminos, setAcceptedTerminos] = useState(false);
   const [acceptedPrivacidad, setAcceptedPrivacidad] = useState(false);
+  const [turnstileToken, setTurnstileToken] = useState("");
   const router = useRouter();
+
+  const handleTurnstileSuccess = (token) => {
+    setTurnstileToken(token);
+    setError(""); // Clear any existing errors when Turnstile is verified
+  };
+
+  const handleTurnstileError = () => {
+    setTurnstileToken("");
+    setError("Error en la verificación de seguridad. Por favor, recarga la página e intenta de nuevo.");
+  };
+
+  const handleTurnstileExpire = () => {
+    setTurnstileToken("");
+    setError("La verificación de seguridad ha expirado. Por favor, completa la verificación nuevamente.");
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -24,6 +41,12 @@ export default function Register() {
       setError("Debes aceptar los Términos de Uso y la Política de Privacidad.");
       return;
     }
+    
+    if (!turnstileToken) {
+      setError("Por favor, completa la verificación de seguridad.");
+      return;
+    }
+
     setLoading(true);
     setError("");
     setExistingUser(false);
@@ -34,7 +57,7 @@ export default function Register() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ email, turnstileToken }),
       });
 
       let responseData;
@@ -62,6 +85,8 @@ export default function Register() {
       setEmailSent(true);
     } catch (error) {
       setError(error.message);
+      // Reset Turnstile on error
+      setTurnstileToken("");
     } finally {
       setLoading(false);
     }
@@ -102,11 +127,11 @@ export default function Register() {
         <p className={styles.subtitle}>
           Ingresa tu correo electrónico para comenzar
         </p>
-        <div className={styles.emailInfo}>
+        {/* <div className={styles.emailInfo}>
           <p className={styles.emailInfoText}>
             📧 Solo se permiten correos institucionales autorizados
           </p>
-        </div>
+        </div> */}
         <form onSubmit={handleSubmit} className={styles.form}>
           <div className={styles.inputGroup}>
             <label htmlFor="email" className={styles.label}>Correo electrónico</label>
@@ -128,6 +153,11 @@ export default function Register() {
               <button
                 type="button"
                 onClick={async () => {
+                  if (!turnstileToken) {
+                    setError("Por favor, completa la verificación de seguridad antes de reenviar el correo.");
+                    return;
+                  }
+                  
                   setLoading(true);
                   try {
                     const response = await fetch("/api/resend-verification", {
@@ -135,7 +165,7 @@ export default function Register() {
                       headers: {
                         "Content-Type": "application/json",
                       },
-                      body: JSON.stringify({ email }),
+                      body: JSON.stringify({ email, turnstileToken }),
                     });
                     
                     let data;
@@ -153,12 +183,14 @@ export default function Register() {
                     setExistingUser(false);
                   } catch (error) {
                     setError(error.message);
+                    // Reset Turnstile on error
+                    setTurnstileToken("");
                   } finally {
                     setLoading(false);
                   }
                 }}
                 className={styles.resendButton}
-                disabled={loading}
+                disabled={loading || !turnstileToken}
               >
                 Reenviar correo de verificación
               </button>
@@ -212,9 +244,17 @@ export default function Register() {
               </label>
             </div>
           </div>
+          {/* Turnstile Widget */}
+          <div style={{ display: 'flex', justifyContent: 'center', marginTop: '0.5rem' }}>
+            <TurnstileWidget
+              onSuccess={handleTurnstileSuccess}
+              onError={handleTurnstileError}
+              onExpire={handleTurnstileExpire}
+            />
+          </div>
           <button
             type="submit"
-            disabled={loading}
+            disabled={loading || !turnstileToken}
             className={styles.submitButton}
           >
             {loading ? 'Procesando...' : 'Continuar'}

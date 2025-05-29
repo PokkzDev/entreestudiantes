@@ -7,6 +7,7 @@ import { FaWhatsapp, FaEnvelope, FaPhone, FaRegAddressCard, FaMapMarkerAlt, FaTa
 import Image from 'next/image';
 import { getCategoryLabel } from "@/lib/categoryOptions";
 import ReportModal from "@/components/ReportModal";
+import ModalContactWarning from "@/components/ModalContactWarning";
 
 export default function PublicacionDetalle(props) {
   // Next.js 14+: params es una promesa, usar React.use() para obtener el valor
@@ -18,6 +19,9 @@ export default function PublicacionDetalle(props) {
   const [selectedImage, setSelectedImage] = useState(0);
   const [showCarousel, setShowCarousel] = useState(false);
   const [showReportModal, setShowReportModal] = useState(false);
+  // Estados para el modal de advertencia de contacto
+  const [showContactWarning, setShowContactWarning] = useState(false);
+  const [pendingContactInfo, setPendingContactInfo] = useState(null);
 
   useEffect(() => {
     if (!id) return;
@@ -60,6 +64,29 @@ export default function PublicacionDetalle(props) {
 
   const handleCloseReportModal = () => {
     setShowReportModal(false);
+  };
+
+  // Funciones para manejar el modal de advertencia de contacto
+  const handleContactClick = (e, contactMethod, contactInfo, contactHref) => {
+    e.preventDefault();
+    setPendingContactInfo({
+      method: contactMethod,
+      info: contactInfo,
+      href: contactHref
+    });
+    setShowContactWarning(true);
+  };
+
+  const handleCloseContactWarning = () => {
+    setShowContactWarning(false);
+    setPendingContactInfo(null);
+  };
+
+  const handleConfirmContact = () => {
+    if (pendingContactInfo?.href) {
+      window.open(pendingContactInfo.href, '_blank', 'noopener,noreferrer');
+    }
+    handleCloseContactWarning();
   };
 
   if (loading) {
@@ -235,15 +262,13 @@ export default function PublicacionDetalle(props) {
             <h3>Contacto</h3>
             <div className={styles.contactoBox}>
               {contactoHref ? (
-                <a
-                  href={contactoHref}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                <button
                   className={`${styles.contactoLink} ${styles[`contacto-${publicacion.contactMethod}`]}`}
+                  onClick={(e) => handleContactClick(e, publicacion.contactMethod, contactoText, contactoHref)}
                 >
                   {contactoIcon}
                   <span>{contactoText}</span>
-                </a>
+                </button>
               ) : (
                 <div className={styles.contactoInfo}>
                   {contactoIcon}
@@ -375,6 +400,15 @@ export default function PublicacionDetalle(props) {
         onClose={handleCloseReportModal}
         publicacionId={publicacion?.id}
         publicacionTitle={publicacion?.title}
+      />
+
+      {/* Modal de advertencia de contacto */}
+      <ModalContactWarning
+        open={showContactWarning}
+        onClose={handleCloseContactWarning}
+        onConfirm={handleConfirmContact}
+        contactMethod={pendingContactInfo?.method}
+        contactInfo={pendingContactInfo?.info}
       />
     </div>
   );

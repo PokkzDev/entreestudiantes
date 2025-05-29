@@ -4,6 +4,7 @@ import styles from "./page.module.css";
 import { FaWhatsapp, FaEnvelope, FaPhone, FaRegAddressCard, FaFlag } from "react-icons/fa";
 import Image from "next/image";
 import ReportModal from "@/components/ReportModal";
+import ModalContactWarning from "@/components/ModalContactWarning";
 import { getCategoryLabel, getProductCategories, getServiceCategories } from "../../lib/categoryOptions";
 
 export default function Busqueda() {
@@ -25,6 +26,9 @@ export default function Busqueda() {
   // Estados para el modal de reportes
   const [showReportModal, setShowReportModal] = useState(false);
   const [reportingPublication, setReportingPublication] = useState(null);
+  // Estados para el modal de advertencia de contacto
+  const [showContactWarning, setShowContactWarning] = useState(false);
+  const [pendingContactInfo, setPendingContactInfo] = useState(null);
   
   // Función para formatear números con puntos para separar miles y comas para decimales
   const formatNumber = (num) => {
@@ -134,6 +138,29 @@ export default function Busqueda() {
   const handleCloseReportModal = () => {
     setShowReportModal(false);
     setReportingPublication(null);
+  };
+
+  // Funciones para manejar el modal de advertencia de contacto
+  const handleContactClick = (e, contactMethod, contactInfo, contactHref) => {
+    e.stopPropagation(); // Evitar que se abra la publicación
+    setPendingContactInfo({
+      method: contactMethod,
+      info: contactInfo,
+      href: contactHref
+    });
+    setShowContactWarning(true);
+  };
+
+  const handleCloseContactWarning = () => {
+    setShowContactWarning(false);
+    setPendingContactInfo(null);
+  };
+
+  const handleConfirmContact = () => {
+    if (pendingContactInfo?.href) {
+      window.open(pendingContactInfo.href, '_blank', 'noopener,noreferrer');
+    }
+    handleCloseContactWarning();
   };
 
   return (
@@ -325,15 +352,13 @@ export default function Busqueda() {
                   {prod.price && <p className={styles.precio}><b>Precio:</b> ${formatNumber(prod.price)}</p>}
                   <p className={styles.contacto}>
                     {contactoHref ? (
-                      <a
-                        href={contactoHref}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="whatsapp-link"
-                        onClick={e => e.stopPropagation()} // Prevent card click when clicking the link
+                      <button
+                        className={styles.contactButton}
+                        onClick={(e) => handleContactClick(e, prod.contactMethod, prod.contactInfo, contactoHref)}
+                        title={`Contactar vía ${prod.contactMethod}`}
                       >
                         {contactoIcon}
-                      </a>
+                      </button>
                     ) : (
                       <span>{contactoIcon}</span>
                     )}
@@ -351,6 +376,15 @@ export default function Busqueda() {
         onClose={handleCloseReportModal}
         publicacionId={reportingPublication?.id}
         publicacionTitle={reportingPublication?.title}
+      />
+      
+      {/* Modal de advertencia de contacto */}
+      <ModalContactWarning
+        open={showContactWarning}
+        onClose={handleCloseContactWarning}
+        onConfirm={handleConfirmContact}
+        contactMethod={pendingContactInfo?.method}
+        contactInfo={pendingContactInfo?.info}
       />
     </div>
   );

@@ -485,22 +485,42 @@
   color: #6b7280;
 }
 
+/* Contact button styles */
+.contactButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  background: #ffffff;
+  border: 1px solid #d1d5db;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: #6b7280;
+  padding: 0;
+}
+
+.contactButton:hover {
+  background: #f3f4f6;
+  border-color: #9ca3af;
+  transform: translateY(-1px);
+}
+
+.contactButton:hover .contactIcon {
+  animation: pulseGlow 1.5s infinite;
+}
+
 .busquedaCard .contacto a:hover {
   background: #f3f4f6;
   border-color: #9ca3af;
   transform: translateY(-1px);
 }
 
-.busquedaCard .contacto a:hover .contactIcon {
-  animation: pulseGlow 1.5s infinite;
-}
-
 .contactIcon {
   font-size: 1.1rem;
   color: inherit;
 }
-
-
 
 /* Removed specific whatsapp icon styling - using simple approach */
 
@@ -558,6 +578,11 @@
   
   .busquedaCard .contacto a,
   .busquedaCard .contacto span {
+    width: 36px;
+    height: 36px;
+  }
+  
+  .contactButton {
     width: 36px;
     height: 36px;
   }

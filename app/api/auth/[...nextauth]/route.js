@@ -13,8 +13,32 @@ export const authOptions = {
         identifier: { label: "Email or Username", type: "text" },
         password: { label: "Password", type: "password" },
         remember: { label: "Recuérdame", type: "checkbox", optional: true },
+        turnstileToken: { label: "Turnstile Token", type: "text", optional: true },
       },
       async authorize(credentials) {
+        // Verify Turnstile token first
+        if (credentials.turnstileToken) {
+          try {
+            const formData = new FormData();
+            formData.append('secret', process.env.CLOUDFARE_TURNSTILE_SECRET_KEY);
+            formData.append('response', credentials.turnstileToken);
+
+            const response = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
+              method: 'POST',
+              body: formData,
+            });
+
+            const result = await response.json();
+
+            if (!result.success) {
+              throw new Error("Verificación de seguridad fallida. Por favor, intenta de nuevo.");
+            }
+          } catch (error) {
+            console.error('Turnstile verification error:', error);
+            throw new Error("Error en la verificación de seguridad. Por favor, intenta de nuevo.");
+          }
+        }
+
         // Permitir login con email o username
         const user = await prisma.user.findFirst({
           where: {
