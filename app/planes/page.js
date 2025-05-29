@@ -214,6 +214,15 @@ function PlanesContent() {
           Encuentra el plan perfecto para tus necesidades y comienza a publicar más contenido
         </p>
         
+        {/* Payment Model Warning */}
+        <div className={styles.paymentNotice}>
+          <div className={styles.noticeIcon}>ℹ️</div>
+          <div className={styles.noticeContent}>
+            <strong>Información sobre los planes:</strong> Los planes tienen una duración de 30 días. 
+            Al finalizar este período, podrás renovar fácilmente tu plan para continuar disfrutando de los beneficios.
+          </div>
+        </div>
+        
         {message && (
           <div className={`${styles.messageAlert} ${styles[message.type]}`}>
             <p>{message.text}</p>
@@ -264,7 +273,12 @@ function PlanesContent() {
                 <h3 className={styles.planName}>{tier.name}</h3>
                 <div className={styles.planPrice}>
                   <span className={styles.price}>{formatPrice(tier.price)}</span>
-                  {tier.price > 0 && <span className={styles.period}>/mes</span>}
+                  {tier.price > 0 && (
+                    <div className={styles.priceDetails}>
+                      <span className={styles.period}>pago único mensual</span>
+                      <span className={styles.renewalNote}>Renovable cada 30 días</span>
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -306,9 +320,9 @@ function PlanesContent() {
                 ) : isCurrentPlan(tierKey) ? (
                   'Plan Actual'
                 ) : isUpgrade(tierKey) ? (
-                  `Actualizar a ${tier.name}`
+                  `Pagar ${formatPrice(tier.price)} por ${tier.name}`
                 ) : (
-                  `Cambiar a ${tier.name}`
+                  `Pagar ${formatPrice(tier.price)} por ${tier.name}`
                 )}
               </button>
             </div>
@@ -338,4 +352,4 @@ export default function Planes() {
       <PlanesContent />
     </Suspense>
   );
-} 
+}

@@ -294,7 +294,8 @@
 
 .paymentItem {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
+  justify-content: space-between;
   gap: 1rem;
   padding: 1rem;
   background: #f8fafc;
@@ -343,6 +344,37 @@
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.025em;
+}
+
+.paymentPeriod {
+  font-size: 0.8rem;
+  color: #64748b;
+  font-style: italic;
+}
+
+.paymentId {
+  font-size: 0.75rem;
+  color: #9ca3af;
+  font-family: monospace;
+}
+
+.paymentMeta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.5rem;
+}
+
+.statusCancelled {
+  background: #fef2f2;
+  color: #dc2626;
+  border: 1px solid #fecaca;
+}
+
+.statusExpired {
+  background: #f3f4f6;
+  color: #6b7280;
+  border: 1px solid #d1d5db;
 }
 
 /* Action Buttons */
@@ -418,8 +450,7 @@
 
   .paymentItem {
     flex-direction: column;
-    align-items: stretch;
-    gap: 0.75rem;
+    gap: 1rem;
   }
 
   .paymentInfo {
@@ -433,4 +464,133 @@
   .featuresList {
     grid-template-columns: 1fr;
   }
+
+  .paymentMeta {
+    align-items: flex-start;
+    flex-direction: row;
+    justify-content: space-between;
+  }
+
+  .summaryGrid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+  }
+
+  .summaryItem {
+    padding: 0.75rem;
+  }
+
+  .summaryValue {
+    font-size: 1.25rem;
+  }
+
+  .renewalNotice {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .renewalIcon {
+    align-self: flex-start;
+  }
+}
+
+/* Auto-renewal status */
+.autoRenewEnabled {
+  color: #10b981;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.autoRenewDisabled {
+  color: #ef4444;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+/* Renewal Information */
+.renewalInfo {
+  margin-top: 1.5rem;
+  padding: 1rem;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+}
+
+.renewalNotice {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.renewalIcon {
+  color: #3b82f6;
+  font-size: 1.25rem;
+  margin-top: 0.25rem;
+  flex-shrink: 0;
+}
+
+.renewalText {
+  flex: 1;
+}
+
+.renewalText strong {
+  color: #1e293b;
+  font-size: 0.95rem;
+}
+
+.renewalText p {
+  margin: 0.5rem 0 0 0;
+  color: #64748b;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+/* Account Summary */
+.accountSummary {
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.accountSummary h4 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #374151;
+  margin: 0 0 1.5rem 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.summaryGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 1.5rem;
+}
+
+.summaryItem {
+  text-align: center;
+  padding: 1rem;
+  background: #f8fafc;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+}
+
+.summaryValue {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin-bottom: 0.5rem;
+}
+
+.summaryLabel {
+  font-size: 0.85rem;
+  color: #64748b;
+  font-weight: 500;
 } 

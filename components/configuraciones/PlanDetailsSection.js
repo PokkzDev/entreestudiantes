@@ -14,7 +14,8 @@ import {
   faTimesCircle,
   faSpinner,
   faArrowUp,
-  faHistory
+  faHistory,
+  faChartLine
 } from "@fortawesome/free-solid-svg-icons";
 import { ACCOUNT_TIERS, formatTierName, getTierColor, getTierBgColor, getTierIcon } from "@/lib/accountTiers";
 import styles from "./PlanDetailsSection.module.css";
@@ -87,6 +88,39 @@ export default function PlanDetailsSection() {
     return diffDays;
   };
 
+  const getTimeRemaining = (endDate) => {
+    if (!endDate) return null;
+    const now = new Date();
+    const end = new Date(endDate);
+    const diffTime = end - now;
+    
+    if (diffTime <= 0) {
+      return { expired: true, text: "Expirado" };
+    }
+    
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    const diffHours = Math.ceil(diffTime / (1000 * 60 * 60));
+    
+    if (diffDays > 1) {
+      return { expired: false, text: `${diffDays} días restantes` };
+    } else if (diffHours > 1) {
+      return { expired: false, text: `${diffHours} horas restantes` };
+    } else {
+      return { expired: false, text: "Menos de 1 hora restante" };
+    }
+  };
+
+  const formatDateTime = (dateString) => {
+    if (!dateString) return "N/A";
+    return new Date(dateString).toLocaleString('es-CL', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
   const getTierIconComponent = (tierKey) => {
     const iconName = getTierIcon(tierKey);
     const icon = iconMap[iconName];
@@ -111,15 +145,13 @@ export default function PlanDetailsSection() {
     }
     
     if (user.subscriptionStatus === 'active') {
-      const daysRemaining = getDaysRemaining(user.tierEndDate);
-      if (daysRemaining !== null) {
-        if (daysRemaining <= 0) {
-          return { text: 'Expirado', className: styles.statusExpired };
-        } else if (daysRemaining <= 7) {
-          return { text: `Expira en ${daysRemaining} día${daysRemaining !== 1 ? 's' : ''}`, className: styles.statusWarning };
-        } else {
-          return { text: 'Activo', className: styles.statusActive };
-        }
+      const timeRemaining = getTimeRemaining(user.tierEndDate);
+      if (timeRemaining.expired) {
+        return { text: 'Expirado', className: styles.statusExpired };
+      } else if (timeRemaining.text.includes('restantes')) {
+        return { text: timeRemaining.text, className: styles.statusWarning };
+      } else {
+        return { text: 'Activo', className: styles.statusActive };
       }
     }
     
@@ -279,13 +311,63 @@ export default function PlanDetailsSection() {
             </div>
             {user.subscriptionStatus === 'active' && user.tierEndDate && (
               <div className={styles.subscriptionItem}>
-                <span className={styles.subscriptionLabel}>Días restantes:</span>
+                <span className={styles.subscriptionLabel}>Tiempo restante:</span>
                 <span className={styles.subscriptionValue}>
-                  {getDaysRemaining(user.tierEndDate)} días
+                  {getTimeRemaining(user.tierEndDate).text}
                 </span>
               </div>
             )}
+            {planData.currentSubscription && (
+              <>
+                <div className={styles.subscriptionItem}>
+                  <span className={styles.subscriptionLabel}>Renovación automática:</span>
+                  <span className={styles.subscriptionValue}>
+                    {planData.currentSubscription.autoRenew ? (
+                      <span className={styles.autoRenewEnabled}>
+                        <FontAwesomeIcon icon={faCheckCircle} /> Activada
+                      </span>
+                    ) : (
+                      <span className={styles.autoRenewDisabled}>
+                        <FontAwesomeIcon icon={faTimesCircle} /> Manual
+                      </span>
+                    )}
+                  </span>
+                </div>
+                <div className={styles.subscriptionItem}>
+                  <span className={styles.subscriptionLabel}>ID de pago:</span>
+                  <span className={styles.subscriptionValue}>
+                    {planData.currentSubscription.paymentId || 'N/A'}
+                  </span>
+                </div>
+                <div className={styles.subscriptionItem}>
+                  <span className={styles.subscriptionLabel}>Monto pagado:</span>
+                  <span className={styles.subscriptionValue}>
+                    {formatPrice(planData.currentSubscription.amount)}
+                  </span>
+                </div>
+              </>
+            )}
           </div>
+          
+          {/* Renewal Information */}
+          {user.subscriptionStatus === 'active' && !getTimeRemaining(user.tierEndDate).expired && (
+            <div className={styles.renewalInfo}>
+              <div className={styles.renewalNotice}>
+                <FontAwesomeIcon icon={faCalendarAlt} className={styles.renewalIcon} />
+                <div className={styles.renewalText}>
+                  <strong>Próxima renovación:</strong>
+                  <p>
+                    Tu plan expira el {formatDate(user.tierEndDate)}. 
+                    {planData.currentSubscription?.autoRenew ? (
+                      " Se renovará automáticamente."
+                    ) : (
+                      " Deberás renovar manualmente para continuar."
+                    )}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
@@ -294,7 +376,7 @@ export default function PlanDetailsSection() {
         <div className={styles.paymentHistory}>
           <h4>
             <FontAwesomeIcon icon={faHistory} />
-            Historial de pagos
+            Historial de pagos ({planData.paymentHistory.length})
           </h4>
           <div className={styles.paymentsList}>
             {planData.paymentHistory.map((payment, index) => (
@@ -303,22 +385,77 @@ export default function PlanDetailsSection() {
                   <FontAwesomeIcon icon={faCreditCard} className={styles.paymentIcon} />
                   <div className={styles.paymentDetails}>
                     <span className={styles.paymentPlan}>Plan {formatTierName(payment.planId)}</span>
-                    <span className={styles.paymentDate}>{formatDate(payment.createdAt)}</span>
+                    <span className={styles.paymentDate}>{formatDateTime(payment.createdAt)}</span>
+                    <span className={styles.paymentPeriod}>
+                      Período: {formatDate(payment.startDate)} - {formatDate(payment.endDate)}
+                    </span>
+                    {payment.paymentId && (
+                      <span className={styles.paymentId}>
+                        ID: {payment.paymentId}
+                      </span>
+                    )}
                   </div>
                 </div>
-                <div className={styles.paymentAmount}>
-                  {formatPrice(payment.amount)}
-                </div>
-                <div className={`${styles.paymentStatus} ${
-                  payment.status === 'active' ? styles.statusActive : styles.statusInactive
-                }`}>
-                  {payment.status === 'active' ? 'Pagado' : 'Inactivo'}
+                <div className={styles.paymentMeta}>
+                  <div className={styles.paymentAmount}>
+                    {formatPrice(payment.amount)}
+                  </div>
+                  <div className={`${styles.paymentStatus} ${
+                    payment.status === 'active' ? styles.statusActive : 
+                    payment.status === 'cancelled' ? styles.statusCancelled : 
+                    payment.status === 'expired' ? styles.statusExpired : styles.statusInactive
+                  }`}>
+                    {payment.status === 'active' ? 'Activo' : 
+                     payment.status === 'cancelled' ? 'Cancelado' :
+                     payment.status === 'expired' ? 'Expirado' : 'Inactivo'}
+                  </div>
                 </div>
               </div>
             ))}
           </div>
         </div>
       )}
+
+      {/* Account Summary */}
+      <div className={styles.accountSummary}>
+        <h4>
+          <FontAwesomeIcon icon={faChartLine} />
+          Resumen de cuenta
+        </h4>
+        <div className={styles.summaryGrid}>
+          <div className={styles.summaryItem}>
+            <div className={styles.summaryValue}>
+              {planData.paymentHistory ? planData.paymentHistory.length : 0}
+            </div>
+            <div className={styles.summaryLabel}>Total de pagos</div>
+          </div>
+          <div className={styles.summaryItem}>
+            <div className={styles.summaryValue}>
+              {formatPrice(
+                planData.paymentHistory ? 
+                planData.paymentHistory.reduce((sum, payment) => sum + payment.amount, 0) : 0
+              )}
+            </div>
+            <div className={styles.summaryLabel}>Total gastado</div>
+          </div>
+          <div className={styles.summaryItem}>
+            <div className={styles.summaryValue}>
+              {planData.publicationCount}
+            </div>
+            <div className={styles.summaryLabel}>Publicaciones activas</div>
+          </div>
+          <div className={styles.summaryItem}>
+            <div className={styles.summaryValue}>
+              {user.accountTier === 'free' ? 
+                'Gratis' : 
+                user.subscriptionStatus === 'active' ? 
+                  'Premium' : 'Inactivo'
+              }
+            </div>
+            <div className={styles.summaryLabel}>Estado actual</div>
+          </div>
+        </div>
+      </div>
 
       {/* Action Buttons */}
       <div className={styles.actionButtons}>
