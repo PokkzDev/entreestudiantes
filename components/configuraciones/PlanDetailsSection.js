@@ -18,6 +18,7 @@ import {
   faChartLine
 } from "@fortawesome/free-solid-svg-icons";
 import { ACCOUNT_TIERS, formatTierName, getTierColor, getTierBgColor, getTierIcon } from "@/lib/accountTiers";
+import SubscriptionCancelModal from "../SubscriptionCancelModal";
 import styles from "./PlanDetailsSection.module.css";
 
 // Icon mapping for FontAwesome
@@ -34,6 +35,7 @@ export default function PlanDetailsSection() {
   const [actionLoading, setActionLoading] = useState(null);
   const [message, setMessage] = useState("");
   const [messageType, setMessageType] = useState("");
+  const [showCancelModal, setShowCancelModal] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -162,20 +164,10 @@ export default function PlanDetailsSection() {
     router.push("/planes");
   };
 
-  const handleCancelSubscription = async () => {
-    // Create a modal-like experience with a textarea for reason
-    const reason = prompt(
-      "¿Estás seguro que deseas cancelar tu suscripción?\n\n" +
-      "Esta acción no se puede deshacer.\n\n" +
-      "Opcionalmente, puedes contarnos por qué cancelas (esto nos ayuda a mejorar):"
-    );
-
-    // If user clicked Cancel on the prompt, don't proceed
-    if (reason === null) {
-      return;
-    }
-
+  const handleCancelSubscription = async (reason) => {
     setActionLoading('cancel');
+    setShowCancelModal(false);
+    
     try {
       const response = await fetch("/api/configuraciones/cancel-subscription", {
         method: "POST",
@@ -183,7 +175,7 @@ export default function PlanDetailsSection() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({ 
-          reason: reason?.trim() || "Sin razón especificada"
+          reason: reason || "Sin razón especificada"
         }),
       });
 
@@ -203,6 +195,14 @@ export default function PlanDetailsSection() {
     } finally {
       setActionLoading(null);
     }
+  };
+
+  const handleCancelClick = () => {
+    setShowCancelModal(true);
+  };
+
+  const handleCancelModalClose = () => {
+    setShowCancelModal(false);
   };
 
   if (loading) {
@@ -483,7 +483,7 @@ export default function PlanDetailsSection() {
         {user.accountTier !== 'free' && user.subscriptionStatus === 'active' && (
           <button
             type="button"
-            onClick={handleCancelSubscription}
+            onClick={handleCancelClick}
             disabled={actionLoading === 'cancel'}
             className={styles.cancelButton}
           >
@@ -498,6 +498,15 @@ export default function PlanDetailsSection() {
           </button>
         )}
       </div>
+
+      {showCancelModal && (
+        <SubscriptionCancelModal
+          isOpen={showCancelModal}
+          onConfirm={handleCancelSubscription}
+          onClose={handleCancelModalClose}
+          userTier={user?.accountTier}
+        />
+      )}
     </div>
   );
 } 
