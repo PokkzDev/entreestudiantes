@@ -85,7 +85,8 @@ export default withAuth(
           '/recuperar-contrasena', 
           '/reset-contrasena',
           '/busqueda', // Search page should be public
-          '/publicacion' // Individual publication pages should be public (will be handled by API)
+          '/publicacion', // Individual publication pages should be public (will be handled by API)
+          '/planes' // Plans page should be public to allow users to see pricing
         ];
         
         const isPublicRoute = publicRoutes.some(route => {
