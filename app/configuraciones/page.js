@@ -7,6 +7,7 @@ import ProfileEditSection from "@/components/configuraciones/ProfileEditSection"
 import ChangePasswordSection from "@/components/configuraciones/ChangePasswordSection";
 import DeleteAccountSection from "@/components/configuraciones/DeleteAccountSection";
 import UniversityChangeSection from "@/components/configuraciones/UniversityChangeSection";
+import PlanDetailsSection from "@/components/configuraciones/PlanDetailsSection";
 import styles from "./page.module.css";
 
 export default function ConfiguracionesPage() {
@@ -38,6 +39,17 @@ export default function ConfiguracionesPage() {
         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
           <circle cx="12" cy="7" r="4"></circle>
+        </svg>
+      )
+    },
+    {
+      id: "plan",
+      label: "Plan y Suscripción",
+      icon: (
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+          <line x1="8" y1="21" x2="16" y2="21"></line>
+          <line x1="12" y1="17" x2="12" y2="21"></line>
         </svg>
       )
     },
@@ -87,6 +99,8 @@ export default function ConfiguracionesPage() {
             onProfileUpdate={handleProfileUpdate}
           />
         );
+      case "plan":
+        return <PlanDetailsSection />;
       case "university":
         return <UniversityChangeSection />;
       case "security":
@@ -107,6 +121,8 @@ export default function ConfiguracionesPage() {
     switch (activeSection) {
       case "profile":
         return "Información personal";
+      case "plan":
+        return "Plan y Suscripción";
       case "university":
         return "Universidad y Campus";
       case "security":

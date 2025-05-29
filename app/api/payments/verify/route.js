@@ -66,6 +66,30 @@ export async function POST(request) {
       );
     }
 
+    // Check if subscription already exists for this payment to prevent duplicate processing
+    const existingSubscription = await prisma.subscription.findUnique({
+      where: {
+        userId_paymentId: {
+          userId: referenceData.userId,
+          paymentId: payment.id.toString()
+        }
+      }
+    });
+
+    if (existingSubscription) {
+      console.log(`⚠️  Subscription already exists for payment ${payment.id}, returning existing subscription info`);
+      return NextResponse.json({
+        success: true,
+        payment: {
+          status: payment.status,
+          amount: payment.transaction_amount,
+          currency: payment.currency_id
+        },
+        subscriptionUpdated: true,
+        message: 'Payment already processed'
+      });
+    }
+
     let subscriptionUpdated = false;
 
     // If payment is approved, update user's subscription
@@ -127,6 +151,21 @@ export async function POST(request) {
 
   } catch (error) {
     console.error('Error verifying payment:', error);
+    
+    // Handle specific Prisma errors
+    if (error.code === 'P2002') {
+      // Unique constraint violation - likely a race condition with webhook
+      console.log(`⚠️  Subscription creation race condition detected for payment ${error.meta?.target || 'unknown'}`);
+      return NextResponse.json(
+        { 
+          success: false, 
+          error: 'El pago ya ha sido procesado',
+          details: 'This payment has already been processed by another request'
+        },
+        { status: 409 } // Conflict status code
+      );
+    }
+    
     return NextResponse.json(
       { 
         success: false, 

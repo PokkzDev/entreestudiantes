@@ -11,13 +11,18 @@ export async function POST(request) {
     const xRequestId = request.headers.get('x-request-id');
     
     // Log the webhook request for debugging
-    console.log('Webhook received:', {
+    console.log('🔔 Webhook received:', {
       signature: xSignature,
       requestId: xRequestId,
       timestamp: new Date().toISOString()
     });
 
     const body = await request.json();
+    
+    // Log webhook type and payment ID for tracking
+    if (body.type === 'payment' && body.data?.id) {
+      console.log(`🔔 Payment webhook received for payment ID: ${body.data.id}`);
+    }
     
     // Verify webhook signature (if signature verification is enabled)
     if (process.env.MERCADOPAGO_WEBHOOK_SECRET && xSignature && xRequestId) {
@@ -64,6 +69,21 @@ export async function POST(request) {
         return NextResponse.json({ success: false, error: 'Invalid external reference' }, { status: 400 });
       }
       
+      // Check if subscription already exists for this payment to prevent duplicate processing
+      const existingSubscription = await prisma.subscription.findUnique({
+        where: {
+          userId_paymentId: {
+            userId: referenceData.userId,
+            paymentId: payment.id.toString()
+          }
+        }
+      });
+      
+      if (existingSubscription) {
+        console.log(`⚠️  Subscription already exists for payment ${payment.id}, skipping duplicate processing`);
+        return NextResponse.json({ success: true, message: 'Payment already processed' });
+      }
+      
       // Update payment intent in database
       const paymentIntent = await prisma.paymentIntent.findFirst({
         where: {
@@ -106,9 +126,15 @@ export async function POST(request) {
             }
           });
           
-          // Create subscription record
-          await prisma.subscription.create({
-            data: {
+          // Create or update subscription record - use upsert to prevent duplicates
+          await prisma.subscription.upsert({
+            where: {
+              userId_paymentId: {
+                userId: referenceData.userId,
+                paymentId: payment.id.toString()
+              }
+            },
+            create: {
               userId: referenceData.userId,
               planId: referenceData.planId,
               status: 'active',
@@ -118,6 +144,10 @@ export async function POST(request) {
               currency: payment.currency_id,
               paymentId: payment.id.toString(),
               createdAt: new Date()
+            },
+            update: {
+              status: 'active',
+              updatedAt: new Date()
             }
           });
           
@@ -126,6 +156,14 @@ export async function POST(request) {
           console.error('Error creating subscription:', subscriptionError);
           // Don't return error here - payment was processed, subscription update failed
           // This should be handled separately
+          
+          // Check if it's a unique constraint error (race condition)
+          if (subscriptionError.code === 'P2002') {
+            console.log(`⚠️  Subscription creation race condition detected for payment ${payment.id}, but payment was processed successfully`);
+          } else {
+            // Log other types of errors for investigation
+            console.error(`❌ Unexpected error creating subscription for payment ${payment.id}:`, subscriptionError);
+          }
         }
       } else if (payment.status === 'cancelled' || payment.status === 'rejected') {
         // Handle failed payments
