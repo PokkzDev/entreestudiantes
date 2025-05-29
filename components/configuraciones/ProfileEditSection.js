@@ -18,6 +18,7 @@ export default function ProfileEditSection({ session, onProfileUpdate }) {
     username: "",
     image: "",
     email: "", // Add email to formData instead of using session
+    rut: "", // RUT del usuario para pagos de MercadoPago
     nameChangeCount: 0,
     usernameChangeCount: 0
   });
@@ -168,6 +169,31 @@ export default function ProfileEditSection({ session, onProfileUpdate }) {
     }
   };
 
+  // Function to validate and format RUT
+  const validateAndFormatRut = (rut) => {
+    if (!rut) return '';
+    
+    // Remove all non-numeric characters except K and k
+    const cleanRut = rut.replace(/[^0-9kK]/g, '');
+    
+    if (cleanRut.length < 2) return rut;
+    
+    // Separate body and digit
+    const body = cleanRut.slice(0, -1);
+    const digit = cleanRut.slice(-1).toLowerCase();
+    
+    // Add dash before the last digit
+    return `${body}-${digit}`;
+  };
+
+  const handleRutChange = (e) => {
+    const formattedRut = validateAndFormatRut(e.target.value);
+    setFormData(prev => ({
+      ...prev,
+      rut: formattedRut
+    }));
+  };
+
   // Fetch user data from the DB (API) and update formData
   const fetchUserData = async () => {
     try {
@@ -181,6 +207,7 @@ export default function ProfileEditSection({ session, onProfileUpdate }) {
           username: data.user.username || "",
           image: data.user.image || "",
           email: data.user.email || "",
+          rut: data.user.rut || "",
           nameChangeCount: data.user.nameChangeCount || 0,
           usernameChangeCount: data.user.usernameChangeCount || 0
         });
@@ -225,7 +252,8 @@ export default function ProfileEditSection({ session, onProfileUpdate }) {
     // Only send the image if it was changed (uploaded or removed)
     const payload = {
       name: formData.name,
-      username: formData.username
+      username: formData.username,
+      rut: formData.rut
     };
     if (formData.image !== session?.user?.image) {
       payload.image = formData.image;
@@ -486,6 +514,22 @@ export default function ProfileEditSection({ session, onProfileUpdate }) {
           />
           <small className={styles.fieldHint}>
             El correo electrónico no se puede cambiar.
+          </small>
+        </div>
+
+        <div className={styles.formGroup}>
+          <label htmlFor="rut" className={styles.label}>RUT</label>
+          <input
+            type="text"
+            id="rut"
+            name="rut"
+            value={formData.rut || ""}
+            onChange={handleRutChange}
+            className={styles.input}
+            placeholder="12.345.678-9"
+          />
+          <small className={styles.fieldHint}>
+            Formato válido: 12345678-9 (sin puntos, con guión)
           </small>
         </div>
 

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { requirePostAuth } from "@/lib/authHelpers";
+import { getEffectiveTier, canCreatePublication } from "@/lib/accountTiers";
 
 export async function POST(req) {
   try {
@@ -15,12 +16,25 @@ export async function POST(req) {
     
     const { user } = authResult;
 
-    // Get user's current university and campus information
+    // Get user's current university, campus, and tier information
     const userDetails = await prisma.user.findUnique({
       where: { id: user.id },
       select: {
         university: true,
         campus: true,
+        accountTier: true,
+        tierStartDate: true,
+        tierEndDate: true,
+        subscriptionStatus: true,
+        _count: {
+          select: {
+            publicaciones: {
+              where: {
+                status: "activo" // Only count active publications
+              }
+            }
+          }
+        }
       },
     });
 
@@ -29,6 +43,22 @@ export async function POST(req) {
         success: false, 
         error: "Usuario no encontrado." 
       }, { status: 404 });
+    }
+
+    // Check publication limits based on account tier
+    const effectiveTier = getEffectiveTier(userDetails);
+    const currentPublicationCount = userDetails._count.publicaciones;
+    const limitInfo = canCreatePublication(effectiveTier, currentPublicationCount);
+
+    if (!limitInfo.canCreate) {
+      return NextResponse.json({ 
+        success: false, 
+        error: `Has alcanzado el límite de publicaciones para tu plan ${effectiveTier === 'free' ? 'Gratuito' : effectiveTier}. ${limitInfo.limit ? `Límite: ${limitInfo.limit} publicaciones.` : ''} ${effectiveTier === 'free' ? 'Considera upgrading tu cuenta para crear más publicaciones.' : 'Tu suscripción puede haber expirado.'}`,
+        limitReached: true,
+        currentTier: effectiveTier,
+        currentCount: currentPublicationCount,
+        limit: limitInfo.limit
+      }, { status: 403 });
     }
     
     const data = await req.json();

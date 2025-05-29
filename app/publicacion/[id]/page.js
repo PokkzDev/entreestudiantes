@@ -3,7 +3,7 @@ import React from "react";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import styles from "./page.module.css";
-import { FaWhatsapp, FaEnvelope, FaPhone, FaRegAddressCard, FaMapMarkerAlt, FaTag, FaTags, FaCalendarAlt, FaIdCard, FaDollarSign, FaChevronLeft, FaChevronRight, FaTimes, FaArrowLeft, FaUniversity, FaFlag } from "react-icons/fa";
+import { FaWhatsapp, FaEnvelope, FaPhone, FaRegAddressCard, FaMapMarkerAlt, FaTag, FaTags, FaCalendarAlt, FaIdCard, FaDollarSign, FaChevronLeft, FaChevronRight, FaTimes, FaArrowLeft, FaUniversity, FaFlag, FaUser, FaEye, FaInfo, FaHeart, FaShare } from "react-icons/fa";
 import Image from 'next/image';
 import { getCategoryLabel } from "@/lib/categoryOptions";
 import ReportModal from "@/components/ReportModal";
@@ -89,6 +89,121 @@ export default function PublicacionDetalle(props) {
     handleCloseContactWarning();
   };
 
+  // Share functionality
+  const handleShare = async () => {
+    if (!publicacion) return;
+
+    const shareUrl = window.location.href;
+    const shareData = {
+      title: `${publicacion.title} - Entre Estudiantes`,
+      text: `${publicacion.description.substring(0, 150)}${publicacion.description.length > 150 ? '...' : ''}`,
+      url: shareUrl
+    };
+
+    try {
+      // Check if Web Share API is supported (mainly on mobile)
+      if (navigator.share && navigator.canShare && navigator.canShare(shareData)) {
+        await navigator.share(shareData);
+        return;
+      }
+    } catch (error) {
+      console.error('Native share failed:', error);
+      // Continue to fallback if native share fails
+    }
+
+    // Fallback options
+    try {
+      // Try clipboard API
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(shareUrl);
+        showShareNotification('¡Enlace copiado al portapapeles!');
+        return;
+      }
+    } catch (error) {
+      console.error('Clipboard copy failed:', error);
+    }
+
+    // Final fallback: select text method for older browsers
+    try {
+      const textArea = document.createElement('textarea');
+      textArea.value = shareUrl;
+      textArea.style.position = 'fixed';
+      textArea.style.left = '-999999px';
+      textArea.style.top = '-999999px';
+      document.body.appendChild(textArea);
+      textArea.focus();
+      textArea.select();
+      
+      if (document.execCommand('copy')) {
+        showShareNotification('¡Enlace copiado al portapapeles!');
+      } else {
+        // If all fails, show prompt
+        window.prompt('Copia este enlace:', shareUrl);
+      }
+      
+      document.body.removeChild(textArea);
+    } catch (error) {
+      console.error('All share methods failed:', error);
+      // Last resort: show prompt with URL
+      window.prompt('Copia este enlace:', shareUrl);
+    }
+  };
+
+  // Helper function to show share notification
+  const showShareNotification = (message) => {
+    const notification = document.createElement('div');
+    notification.textContent = message;
+    notification.style.cssText = `
+      position: fixed;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #4CAF50;
+      color: white;
+      padding: 12px 24px;
+      border-radius: 8px;
+      z-index: 10000;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      font-size: 14px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      max-width: 90vw;
+      text-align: center;
+      animation: slideInDown 0.3s ease-out;
+    `;
+    
+    // Add animation keyframes if they don't exist
+    if (!document.querySelector('#shareNotificationStyles')) {
+      const style = document.createElement('style');
+      style.id = 'shareNotificationStyles';
+      style.textContent = `
+        @keyframes slideInDown {
+          from {
+            transform: translate(-50%, -100%);
+            opacity: 0;
+          }
+          to {
+            transform: translate(-50%, 0);
+            opacity: 1;
+          }
+        }
+      `;
+      document.head.appendChild(style);
+    }
+    
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+      if (document.body.contains(notification)) {
+        notification.style.animation = 'slideInDown 0.3s ease-out reverse';
+        setTimeout(() => {
+          if (document.body.contains(notification)) {
+            document.body.removeChild(notification);
+          }
+        }, 300);
+      }
+    }, 3000);
+  };
+
   if (loading) {
     return (
       <div className={styles.publicacionContainer}>
@@ -142,208 +257,223 @@ export default function PublicacionDetalle(props) {
 
   return (
     <div className={styles.publicacionContainer}>
-      {/* Back button */}
-      <button 
-        className={styles.backButton}
-        onClick={() => router.back()}
-      >
-        <FaArrowLeft /> Volver
-      </button>
-
-      {/* Main publication card */}
-      <div className={`${styles.publicacionCard} ${styles[`card-${publicacion.type}`]}`}>
-        {/* Type label */}
-        <span className={styles.tipoLabel}>
-          {publicacion.type === 'producto' ? 'Producto' : 'Servicio'}
-        </span>
-
-        {/* Image section */}
-        <div className={styles.imageSection}>
-          {images.length > 0 ? (
-            <div className={styles.imageGallery}>
-              <div className={styles.mainImageContainer}>
-                <Image
-                  src={(() => {
-                    const img = images[selectedImage];
-                    if (!img) return "";
-                    // If already starts with /images/ or is a full URL, use as is
-                    if (img.startsWith("/images/") || img.startsWith("http")) return img;
-                    // Otherwise, prepend /images/
-                    return `/images/${img.replace(/^\/+/, "")}`;
-                  })()}
-                  alt={publicacion.title}
-                  className={styles.mainImage}
-                  onClick={() => setShowCarousel(true)}
-                  width={600}
-                  height={400}
-                  priority={true}
-                />
-              </div>
-              {images.length > 1 && (
-                <div className={styles.thumbnailGallery}>
-                  {images.map((img, idx) => (
-                    <Image
-                      key={idx}
-                      src={(() => {
-                        if (!img) return "";
-                        if (img.startsWith("/images/") || img.startsWith("http")) return img;
-                        return `/images/${img.replace(/^\/+/, "")}`;
-                      })()}
-                      alt={`${publicacion.title} miniatura ${idx + 1}`}
-                      className={`${styles.thumbnail} ${selectedImage === idx ? styles.thumbnailSelected : ''}`}
-                      onClick={() => setSelectedImage(idx)}
-                      width={80}
-                      height={80}
-                    />
-                  ))}
-                </div>
-              )}
-            </div>
-          ) : (
-            <div className={styles.noImage}>
-              <span>Sin imagen disponible</span>
-            </div>
-          )}
+      {/* Navigation Header */}
+      <div className={styles.navigationHeader}>
+        <button 
+          className={styles.backButton}
+          onClick={() => router.back()}
+        >
+          <FaArrowLeft /> Volver
+        </button>
+        
+        <div className={styles.actionButtons}>
+          <button className={styles.actionButton} title="Compartir" onClick={handleShare}>
+            <FaShare />
+          </button>
+          {/* <button className={styles.actionButton} title="Guardar">
+            <FaHeart />
+          </button> */}
+          <button
+            className={styles.actionButton}
+            onClick={handleReport}
+            title="Reportar esta publicación"
+          >
+            <FaFlag />
+          </button>
         </div>
+      </div>
 
-        {/* Content section */}
-        <div className={styles.contentSection}>
-          <h1 className={styles.titulo}>{publicacion.title}</h1>
-          
-          {/* Price */}
-          {publicacion.price && (
-            <div className={styles.precio}>
-              <FaDollarSign />
-              <span>${formatNumber(publicacion.price)}</span>
-            </div>
-          )}
-
-          {/* Category */}
-          <div className={styles.categoria}>
-            <FaTag />
-            <span><b>Categoría:</b> {getCategoryLabel(publicacion.category)}</span>
-          </div>
-
-          {/* University info */}
-          {publicacion.university && (
-            <div className={styles.universidad}>
-              <FaUniversity />
-              <span>
-                <b>Institución:</b> {publicacion.university}
-                {publicacion.campus && ` - ${publicacion.campus}`}
-              </span>
-            </div>
-          )}
-
-          {/* Location */}
-          {publicacion.location && (
-            <div className={styles.ubicacion}>
-              <FaMapMarkerAlt />
-              <span><b>Ubicación:</b> {publicacion.location}</span>
-            </div>
-          )}
-
-          {/* Tags */}
-          {publicacion.tags && (
-            <div className={styles.tags}>
-              <FaTags />
-              <span><b>Tags:</b> {publicacion.tags}</span>
-            </div>
-          )}
-
-          {/* Description */}
-          <div className={styles.descripcionSection}>
-            <h3>Descripción</h3>
-            <p className={styles.descripcion}>{publicacion.description}</p>
-          </div>
-
-          {/* Contact section */}
-          <div className={styles.contactoSection}>
-            <h3>Contacto</h3>
-            <div className={styles.contactoBox}>
-              {contactoHref ? (
-                <button
-                  className={`${styles.contactoLink} ${styles[`contacto-${publicacion.contactMethod}`]}`}
-                  onClick={(e) => handleContactClick(e, publicacion.contactMethod, contactoText, contactoHref)}
-                >
-                  {contactoIcon}
-                  <span>{contactoText}</span>
-                </button>
-              ) : (
-                <div className={styles.contactoInfo}>
-                  {contactoIcon}
-                  <span>{contactoText}</span>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Author section */}
-          {publicacion.author && (
-            <div className={styles.authorSection}>
-              <h3>Publicado por</h3>
-              <div 
-                className={styles.authorCard}
-                onClick={() => router.push(`/perfil/${publicacion.author.username}`)}
-              >
-                <div className={styles.authorAvatar}>
-                  {publicacion.author.image ? (
-                    <Image
-                      src={publicacion.author.image}
-                      alt={publicacion.author.name || publicacion.author.username}
-                      width={48}
-                      height={48}
-                      className={styles.avatarImage}
-                    />
-                  ) : (
-                    <div className={styles.avatarPlaceholder}>
-                      <FaRegAddressCard />
+      {/* Main publication card with modern design */}
+      <div className={`${styles.publicacionCard} ${styles[`card-${publicacion.type}`]}`}>
+        
+        {/* Hero Section - Images + Basic Info */}
+        <div className={styles.heroSection}>
+          {/* Image Gallery */}
+          <div className={styles.imageSection}>
+            {images.length > 0 ? (
+              <div className={styles.imageGallery}>
+                <div className={styles.mainImageContainer}>
+                  <Image
+                    src={(() => {
+                      const img = images[selectedImage];
+                      if (!img) return "";
+                      if (img.startsWith("/images/") || img.startsWith("http")) return img;
+                      return `/images/${img.replace(/^\/+/, "")}`;
+                    })()}
+                    alt={publicacion.title}
+                    className={styles.mainImage}
+                    onClick={() => setShowCarousel(true)}
+                    width={600}
+                    height={400}
+                    priority={true}
+                  />
+                  {images.length > 1 && (
+                    <div className={styles.imageCounter}>
+                      {selectedImage + 1} / {images.length}
                     </div>
                   )}
                 </div>
-                <div className={styles.authorInfo}>
-                  <h4 className={styles.authorName}>
-                    {publicacion.author.name || publicacion.author.username}
-                  </h4>
-                  <p className={styles.authorUsername}>@{publicacion.author.username}</p>
-                  {publicacion.author.university && (
-                    <p className={styles.authorUniversity}>
-                      <FaUniversity />
-                      {publicacion.author.university}
-                      {publicacion.author.campus && ` - ${publicacion.author.campus}`}
-                    </p>
-                  )}
+                {images.length > 1 && (
+                  <div className={styles.thumbnailGallery}>
+                    {images.map((img, idx) => (
+                      <Image
+                        key={idx}
+                        src={(() => {
+                          if (!img) return "";
+                          if (img.startsWith("/images/") || img.startsWith("http")) return img;
+                          return `/images/${img.replace(/^\/+/, "")}`;
+                        })()}
+                        alt={`${publicacion.title} miniatura ${idx + 1}`}
+                        className={`${styles.thumbnail} ${selectedImage === idx ? styles.thumbnailSelected : ''}`}
+                        onClick={() => setSelectedImage(idx)}
+                        width={80}
+                        height={80}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className={styles.noImage}>
+                <FaEye />
+                <span>Sin imagen disponible</span>
+              </div>
+            )}
+          </div>
+
+          {/* Hero Info Panel */}
+          <div className={styles.heroInfo}>
+            <div className={styles.typeAndPrice}>
+              <span className={styles.tipoLabel}>
+                {publicacion.type === 'producto' ? 'Producto' : 'Servicio'}
+              </span>
+              {publicacion.price && (
+                <div className={styles.precio}>
+                  <FaDollarSign />
+                  <span>${formatNumber(publicacion.price)}</span>
                 </div>
-                <div className={styles.viewProfileButton}>
-                  Ver perfil →
+              )}
+            </div>
+            
+            <h1 className={styles.titulo}>{publicacion.title}</h1>
+            
+            <div className={styles.metaInfo}>
+              <div className={styles.categoria}>
+                <FaTag />
+                <span>{getCategoryLabel(publicacion.category)}</span>
+              </div>
+              
+              {publicacion.location && (
+                <div className={styles.ubicacion}>
+                  <FaMapMarkerAlt />
+                  <span>{publicacion.location}</span>
                 </div>
+              )}
+              
+              {publicacion.university && (
+                <div className={styles.universidad}>
+                  <FaUniversity />
+                  <span>
+                    {publicacion.university}
+                    {publicacion.campus && ` - ${publicacion.campus}`}
+                  </span>
+                </div>
+              )}
+
+              {publicacion.createdAt && (
+                <div className={styles.fechaPublicacion}>
+                  <FaCalendarAlt />
+                  <span>Publicado el {formatDate(publicacion.createdAt)}</span>
+                </div>
+              )}
+            </div>
+
+            {/* Quick Contact */}
+            <div className={styles.quickContact}>
+              {contactoHref ? (
+                <button
+                  className={`${styles.contactButton} ${styles[`contacto-${publicacion.contactMethod}`]}`}
+                  onClick={(e) => handleContactClick(e, publicacion.contactMethod, contactoText, contactoHref)}
+                >
+                  {contactoIcon}
+                  <span>Contactar</span>
+                </button>
+              ) : (
+                <div className={styles.contactButton}>
+                  {contactoIcon}
+                  <span>Ver contacto</span>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Content Sections */}
+        <div className={styles.contentSections}>
+          
+          {/* Description Section */}
+          <section className={styles.section}>
+            <div className={styles.sectionHeader}>
+              <FaInfo />
+              <h3>Descripción</h3>
+            </div>
+            <div className={styles.sectionContent}>
+              <p className={styles.descripcion}>{publicacion.description}</p>
+              
+              {publicacion.tags && (
+                <div className={styles.tagsContainer}>
+                  <FaTags />
+                  <div className={styles.tags}>
+                    {publicacion.tags.split(',').map((tag, index) => (
+                      <span key={index} className={styles.tag}>
+                        {tag.trim()}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </section>
+
+          {/* Author Info */}
+          <section className={styles.section}>
+            <div className={styles.sectionHeader}>
+              <FaUser />
+              <h3>Publicado por</h3>
+            </div>
+            <div className={styles.sectionContent}>
+              <div className={styles.publicationDetails}>
+                {/* Author info - simplified */}
+                {publicacion.author && (
+                  <div 
+                    className={styles.authorDetail}
+                    onClick={() => router.push(`/perfil/${publicacion.author.username}`)}
+                  >
+                    <div className={styles.authorMini}>
+                      <div className={styles.authorMiniAvatar}>
+                        {publicacion.author.image ? (
+                          <Image
+                            src={publicacion.author.image}
+                            alt={publicacion.author.name || publicacion.author.username}
+                            width={32}
+                            height={32}
+                            className={styles.avatarImageMini}
+                          />
+                        ) : (
+                          <div className={styles.avatarPlaceholderMini}>
+                            <FaUser />
+                          </div>
+                        )}
+                      </div>
+                      <span>@{publicacion.author.username}</span>
+                    </div>
+                    <span className={styles.verPerfilText}>Ver perfil →</span>
+                  </div>
+                )}
               </div>
             </div>
-          )}
+          </section>
 
-          {/* Footer info */}
-          <div className={styles.footerInfo}>
-            <div className={styles.footerLeft}>
-              {publicacion.createdAt && (
-                <span className={styles.fechaPublicacion}>
-                  <FaCalendarAlt />
-                  Publicado el {formatDate(publicacion.createdAt)}
-                </span>
-              )}
-              <span className={styles.publicacionId}>
-                <FaIdCard />
-                ID: {publicacion.id}
-              </span>
-            </div>
-            <button
-              className={styles.reportButton}
-              onClick={handleReport}
-              title="Reportar esta publicación"
-            >
-              <FaFlag />
-              <span>Reportar</span>
-            </button>
-          </div>
         </div>
       </div>
 

@@ -1,0 +1,25 @@
+User-agent: *
+Allow: /
+Allow: /busqueda
+Allow: /publicacion/*
+
+# Block common attack vectors and admin paths
+Disallow: /admin/
+Disallow: /wp-admin/
+Disallow: /wp-content/
+Disallow: /wp-includes/
+Disallow: /phpmyadmin/
+Disallow: /administrator/
+Disallow: /api/
+Disallow: /_next/
+Disallow: /login
+Disallow: /registro
+
+# Security paths
+Disallow: /*.php$
+Disallow: /*.asp$
+Disallow: /*.aspx$
+Disallow: /*.jsp$
+Disallow: /*.cgi$
+
+Sitemap: https://entreestudiantes.online/sitemap.xml 

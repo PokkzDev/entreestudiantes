@@ -13,7 +13,10 @@ export default function MisPublicaciones() {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [toDeleteId, setToDeleteId] = useState(null);
   const [showRestrictionModal, setShowRestrictionModal] = useState(false);
+  const [showLimitModal, setShowLimitModal] = useState(false);
   const [restrictionData, setRestrictionData] = useState(null);
+  const [limitData, setLimitData] = useState(null);
+  const [accountInfo, setAccountInfo] = useState(null);
   const { data: session, status } = useSession();
   const router = useRouter();
 
@@ -38,6 +41,10 @@ export default function MisPublicaciones() {
       
       if (data.success) {
         setPublicaciones(data.publicaciones);
+        // Set account info from the same API response
+        if (data.accountInfo) {
+          setAccountInfo(data.accountInfo);
+        }
       } else {
         console.error("Error al cargar publicaciones:", data.error);
       }
@@ -45,6 +52,21 @@ export default function MisPublicaciones() {
       console.error("Error al cargar publicaciones:", error);
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function fetchAccountInfo() {
+    try {
+      const res = await fetch("/api/check-publication-limits");
+      const data = await res.json();
+      
+      if (data.success) {
+        setAccountInfo(data);
+      } else {
+        console.error("Error al cargar información de cuenta:", data.error);
+      }
+    } catch (error) {
+      console.error("Error al cargar información de cuenta:", error);
     }
   }
 
@@ -63,6 +85,8 @@ export default function MisPublicaciones() {
           type: "success"
         });
         setTimeout(() => setMessage(null), 3000);
+        // Refresh account info to update counts
+        fetchPublicaciones();
       } else {
         setMessage({
           text: data.error || "Error al eliminar la publicación",
@@ -115,14 +139,54 @@ export default function MisPublicaciones() {
   };
 
   const handleNewPublication = async () => {
+    // First check if user is restricted
     const canPost = await checkPostPermissions();
-    if (canPost) {
-      router.push("/publicar");
+    if (!canPost) {
+      return;
     }
+
+    // Then check publication limits
+    if (accountInfo && !accountInfo.canCreate) {
+      setLimitData({
+        currentTier: accountInfo.currentTier,
+        tierName: accountInfo.tierName,
+        currentCount: accountInfo.currentCount,
+        limit: accountInfo.limit,
+        isUnlimited: accountInfo.isUnlimited
+      });
+      setShowLimitModal(true);
+      return;
+    }
+
+    router.push("/publicar");
   };
 
   const handleRestrictionModalClose = () => {
     setShowRestrictionModal(false);
+  };
+
+  const handleLimitModalClose = () => {
+    setShowLimitModal(false);
+  };
+
+  const getTierEmoji = (tier) => {
+    const emojis = {
+      free: '🆓',
+      basic: '⭐',
+      premium: '💎',
+      elite: '👑'
+    };
+    return emojis[tier] || emojis.free;
+  };
+
+  const getTierColor = (tier) => {
+    const colors = {
+      free: '#6b7280',
+      basic: '#3b82f6',
+      premium: '#8b5cf6',
+      elite: '#f59e0b'
+    };
+    return colors[tier] || colors.free;
   };
 
   // Función para cambiar el estado (activo/inactivo)
@@ -205,6 +269,46 @@ export default function MisPublicaciones() {
           </div>
         </div>
       )}
+
+      {/* Modal de límite de publicaciones */}
+      {showLimitModal && limitData && (
+        <div className={styles.modalOverlay}>
+          <div className={styles.modalContent}>
+            <button className={styles.modalClose} onClick={handleLimitModalClose} title="Cerrar">×</button>
+            <div className={styles.modalIcon} style={{ fontSize: '48px' }}>
+              {getTierEmoji(limitData.currentTier)}
+            </div>
+            <h2 className={styles.modalTitle}>Límite de publicaciones alcanzado</h2>
+            <p className={styles.modalText}>
+              Has alcanzado el límite de publicaciones para tu plan <strong>{limitData.tierName}</strong>.
+            </p>
+            <div className={styles.limitInfo}>
+              <div className={styles.limitStat}>
+                <span>Publicaciones actuales:</span>
+                <strong>{limitData.currentCount} / {limitData.limit || '∞'}</strong>
+              </div>
+            </div>
+            <p className={styles.modalText}>
+              {limitData.currentTier === 'free' 
+                ? 'Considera upgrading tu cuenta para crear más publicaciones y acceder a funciones premium.'
+                : 'Tu suscripción puede haber expirado o necesitas un plan superior.'
+              }
+            </p>
+            <div className={styles.modalActions}>
+              <button onClick={handleLimitModalClose} className={styles.cancelButton}>Cerrar</button>
+              <button 
+                onClick={() => {
+                  handleLimitModalClose();
+                  router.push('/planes');
+                }} 
+                className={styles.upgradeButton}
+              >
+                Ver planes
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       
       <div className={styles.header}>
         <h1 className={styles.title}>Mis Publicaciones</h1>
@@ -215,6 +319,53 @@ export default function MisPublicaciones() {
           Nueva Publicación
         </button>
       </div>
+
+      {/* Account tier information */}
+      {accountInfo && (
+        <div className={styles.accountTierInfo}>
+          <div className={styles.tierBadge} style={{ color: getTierColor(accountInfo.currentTier) }}>
+            <span className={styles.tierEmoji}>{getTierEmoji(accountInfo.currentTier)}</span>
+            <span className={styles.tierName}>Plan {accountInfo.tierName}</span>
+          </div>
+          <div className={styles.publicationStats}>
+            <span className={styles.statText}>
+              Publicaciones: <strong>{accountInfo.currentCount}</strong>
+              {accountInfo.isUnlimited ? (
+                <span className={styles.unlimitedBadge}> / ∞</span>
+              ) : (
+                <>
+                  <span> / {accountInfo.limit}</span>
+                  {accountInfo.remaining > 0 && (
+                    <span className={styles.remainingText}> ({accountInfo.remaining} disponibles)</span>
+                  )}
+                </>
+              )}
+            </span>
+            {!accountInfo.isUnlimited && (
+              <div className={styles.progressBar}>
+                <div 
+                  className={styles.progressFill}
+                  style={{ 
+                    width: `${Math.min(100, (accountInfo.currentCount / accountInfo.limit) * 100)}%`,
+                    backgroundColor: accountInfo.currentCount >= accountInfo.limit ? '#ef4444' : getTierColor(accountInfo.currentTier)
+                  }}
+                />
+              </div>
+            )}
+          </div>
+          {accountInfo.currentTier === 'free' && accountInfo.remaining <= 1 && (
+            <div className={styles.upgradePrompt}>
+              <span>¿Necesitas más publicaciones?</span>
+              <button 
+                onClick={() => router.push('/planes')}
+                className={styles.upgradeLink}
+              >
+                Ver planes premium
+              </button>
+            </div>
+          )}
+        </div>
+      )}
 
       {publicaciones.length === 0 ? (
         <div className={styles.emptyState}>

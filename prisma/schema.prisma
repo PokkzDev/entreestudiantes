@@ -18,11 +18,19 @@ model User {
   username            String?   @unique
   name                String?
   email               String    @unique
+  rut                 String?   @unique // RUT chileno (opcional pero recomendado para pagos)
   password            String
   image               String?
   bio                 String?   @db.Text
   university          String?   // Universidad del usuario
   campus              String?   // Campus de la universidad
+  
+  // Account tier system
+  accountTier         String    @default("free") // "free", "basic", "premium", "elite"
+  tierStartDate       DateTime? // When current tier started
+  tierEndDate         DateTime? // When current tier expires (null for lifetime/free)
+  subscriptionStatus  String    @default("active") // "active", "expired", "cancelled"
+  
   createdAt           DateTime  @default(now())
   updatedAt           DateTime  @updatedAt
   verificationToken   String?  // Token para verificar email
@@ -76,6 +84,10 @@ model User {
   isActive            Boolean  @default(true) // General account status
   lastLoginAt         DateTime? // Last login timestamp
   lastActivityAt      DateTime? // Last activity timestamp
+  
+  // Payment relations
+  paymentIntents      PaymentIntent[]
+  subscriptions       Subscription[]
 }
 
 model Publicacion {
@@ -147,6 +159,27 @@ model DeletedPublicationLog {
   deletedAt     DateTime @default(now()) // When the publication was deleted
 }
 
+model SubscriptionCancellationLog {
+  id                   String    @id @default(cuid())
+  userId               String    // User who cancelled the subscription
+  username             String?   // Username at time of cancellation
+  email                String    // Email at time of cancellation
+  name                 String?   // Name at time of cancellation
+  subscriptionId       String?   // Original subscription ID (if available)
+  planId               String    // Plan that was cancelled ("basic", "premium", "elite")
+  previousAccountTier  String    // Account tier before cancellation
+  reason               String?   @db.Text // Reason for cancellation
+  ipAddress            String?   // IP address at time of cancellation
+  userAgent            String?   @db.Text // Browser/device info
+  subscriptionStartDate DateTime? // When the cancelled subscription started
+  subscriptionEndDate   DateTime? // When the cancelled subscription was supposed to end
+  cancelledAt          DateTime  @default(now()) // When the cancellation occurred
+  
+  @@index([userId])
+  @@index([planId])
+  @@index([cancelledAt])
+}
+
 model Admin {
   id        String   @id @default(cuid())
   username  String  @unique
@@ -200,4 +233,51 @@ model AppConfig {
   
   @@index([key])
   @@index([isActive])
+}
+
+model PaymentIntent {
+  id                      String   @id @default(cuid())
+  userId                  String   // User who initiated the payment
+  planId                  String   // Plan they're trying to purchase
+  amount                  Decimal  @db.Decimal(10, 2) // Amount in CLP
+  currency                String   @default("CLP")
+  status                  String   @default("pending") // "pending", "approved", "rejected", "cancelled"
+  mercadoPagoPreferenceId String?  // MercadoPago preference ID
+  mercadoPagoPaymentId    String?  // MercadoPago payment ID (when payment is completed)
+  externalReference       String   @unique // External reference for tracking
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+  
+  // Relations
+  user                    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([userId])
+  @@index([status])
+  @@index([externalReference])
+}
+
+model Subscription {
+  id                      String   @id @default(cuid())
+  userId                  String   // User who owns the subscription
+  planId                  String   // Plan identifier ("basic", "premium", "elite")
+  status                  String   @default("active") // "active", "cancelled", "expired", "paused"
+  startDate               DateTime // When subscription starts
+  endDate                 DateTime // When subscription ends
+  amount                  Decimal  @db.Decimal(10, 2) // Amount paid for this subscription
+  currency                String   @default("CLP")
+  paymentId               String?  // MercadoPago payment ID
+  autoRenew               Boolean  @default(false) // Whether subscription auto-renews
+  cancelledAt             DateTime? // When subscription was cancelled
+  cancelReason            String?  @db.Text // Reason for cancellation
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+  
+  // Relations
+  user                    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([userId])
+  @@index([status])
+  @@index([planId])
+  @@index([endDate])
+  @@unique([userId, paymentId])
 }

@@ -34,6 +34,7 @@ export default function EditarPublicacion() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const fileInputRef = useRef();
+  const [draggedImageIndex, setDraggedImageIndex] = useState(null);
 
   // Reemplazar categoryOptions por las del archivo centralizado
   // Generar un array plano de opciones para el <select>
@@ -219,6 +220,35 @@ export default function EditarPublicacion() {
       setForm((prev) => ({ ...prev, [name]: value }));
     }
   }
+
+  // Función para manejar el inicio del arrastre
+  const handleDragStart = (e, index) => {
+    setDraggedImageIndex(index);
+    e.dataTransfer.effectAllowed = 'move';
+  };
+
+  // Función para manejar el drop
+  const handleDrop = (e, dropIndex) => {
+    e.preventDefault();
+    if (draggedImageIndex === null || draggedImageIndex === dropIndex) return;
+
+    const newImages = [...(Array.isArray(form.images) ? form.images : [])];
+    const newPreviews = [...imagePreviews];
+
+    // Intercambiar elementos
+    [newImages[draggedImageIndex], newImages[dropIndex]] = [newImages[dropIndex], newImages[draggedImageIndex]];
+    [newPreviews[draggedImageIndex], newPreviews[dropIndex]] = [newPreviews[dropIndex], newPreviews[draggedImageIndex]];
+
+    setForm(prev => ({ ...prev, images: newImages }));
+    setImagePreviews(newPreviews);
+    setDraggedImageIndex(null);
+  };
+
+  // Función para manejar el drag over
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+  };
 
   if (loading) {
     return (
@@ -636,8 +666,6 @@ export default function EditarPublicacion() {
           )}
         </div>
 
-        {/* Quitar el campo de estado de la publicación */}
-
         <div className={styles.formGroup}>
           <label>
             <svg
@@ -652,85 +680,60 @@ export default function EditarPublicacion() {
                 strokeLinecap="round"
                 strokeLinejoin="round"
                 strokeWidth="2"
-                d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.586-6.586a2 2 0 10-2.828-2.828z"
+                d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 2h12a2 2 0 012 2v12a2 2 0 01-2 2H6a2 2 0 01-2-2V4a2 2 0 012-2z"
               />
             </svg>
-            Imágenes de la publicación (máximo 4)
+            Imágenes de la publicación
           </label>
-          <input
-            type="file"
-            accept="image/jpeg,image/jpg,image/png,image/webp"
-            multiple
-            ref={fileInputRef}
-            onChange={handleImageChange}
-            disabled={uploading}
-            className={styles.publicarInput}
-            style={{ marginBottom: 8 }}
-          />
-          <div className={styles.imageDescriptor}>
-            Formatos permitidos: JPG, JPEG, PNG, WEBP
-          </div>
-          <div className={styles.imageDescriptor}>
-            Tamaño máximo por imagen: 5MB
-          </div>
-          <div
-            style={{
-              display: "flex",
-              gap: 8,
-              flexWrap: "wrap",
-              marginBottom: 8,
-            }}
-          >
-            {imagePreviews.map((src, idx) => (
-              <div
-                key={idx}
-                style={{
-                  position: "relative",
-                  display: "inline-block",
-                }}
-              >
-                <Image
-                  src={
-                    typeof form.images[idx] === "string"
-                      ? form.images[idx]
-                      : src
-                  }
-                  alt="imagen"
-                  style={{
-                    width: 80,
-                    height: 80,
-                    objectFit: "cover",
-                    borderRadius: 8,
-                    border: "1px solid #ddd",
-                  }}
-                  width={80}
-                  height={80}
-                />
+          
+          <div className={styles.imageGallery}>
+            <div className={styles.imageGrid}>
+              {/* Main Image Area */}
+              <div className={`${styles.mainImageContainer} ${imagePreviews.length > 0 ? styles.hasImage : ''}`}>
+                {imagePreviews.length > 0 ? (
+                  <>
+                    <Image
+                      src={typeof form.images[0] === "string" ? form.images[0] : imagePreviews[0]}
+                      alt="Imagen principal"
+                      className={styles.mainImagePreview}
+                      width={200}
+                      height={200}
+                    />
+                    <div className={styles.mainImageBadge}>Imagen Principal</div>
+                  </>
+                ) : (
+                  <div className={styles.mainImagePlaceholder}>
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="1.5"
+                        d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 2h12a2 2 0 012 2v12a2 2 0 01-2 2H6a2 2 0 01-2-2V4a2 2 0 012-2z"
+                      />
+                    </svg>
+                    <h4>Imagen Principal</h4>
+                    <p>La primera imagen que subas será tu imagen principal</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Thumbnails and Upload Area */}
+              <div className={styles.imageUploadSection}>
                 <button
                   type="button"
-                  onClick={() => handleRemoveImage(idx)}
-                  style={{
-                    position: "absolute",
-                    top: 2,
-                    right: 2,
-                    background: "#fff",
-                    border: "none",
-                    borderRadius: "50%",
-                    boxShadow: "0 1px 4px #0002",
-                    cursor: "pointer",
-                    width: 22,
-                    height: 22,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    padding: 0,
-                  }}
-                  title="Eliminar imagen"
+                  onClick={() => fileInputRef.current?.click()}
+                  className={styles.uploadButton}
+                  disabled={uploading || imagePreviews.length >= 4}
                 >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
-                    width="16"
-                    height="16"
+                    width="20"
+                    height="20"
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
@@ -739,16 +742,136 @@ export default function EditarPublicacion() {
                       strokeLinecap="round"
                       strokeLinejoin="round"
                       strokeWidth="2"
-                      d="M6 18L18 6M6 6l12 12"
+                      d="M12 4v16m8-8H4"
                     />
                   </svg>
+                  {imagePreviews.length >= 4 ? 'Máximo alcanzado' : 'Agregar imágenes'}
                 </button>
+
+                <input
+                  type="file"
+                  accept="image/jpeg,image/jpg,image/png,image/webp"
+                  multiple
+                  ref={fileInputRef}
+                  onChange={handleImageChange}
+                  disabled={uploading}
+                  style={{ display: 'none' }}
+                />
+
+                {imagePreviews.length > 0 && (
+                  <div className={styles.thumbnailGrid}>
+                    {imagePreviews.map((src, idx) => (
+                      <div
+                        key={idx}
+                        className={`${styles.thumbnailContainer} ${idx === 0 ? styles.isFirst : ''} ${draggedImageIndex === idx ? styles.dragging : ''}`}
+                        draggable
+                        onDragStart={(e) => handleDragStart(e, idx)}
+                        onDrop={(e) => handleDrop(e, idx)}
+                        onDragOver={handleDragOver}
+                        title={idx === 0 ? "Imagen principal - Arrastra para reordenar" : `Imagen ${idx + 1} - Arrastra para reordenar`}
+                      >
+                        <Image
+                          src={typeof form.images[idx] === "string" ? form.images[idx] : src}
+                          alt={`Imagen ${idx + 1}`}
+                          className={styles.thumbnailImage}
+                          width={80}
+                          height={80}
+                        />
+                        {idx === 0 && (
+                          <div className={styles.mainImageLabel}>
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              width="12"
+                              height="12"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth="2"
+                                d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"
+                              />
+                            </svg>
+                          </div>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveImage(idx)}
+                          className={styles.removeImageButton}
+                          title="Eliminar imagen"
+                        >
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth="2"
+                              d="M6 18L18 6M6 6l12 12"
+                            />
+                          </svg>
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                <div className={styles.imageInfo}>
+                  <div className={styles.infoCard}>
+                    <h5>Formatos</h5>
+                    <p>JPG, PNG, WEBP</p>
+                  </div>
+                  <div className={styles.infoCard}>
+                    <h5>Tamaño máximo</h5>
+                    <p>5MB por imagen</p>
+                  </div>
+                </div>
+
+                {imagePreviews.length > 1 && (
+                  <div className={styles.helpText}>
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="16"
+                      height="16"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                      />
+                    </svg>
+                    <p>
+                      <strong>Tip:</strong> Arrastra las imágenes para reordenarlas. La primera imagen será la imagen principal de tu publicación.
+                    </p>
+                  </div>
+                )}
               </div>
-            ))}
+            </div>
+
+            {uploading && (
+              <div style={{ 
+                color: "#6366f1", 
+                textAlign: "center", 
+                padding: "1rem",
+                background: "linear-gradient(135deg, #f0f4ff, #e0e7ff)",
+                borderRadius: "12px",
+                border: "1px solid #c7d2fe",
+                marginTop: "1rem"
+              }}>
+                <div className={styles.loadingSpinner} style={{ margin: "0 auto 0.5rem" }}></div>
+                Subiendo imágenes...
+              </div>
+            )}
           </div>
-          {uploading && (
-            <div style={{ color: "#6366f1" }}>Subiendo imágenes...</div>
-          )}
         </div>
 
         <div className={styles.formActions}>

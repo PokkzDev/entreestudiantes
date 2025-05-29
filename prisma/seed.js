@@ -107,6 +107,56 @@ async function main() {
     console.log(`- Admin account already exists: ${adminEmail}`);
   }
 
+  console.log('Seeding test users with different account tiers...');
+
+  // Create test users with different tiers for demonstration
+  const now = new Date();
+  const basicTierEnd = new Date();
+  basicTierEnd.setDate(now.getDate() + 30); // 30 days from now
+
+  const testUsers = [
+    {
+      username: 'usuario_free',
+      email: 'free@inacapmail.cl',
+      password: 'password123',
+      name: 'Usuario Free',
+      accountTier: 'free',
+      isVerified: true
+      // Free tier doesn't need tierStartDate/tierEndDate (null for lifetime/free)
+    },
+    {
+      username: 'usuario_basic',
+      email: 'basic@inacapmail.cl',
+      password: 'password123',
+      name: 'Usuario Basic',
+      accountTier: 'basic',
+      tierStartDate: now,
+      tierEndDate: basicTierEnd,
+      subscriptionStatus: 'active',
+      isVerified: true
+    }
+  ];
+
+  for (const userData of testUsers) {
+    const existingUser = await prisma.user.findUnique({
+      where: { email: userData.email }
+    });
+
+    if (!existingUser) {
+      const hashedPassword = await bcrypt.hash(userData.password, 10);
+      
+      await prisma.user.create({
+        data: {
+          ...userData,
+          password: hashedPassword
+        }
+      });
+      console.log(`✓ Created test user: ${userData.email} (${userData.accountTier})`);
+    } else {
+      console.log(`- Test user already exists: ${userData.email}`);
+    }
+  }
+
   console.log('Seeding completed!');
 }
 

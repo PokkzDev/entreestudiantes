@@ -114,6 +114,7 @@ export default function Navbar() {
         <nav className={`${styles.navLinks} ${styles.desktopOnly}`}>
           <Link href="/" className={styles.navLink}>Inicio</Link>
           <Link href="/busqueda" className={styles.navLink}>Búsqueda</Link>
+          <Link href="/planes" className={styles.navLink}>Planes</Link>
         </nav>
         
         {/* Botón hamburguesa para móvil */}
@@ -219,6 +220,9 @@ export default function Navbar() {
                 </Link>
                 <Link href="/busqueda" className={styles.mobileNavLink} onClick={() => setMobileMenuOpen(false)}>
                   Búsqueda
+                </Link>
+                <Link href="/planes" className={styles.mobileNavLink} onClick={() => setMobileMenuOpen(false)}>
+                  Planes
                 </Link>
                 
                 {/* Si el usuario está autenticado */}
