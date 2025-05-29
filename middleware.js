@@ -3,6 +3,34 @@ import { NextResponse } from "next/server";
 
 export default withAuth(
   function middleware(req) {
+    const { pathname, searchParams } = req.nextUrl;
+    
+    // Security: Block WordPress admin and suspicious requests
+    const suspiciousPatterns = [
+      /wp-admin/i,
+      /wp-content/i,
+      /wp-includes/i,
+      /xmlrpc\.php/i,
+      /wp-login\.php/i,
+      /phpmyadmin/i,
+      /admin/i,
+      /administrator/i,
+      /setup-config\.php/i
+    ];
+    
+    // Check URL path and callback URLs for suspicious patterns
+    const callbackUrl = searchParams.get('callbackUrl');
+    const isSuspiciousPath = suspiciousPatterns.some(pattern => pattern.test(pathname));
+    const isSuspiciousCallback = callbackUrl && suspiciousPatterns.some(pattern => pattern.test(decodeURIComponent(callbackUrl)));
+    
+    if (isSuspiciousPath || isSuspiciousCallback) {
+      console.warn(`Blocked suspicious request: ${pathname}${callbackUrl ? ` with callback: ${callbackUrl}` : ''}`);
+      return NextResponse.json(
+        { error: "Access denied" }, 
+        { status: 403 }
+      );
+    }
+    
     const token = req.nextauth.token;
     
     // If user is banned, suspended (and suspension hasn't expired), or inactive, redirect to login
