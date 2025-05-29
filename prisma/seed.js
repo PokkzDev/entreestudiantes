@@ -112,6 +112,17 @@ async function main() {
   // Create test users with different tiers for demonstration
   const testUsers = [
     {
+      username: 'usuario_free',
+      email: 'free@inacapmail.cl',
+      password: 'password123',
+      name: 'Usuario Free',
+      accountTier: 'free',
+      tierStartDate: new Date(),
+      tierEndDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
+      subscriptionStatus: 'active',
+      isVerified: true
+    },
+    {
       username: 'usuario_basic',
       email: 'basic@inacapmail.cl',
       password: 'password123',
