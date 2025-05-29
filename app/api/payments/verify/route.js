@@ -26,22 +26,31 @@ export async function POST(request) {
       );
     }
 
+    console.log(`Starting payment verification for user ${session.user.id}, paymentId: ${paymentId}`);
+
     // Verify payment with MercadoPago
     const paymentResult = await verifyPayment(paymentId);
     
     if (!paymentResult.success) {
+      console.error(`Payment verification failed for paymentId ${paymentId}: ${paymentResult.error}`);
       return NextResponse.json(
-        { success: false, error: 'Error verificando el pago' },
+        { 
+          success: false, 
+          error: 'Error verificando el pago',
+          details: paymentResult.error // Include detailed error for debugging
+        },
         { status: 400 }
       );
     }
 
     const payment = paymentResult.payment;
+    console.log(`Payment verification successful. Payment status: ${payment.status}, external_reference: ${payment.external_reference}`);
     
     // Parse external reference to get user and plan info
     const referenceData = parseExternalReference(payment.external_reference);
     
     if (!referenceData) {
+      console.error(`Invalid external reference: ${payment.external_reference}`);
       return NextResponse.json(
         { success: false, error: 'Referencia externa inválida' },
         { status: 400 }
@@ -50,6 +59,7 @@ export async function POST(request) {
 
     // Verify that the payment belongs to the current user
     if (referenceData.userId !== session.user.id) {
+      console.error(`Payment ${paymentId} belongs to user ${referenceData.userId}, but current user is ${session.user.id}`);
       return NextResponse.json(
         { success: false, error: 'Pago no pertenece al usuario actual' },
         { status: 403 }
@@ -60,6 +70,8 @@ export async function POST(request) {
 
     // If payment is approved, update user's subscription
     if (payment.status === 'approved') {
+      console.log(`Payment approved, updating subscription for user ${referenceData.userId}`);
+      
       const endDate = new Date();
       endDate.setMonth(endDate.getMonth() + 1); // Add 1 month
       
@@ -100,6 +112,7 @@ export async function POST(request) {
       });
       
       subscriptionUpdated = true;
+      console.log(`Subscription updated successfully for user ${referenceData.userId}`);
     }
 
     return NextResponse.json({
@@ -115,7 +128,11 @@ export async function POST(request) {
   } catch (error) {
     console.error('Error verifying payment:', error);
     return NextResponse.json(
-      { success: false, error: 'Error interno del servidor' },
+      { 
+        success: false, 
+        error: 'Error interno del servidor',
+        details: error.message // Include error details for debugging
+      },
       { status: 500 }
     );
   }
