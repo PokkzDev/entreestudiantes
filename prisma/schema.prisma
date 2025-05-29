@@ -23,6 +23,13 @@ model User {
   bio                 String?   @db.Text
   university          String?   // Universidad del usuario
   campus              String?   // Campus de la universidad
+  
+  // Account tier system
+  accountTier         String    @default("free") // "free", "basic", "premium", "elite"
+  tierStartDate       DateTime? // When current tier started
+  tierEndDate         DateTime? // When current tier expires (null for lifetime/free)
+  subscriptionStatus  String    @default("active") // "active", "expired", "cancelled"
+  
   createdAt           DateTime  @default(now())
   updatedAt           DateTime  @updatedAt
   verificationToken   String?  // Token para verificar email

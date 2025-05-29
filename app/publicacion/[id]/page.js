@@ -89,6 +89,121 @@ export default function PublicacionDetalle(props) {
     handleCloseContactWarning();
   };
 
+  // Share functionality
+  const handleShare = async () => {
+    if (!publicacion) return;
+
+    const shareUrl = window.location.href;
+    const shareData = {
+      title: `${publicacion.title} - Entre Estudiantes`,
+      text: `${publicacion.description.substring(0, 150)}${publicacion.description.length > 150 ? '...' : ''}`,
+      url: shareUrl
+    };
+
+    try {
+      // Check if Web Share API is supported (mainly on mobile)
+      if (navigator.share && navigator.canShare && navigator.canShare(shareData)) {
+        await navigator.share(shareData);
+        return;
+      }
+    } catch (error) {
+      console.error('Native share failed:', error);
+      // Continue to fallback if native share fails
+    }
+
+    // Fallback options
+    try {
+      // Try clipboard API
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(shareUrl);
+        showShareNotification('¡Enlace copiado al portapapeles!');
+        return;
+      }
+    } catch (error) {
+      console.error('Clipboard copy failed:', error);
+    }
+
+    // Final fallback: select text method for older browsers
+    try {
+      const textArea = document.createElement('textarea');
+      textArea.value = shareUrl;
+      textArea.style.position = 'fixed';
+      textArea.style.left = '-999999px';
+      textArea.style.top = '-999999px';
+      document.body.appendChild(textArea);
+      textArea.focus();
+      textArea.select();
+      
+      if (document.execCommand('copy')) {
+        showShareNotification('¡Enlace copiado al portapapeles!');
+      } else {
+        // If all fails, show prompt
+        window.prompt('Copia este enlace:', shareUrl);
+      }
+      
+      document.body.removeChild(textArea);
+    } catch (error) {
+      console.error('All share methods failed:', error);
+      // Last resort: show prompt with URL
+      window.prompt('Copia este enlace:', shareUrl);
+    }
+  };
+
+  // Helper function to show share notification
+  const showShareNotification = (message) => {
+    const notification = document.createElement('div');
+    notification.textContent = message;
+    notification.style.cssText = `
+      position: fixed;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #4CAF50;
+      color: white;
+      padding: 12px 24px;
+      border-radius: 8px;
+      z-index: 10000;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      font-size: 14px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      max-width: 90vw;
+      text-align: center;
+      animation: slideInDown 0.3s ease-out;
+    `;
+    
+    // Add animation keyframes if they don't exist
+    if (!document.querySelector('#shareNotificationStyles')) {
+      const style = document.createElement('style');
+      style.id = 'shareNotificationStyles';
+      style.textContent = `
+        @keyframes slideInDown {
+          from {
+            transform: translate(-50%, -100%);
+            opacity: 0;
+          }
+          to {
+            transform: translate(-50%, 0);
+            opacity: 1;
+          }
+        }
+      `;
+      document.head.appendChild(style);
+    }
+    
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+      if (document.body.contains(notification)) {
+        notification.style.animation = 'slideInDown 0.3s ease-out reverse';
+        setTimeout(() => {
+          if (document.body.contains(notification)) {
+            document.body.removeChild(notification);
+          }
+        }, 300);
+      }
+    }, 3000);
+  };
+
   if (loading) {
     return (
       <div className={styles.publicacionContainer}>
@@ -152,12 +267,12 @@ export default function PublicacionDetalle(props) {
         </button>
         
         <div className={styles.actionButtons}>
-          <button className={styles.actionButton} title="Compartir">
+          <button className={styles.actionButton} title="Compartir" onClick={handleShare}>
             <FaShare />
           </button>
-          <button className={styles.actionButton} title="Guardar">
+          {/* <button className={styles.actionButton} title="Guardar">
             <FaHeart />
-          </button>
+          </button> */}
           <button
             className={styles.actionButton}
             onClick={handleReport}

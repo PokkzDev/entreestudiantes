@@ -1,0 +1,47 @@
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  border: 1px solid;
+  background: rgba(255, 255, 255, 0.1);
+  font-weight: 600;
+  font-size: 0.875rem;
+  backdrop-filter: blur(10px);
+}
+
+.small {
+  padding: 0.125rem 0.5rem;
+  font-size: 0.75rem;
+}
+
+.small .emoji {
+  font-size: 0.875rem;
+}
+
+.medium {
+  padding: 0.25rem 0.75rem;
+  font-size: 0.875rem;
+}
+
+.medium .emoji {
+  font-size: 1rem;
+}
+
+.large {
+  padding: 0.5rem 1rem;
+  font-size: 1rem;
+}
+
+.large .emoji {
+  font-size: 1.25rem;
+}
+
+.emoji {
+  line-height: 1;
+}
+
+.name {
+  text-transform: capitalize;
+} 

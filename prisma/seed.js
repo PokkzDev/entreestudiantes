@@ -107,6 +107,65 @@ async function main() {
     console.log(`- Admin account already exists: ${adminEmail}`);
   }
 
+  console.log('Seeding test users with different account tiers...');
+
+  // Create test users with different tiers for demonstration
+  const testUsers = [
+    {
+      username: 'usuario_basic',
+      email: 'basic@inacapmail.cl',
+      password: 'password123',
+      name: 'Usuario Básico',
+      accountTier: 'basic',
+      tierStartDate: new Date(),
+      tierEndDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
+      subscriptionStatus: 'active',
+      isVerified: true
+    },
+    {
+      username: 'usuario_premium',
+      email: 'premium@inacapmail.cl',
+      password: 'password123',
+      name: 'Usuario Premium',
+      accountTier: 'premium',
+      tierStartDate: new Date(),
+      tierEndDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
+      subscriptionStatus: 'active',
+      isVerified: true
+    },
+    {
+      username: 'usuario_elite',
+      email: 'elite@inacapmail.cl',
+      password: 'password123',
+      name: 'Usuario Elite',
+      accountTier: 'elite',
+      tierStartDate: new Date(),
+      tierEndDate: null, // unlimited
+      subscriptionStatus: 'active',
+      isVerified: true
+    }
+  ];
+
+  for (const userData of testUsers) {
+    const existingUser = await prisma.user.findUnique({
+      where: { email: userData.email }
+    });
+
+    if (!existingUser) {
+      const hashedPassword = await bcrypt.hash(userData.password, 10);
+      
+      await prisma.user.create({
+        data: {
+          ...userData,
+          password: hashedPassword
+        }
+      });
+      console.log(`✓ Created test user: ${userData.email} (${userData.accountTier})`);
+    } else {
+      console.log(`- Test user already exists: ${userData.email}`);
+    }
+  }
+
   console.log('Seeding completed!');
 }
 
