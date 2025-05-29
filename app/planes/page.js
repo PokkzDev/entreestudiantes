@@ -169,10 +169,11 @@ function PlanesContent() {
       
       if (data.success) {
         // Redirect to MercadoPago Checkout Pro
-        // Use MERCADOPAGO_ENVIRONMENT to determine which URL to use
-        const checkoutUrl = process.env.NEXT_PUBLIC_MERCADOPAGO_ENVIRONMENT === 'production' 
-          ? data.preference.init_point
-          : data.preference.sandbox_init_point;
+        // According to MercadoPago documentation, when using production credentials,
+        // always use init_point - the credentials determine the environment, not the URL
+        const checkoutUrl = data.preference.init_point;
+        
+        console.log('Using production checkout URL:', checkoutUrl);
         
         window.location.href = checkoutUrl;
       } else {
