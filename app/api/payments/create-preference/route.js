@@ -110,7 +110,8 @@ export async function POST(request) {
         id: preferenceResult.preference.id,
         init_point: preferenceResult.init_point,
         sandbox_init_point: preferenceResult.sandbox_init_point
-      }
+      },
+      environment: process.env.MERCADOPAGO_ENVIRONMENT || 'sandbox'
     });
 
   } catch (error) {
