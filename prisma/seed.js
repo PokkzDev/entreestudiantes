@@ -110,6 +110,10 @@ async function main() {
   console.log('Seeding test users with different account tiers...');
 
   // Create test users with different tiers for demonstration
+  const now = new Date();
+  const basicTierEnd = new Date();
+  basicTierEnd.setDate(now.getDate() + 30); // 30 days from now
+
   const testUsers = [
     {
       username: 'usuario_free',
@@ -117,41 +121,17 @@ async function main() {
       password: 'password123',
       name: 'Usuario Free',
       accountTier: 'free',
-      tierStartDate: new Date(),
-      tierEndDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
-      subscriptionStatus: 'active',
       isVerified: true
+      // Free tier doesn't need tierStartDate/tierEndDate (null for lifetime/free)
     },
     {
       username: 'usuario_basic',
       email: 'basic@inacapmail.cl',
       password: 'password123',
-      name: 'Usuario Básico',
+      name: 'Usuario Basic',
       accountTier: 'basic',
-      tierStartDate: new Date(),
-      tierEndDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
-      subscriptionStatus: 'active',
-      isVerified: true
-    },
-    {
-      username: 'usuario_premium',
-      email: 'premium@inacapmail.cl',
-      password: 'password123',
-      name: 'Usuario Premium',
-      accountTier: 'premium',
-      tierStartDate: new Date(),
-      tierEndDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
-      subscriptionStatus: 'active',
-      isVerified: true
-    },
-    {
-      username: 'usuario_elite',
-      email: 'elite@inacapmail.cl',
-      password: 'password123',
-      name: 'Usuario Elite',
-      accountTier: 'elite',
-      tierStartDate: new Date(),
-      tierEndDate: null, // unlimited
+      tierStartDate: now,
+      tierEndDate: basicTierEnd,
       subscriptionStatus: 'active',
       isVerified: true
     }
