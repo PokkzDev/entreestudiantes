@@ -1,9 +1,9 @@
 "use client";
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faHandHoldingHeart, faStar, faGem, faCrown } from "@fortawesome/free-solid-svg-icons";
+import { faHandHoldingHeart, faStar, faGem, faCrown, faSpinner } from "@fortawesome/free-solid-svg-icons";
 import { ACCOUNT_TIERS, getTierColor, getTierIcon, getTierBgColor, formatTierName } from "@/lib/accountTiers";
 import styles from "./page.module.css";
 
@@ -18,8 +18,11 @@ const iconMap = {
 export default function Planes() {
   const [accountInfo, setAccountInfo] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [processing, setProcessing] = useState(null); // Track which plan is being processed
+  const [message, setMessage] = useState(null);
   const { data: session, status } = useSession();
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   useEffect(() => {
     if (status === "authenticated") {
@@ -28,6 +31,53 @@ export default function Planes() {
       setLoading(false);
     }
   }, [status]);
+
+  useEffect(() => {
+    // Check for payment status in URL params
+    const paymentStatus = searchParams.get('payment');
+    const paymentId = searchParams.get('payment_id');
+    const collectionStatus = searchParams.get('collection_status');
+    
+    if (paymentStatus) {
+      switch (paymentStatus) {
+        case 'success':
+          if (collectionStatus === 'approved' && paymentId) {
+            // Payment was approved, call endpoint to verify and update subscription
+            handlePaymentSuccess(paymentId);
+          } else {
+            setMessage({
+              type: 'success',
+              text: '¡Pago procesado exitosamente! Tu plan ha sido actualizado.'
+            });
+          }
+          // Refresh account info after successful payment
+          if (session) {
+            setTimeout(() => {
+              fetchAccountInfo();
+            }, 2000);
+          }
+          break;
+        case 'error':
+          setMessage({
+            type: 'error',
+            text: 'Hubo un problema con el pago. Por favor, intenta nuevamente.'
+          });
+          break;
+        case 'pending':
+          setMessage({
+            type: 'warning',
+            text: 'Tu pago está siendo procesado. Te notificaremos cuando esté confirmado.'
+          });
+          break;
+      }
+      
+      // Clear URL params after showing message
+      setTimeout(() => {
+        router.replace('/planes');
+        setMessage(null);
+      }, 5000);
+    }
+  }, [searchParams, session, router]);
 
   async function fetchAccountInfo() {
     try {
@@ -53,7 +103,7 @@ export default function Planes() {
     }).format(price);
   };
 
-  const handleSelectPlan = (tierKey) => {
+  const handleSelectPlan = async (tierKey) => {
     if (!session) {
       router.push("/login?redirect=/planes");
       return;
@@ -64,8 +114,43 @@ export default function Planes() {
       return;
     }
 
-    // For now, just show an alert. In a real app, this would integrate with payment system
-    alert(`Próximamente: Integración con sistema de pagos para el plan ${formatTierName(tierKey)}`);
+    // Check if user is already on this plan or higher
+    if (isCurrentPlan(tierKey) || !isUpgrade(tierKey)) {
+      return;
+    }
+
+    setProcessing(tierKey);
+    
+    try {
+      // Create payment preference
+      const response = await fetch('/api/payments/create-preference', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ planId: tierKey }),
+      });
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        // Redirect to MercadoPago Checkout Pro
+        const checkoutUrl = process.env.NODE_ENV === 'development' 
+          ? data.preference.sandbox_init_point 
+          : data.preference.init_point;
+        
+        window.location.href = checkoutUrl;
+      } else {
+        throw new Error(data.error || 'Error al crear la preferencia de pago');
+      }
+    } catch (error) {
+      console.error('Error al procesar el pago:', error);
+      setMessage({
+        type: 'error',
+        text: error.message || 'Error al procesar el pago. Por favor, intenta nuevamente.'
+      });
+      setProcessing(null);
+    }
   };
 
   const isCurrentPlan = (tierKey) => {
@@ -84,6 +169,40 @@ export default function Planes() {
     return icon ? <FontAwesomeIcon icon={icon} /> : null;
   };
 
+  const handlePaymentSuccess = async (paymentId) => {
+    try {
+      const response = await fetch('/api/payments/verify', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ paymentId }),
+      });
+      
+      const data = await response.json();
+      
+      if (data.success && data.subscriptionUpdated) {
+        setMessage({
+          type: 'success',
+          text: '¡Pago confirmado! Tu plan ha sido actualizado exitosamente.'
+        });
+        // Refresh account info immediately
+        fetchAccountInfo();
+      } else {
+        setMessage({
+          type: 'warning',
+          text: 'Pago recibido. La actualización del plan puede tomar unos minutos.'
+        });
+      }
+    } catch (error) {
+      console.error('Error verifying payment:', error);
+      setMessage({
+        type: 'warning',
+        text: 'Pago recibido. La actualización del plan puede tomar unos minutos.'
+      });
+    }
+  };
+
   return (
     <div className={styles.container}>
       <div className={styles.hero}>
@@ -91,6 +210,12 @@ export default function Planes() {
         <p className={styles.subtitle}>
           Encuentra el plan perfecto para tus necesidades y comienza a publicar más contenido
         </p>
+        
+        {message && (
+          <div className={`${styles.messageAlert} ${styles[message.type]}`}>
+            <p>{message.text}</p>
+          </div>
+        )}
         
         {accountInfo && (
           <div className={styles.currentPlanBadge}>
@@ -162,7 +287,7 @@ export default function Planes() {
 
               <button
                 onClick={() => handleSelectPlan(tierKey)}
-                disabled={isCurrentPlan(tierKey)}
+                disabled={isCurrentPlan(tierKey) || processing === tierKey}
                 className={`${styles.selectButton} ${isCurrentPlan(tierKey) ? styles.currentButton : isUpgrade(tierKey) ? styles.upgradeButton : styles.downgradeButton}`}
                 style={!isCurrentPlan(tierKey) ? { 
                   backgroundColor: getTierColor(tierKey),
@@ -170,12 +295,18 @@ export default function Planes() {
                   color: 'white'
                 } : {}}
               >
-                {isCurrentPlan(tierKey) 
-                  ? 'Plan Actual' 
-                  : isUpgrade(tierKey) 
-                    ? `Actualizar a ${tier.name}`
-                    : `Cambiar a ${tier.name}`
-                }
+                {processing === tierKey ? (
+                  <>
+                    <FontAwesomeIcon icon={faSpinner} spin />
+                    <span style={{ marginLeft: '8px' }}>Procesando...</span>
+                  </>
+                ) : isCurrentPlan(tierKey) ? (
+                  'Plan Actual'
+                ) : isUpgrade(tierKey) ? (
+                  `Actualizar a ${tier.name}`
+                ) : (
+                  `Cambiar a ${tier.name}`
+                )}
               </button>
             </div>
           ))}

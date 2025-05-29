@@ -12,7 +12,7 @@ export async function POST(request) {
     }
 
     const body = await request.json();
-    const { name, username, image } = body;
+    const { name, username, image, rut } = body;
 
     // Validate input
     if (!name || name.trim().length === 0) {
@@ -23,6 +23,16 @@ export async function POST(request) {
       return NextResponse.json({ error: "El nombre de usuario debe tener al menos 4 caracteres" }, { status: 400 });
     }
 
+    // Validate RUT format if provided
+    if (rut && rut.trim()) {
+      const rutRegex = /^[0-9]+[-|‐]{1}[0-9kK]{1}$/;
+      if (!rutRegex.test(rut.trim())) {
+        return NextResponse.json({ 
+          error: "El formato del RUT no es válido. Usar formato: 12345678-9" 
+        }, { status: 400 });
+      }
+    }
+
     // Check if username is already taken by another user
     if (username !== session.user.username) {
       const existingUser = await prisma.user.findUnique({
@@ -31,6 +41,17 @@ export async function POST(request) {
 
       if (existingUser && existingUser.id !== session.user.id) {
         return NextResponse.json({ error: "El nombre de usuario ya está en uso" }, { status: 400 });
+      }
+    }
+
+    // Check if RUT is already taken by another user
+    if (rut && rut.trim()) {
+      const existingUserWithRut = await prisma.user.findUnique({
+        where: { rut: rut.trim() }
+      });
+
+      if (existingUserWithRut && existingUserWithRut.id !== session.user.id) {
+        return NextResponse.json({ error: "El RUT ya está registrado por otro usuario" }, { status: 400 });
       }
     }
 
@@ -66,6 +87,11 @@ export async function POST(request) {
       username: username.trim()
     };
 
+    // Add RUT if provided
+    if (rut !== undefined) {
+      updateData.rut = rut && rut.trim() ? rut.trim() : null;
+    }
+
     // Increment change counts only if changes are being made
     if (nameChanged) {
       updateData.nameChangeCount = currentUser.nameChangeCount + 1;
@@ -90,6 +116,7 @@ export async function POST(request) {
         username: true,
         email: true,
         image: true,
+        rut: true,
         nameChangeCount: true,
         usernameChangeCount: true
       }
@@ -122,6 +149,7 @@ export async function GET(request) {
         username: true,
         email: true,
         image: true,
+        rut: true,
         nameChangeCount: true,
         usernameChangeCount: true
       }
