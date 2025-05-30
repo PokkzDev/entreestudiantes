@@ -9,6 +9,11 @@ const nextConfig = {
       },
     ],
   },
+  // Ensure API routes are treated as serverless functions in production
+  experimental: {
+    // Force dynamic rendering for API routes
+    serverComponentsExternalPackages: ['@prisma/client']
+  },
   // Security headers
   async headers() {
     return [
@@ -34,6 +39,16 @@ const nextConfig = {
           {
             key: 'Permissions-Policy',
             value: 'camera=(), microphone=(), geolocation=()'
+          }
+        ]
+      },
+      // Specific headers for API routes to ensure they're not cached
+      {
+        source: '/api/:path*',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'no-cache, no-store, must-revalidate'
           }
         ]
       }
@@ -86,6 +101,8 @@ const nextConfig = {
   },
   // Ensure proper production behavior
   reactStrictMode: true,
+  // Force API routes to be dynamic in production
+  output: 'standalone',
   // Disable HMR in production
   webpack: (config, { dev, isServer }) => {
     if (!dev && !isServer) {
