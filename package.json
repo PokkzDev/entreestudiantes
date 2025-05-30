@@ -7,7 +7,14 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "db:seed": "node prisma/seed.js"
+    "db:seed": "node prisma/seed.js",
+    "deploy": "npm run build && pm2 restart ecosystem.config.js",
+    "deploy:fresh": "npm run build && pm2 delete all && pm2 start ecosystem.config.js",
+    "logs": "pm2 logs entreestudiantes",
+    "pm2:status": "pm2 status",
+    "pm2:restart": "pm2 restart entreestudiantes",
+    "pm2:stop": "pm2 stop entreestudiantes",
+    "pm2:delete": "pm2 delete entreestudiantes"
   },
   "dependencies": {
     "@faker-js/faker": "^9.8.0",

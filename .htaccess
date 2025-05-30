@@ -1,0 +1,23 @@
+RewriteEngine On
+
+# Allow all HTTP methods for API routes
+RewriteCond %{REQUEST_URI} ^/api/.*
+RewriteRule ^(.*)$ $1 [L,QSA]
+
+# Ensure POST requests are properly handled
+RewriteCond %{REQUEST_METHOD} POST
+RewriteCond %{REQUEST_URI} ^/api/.*
+RewriteRule ^(.*)$ $1 [L,QSA]
+
+# Handle webhook specifically
+RewriteCond %{REQUEST_URI} ^/api/payments/webhook
+RewriteRule ^(.*)$ $1 [L,QSA]
+
+# Prevent caching of API routes
+<IfModule mod_headers.c>
+    <FilesMatch "^api/">
+        Header set Cache-Control "no-cache, no-store, must-revalidate"
+        Header set Pragma "no-cache"
+        Header set Expires "0"
+    </FilesMatch>
+</IfModule> 
