@@ -86,6 +86,25 @@ async function main() {
     }
   }
 
+  // Ensure the plan_purchasing_enabled config exists with a direct check
+  const planPurchasingConfig = await prisma.appConfig.findUnique({
+    where: { key: 'plan_purchasing_enabled' }
+  });
+
+  if (!planPurchasingConfig) {
+    await prisma.appConfig.create({
+      data: {
+        key: 'plan_purchasing_enabled',
+        value: 'true',
+        description: 'Enable or disable plan purchasing functionality. When disabled, users cannot purchase new plans.',
+        isActive: true
+      }
+    });
+    console.log('✓ Created plan_purchasing_enabled config');
+  } else {
+    console.log(`- Plan purchasing config exists: ${planPurchasingConfig.value}`);
+  }
+
   console.log('Seeding admin account...');
 
   // Create admin account

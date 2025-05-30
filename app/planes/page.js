@@ -29,11 +29,20 @@ function PlanesContent() {
     if (!session) return;
     
     try {
-      const response = await fetch('/api/account-info');
+      const response = await fetch('/api/check-publication-limits');
       const data = await response.json();
       
       if (data.success) {
-        setAccountInfo(data.account);
+        setAccountInfo({
+          currentTier: data.currentTier,
+          tierName: data.tierName,
+          currentCount: data.currentCount,
+          limit: data.limit,
+          remaining: data.remaining,
+          isUnlimited: data.isUnlimited,
+          canCreate: data.canCreate,
+          subscriptionActive: data.subscriptionActive
+        });
       } else {
         console.error('Error fetching account info:', data.error);
       }
