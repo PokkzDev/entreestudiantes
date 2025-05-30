@@ -68,10 +68,40 @@ export async function POST(request) {
     } catch (parseError) {
       console.error('❌ Failed to parse JSON body:', parseError.message);
       console.log('Raw body that failed to parse:', rawBody);
-      return NextResponse.json({ 
-        success: false, 
-        error: 'Invalid JSON in webhook body' 
-      }, { status: 400 });
+      
+      // Try to handle malformed JSON (unquoted keys/values)
+      try {
+        console.log('🔧 Attempting to fix malformed JSON...');
+        let fixedJson = rawBody;
+        
+        // Remove outer quotes if they exist
+        if (fixedJson.startsWith("'") && fixedJson.endsWith("'")) {
+          fixedJson = fixedJson.slice(1, -1);
+        }
+        
+        // Fix unquoted keys and string values
+        // This regex finds patterns like key: or key:value and adds quotes
+        fixedJson = fixedJson
+          // Add quotes around keys (word followed by colon)
+          .replace(/([{,]\s*)([a-zA-Z_][a-zA-Z0-9_]*)\s*:/g, '$1"$2":')
+          // Add quotes around string values (value after colon that's not a number, boolean, or object)
+          .replace(/:(\s*)([a-zA-Z_][a-zA-Z0-9_.]*)\s*([,}])/g, ': "$2"$3')
+          // Handle values at the start of the object
+          .replace(/^([a-zA-Z_][a-zA-Z0-9_]*)\s*:/, '"$1":')
+          // Fix any remaining unquoted string values
+          .replace(/:([a-zA-Z][a-zA-Z0-9_.]*)/g, ':"$1"');
+        
+        console.log('🔧 Fixed JSON:', fixedJson);
+        body = JSON.parse(fixedJson);
+        console.log('✅ Successfully parsed fixed JSON:', JSON.stringify(body, null, 2));
+      } catch (fixError) {
+        console.error('❌ Failed to fix malformed JSON:', fixError.message);
+        console.log('Fixed JSON that still failed to parse:', fixedJson);
+        return NextResponse.json({ 
+          success: false, 
+          error: 'Invalid JSON in webhook body' 
+        }, { status: 400 });
+      }
     }
     
     // Log webhook type and payment ID for tracking
