@@ -1,8 +1,7 @@
 module.exports = {
   apps: [{
     name: 'entreestudiantes',
-    script: 'node_modules/next/dist/bin/next',
-    args: 'start',
+    script: '.next/standalone/server.js',
     instances: 1,
     autorestart: true,
     watch: false,
