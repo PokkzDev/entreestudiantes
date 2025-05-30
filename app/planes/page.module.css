@@ -445,28 +445,39 @@
   display: flex;
   align-items: flex-start;
   gap: 1rem;
-  background: #f1f5f9;
-  border: 1px solid #cbd5e1;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
   border-radius: 12px;
-  padding: 1rem 1.5rem;
-  margin: 2rem auto;
-  max-width: 700px;
-  position: relative;
-  z-index: 1;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+  max-width: 800px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.disabledNotice {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  background: #fef3c7;
+  border: 1px solid #fbbf24;
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+  max-width: 800px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .noticeIcon {
-  font-size: 1.25rem;
+  font-size: 1.5rem;
   flex-shrink: 0;
-  margin-top: 0.125rem;
-  color: #3b82f6;
 }
 
 .noticeContent {
-  color: #475569;
-  font-size: 0.9rem;
-  line-height: 1.5;
-  text-align: left;
+  color: #374151;
+  line-height: 1.6;
+  font-size: 0.95rem;
 }
 
 .noticeContent strong {

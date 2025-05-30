@@ -62,6 +62,12 @@ async function main() {
       value: 'false',
       description: 'Enable maintenance mode to restrict access to the application.',
       isActive: true
+    },
+    {
+      key: 'plan_purchasing_enabled',
+      value: 'true',
+      description: 'Enable or disable plan purchasing functionality. When disabled, users cannot purchase new plans.',
+      isActive: true
     }
   ];
 

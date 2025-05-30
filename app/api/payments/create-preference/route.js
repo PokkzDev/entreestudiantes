@@ -3,12 +3,22 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '../../auth/[...nextauth]/route';
 import { createSubscriptionPreference } from '@/lib/mercadopago';
 import { ACCOUNT_TIERS } from '@/lib/accountTiers';
+import { isPlanPurchasingEnabled } from '@/lib/appConfig';
 import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
 export async function POST(request) {
   try {
+    // Check if plan purchasing is enabled
+    const planPurchasingEnabled = await isPlanPurchasingEnabled();
+    if (!planPurchasingEnabled) {
+      return NextResponse.json(
+        { success: false, error: 'La compra de planes está temporalmente deshabilitada. Intenta más tarde.' },
+        { status: 503 }
+      );
+    }
+
     const session = await getServerSession(authOptions);
     
     if (!session || !session.user) {

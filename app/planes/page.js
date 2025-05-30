@@ -20,22 +20,42 @@ function PlanesContent() {
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(null); // Track which plan is being processed
   const [message, setMessage] = useState(null);
+  const [planPurchasingEnabled, setPlanPurchasingEnabled] = useState(true);
   const { data: session, status } = useSession();
   const router = useRouter();
   const searchParams = useSearchParams();
 
   const fetchAccountInfo = useCallback(async () => {
+    if (!session) return;
+    
     try {
-      const res = await fetch("/api/check-publication-limits");
-      const data = await res.json();
+      const response = await fetch('/api/account-info');
+      const data = await response.json();
       
       if (data.success) {
-        setAccountInfo(data);
+        setAccountInfo(data.account);
+      } else {
+        console.error('Error fetching account info:', data.error);
       }
     } catch (error) {
-      console.error("Error al cargar información de cuenta:", error);
+      console.error('Error fetching account info:', error);
     } finally {
       setLoading(false);
+    }
+  }, [session]);
+
+  const checkPlanPurchasingStatus = useCallback(async () => {
+    try {
+      const response = await fetch('/api/plan-purchasing-status');
+      const data = await response.json();
+      
+      if (data.success) {
+        setPlanPurchasingEnabled(data.enabled);
+      }
+    } catch (error) {
+      console.error('Error checking plan purchasing status:', error);
+      // Default to enabled if check fails
+      setPlanPurchasingEnabled(true);
     }
   }, []);
 
@@ -76,10 +96,11 @@ function PlanesContent() {
   useEffect(() => {
     if (status === "authenticated") {
       fetchAccountInfo();
+      checkPlanPurchasingStatus();
     } else if (status !== "loading") {
       setLoading(false);
     }
-  }, [status, fetchAccountInfo]);
+  }, [status, fetchAccountInfo, checkPlanPurchasingStatus]);
 
   useEffect(() => {
     // Check for payment status in URL params
@@ -145,6 +166,15 @@ function PlanesContent() {
 
     if (tierKey === "free") {
       // Free plan - no action needed
+      return;
+    }
+
+    // Check if plan purchasing is disabled
+    if (!planPurchasingEnabled) {
+      setMessage({
+        type: 'warning',
+        text: 'La compra de planes está temporalmente deshabilitada. Intenta más tarde.'
+      });
       return;
     }
 
@@ -222,6 +252,16 @@ function PlanesContent() {
             Al finalizar este período, podrás renovar fácilmente tu plan para continuar disfrutando de los beneficios.
           </div>
         </div>
+        
+        {/* Plan Purchasing Disabled Notice */}
+        {!planPurchasingEnabled && (
+          <div className={styles.disabledNotice}>
+            <div className={styles.noticeIcon}>⚠️</div>
+            <div className={styles.noticeContent}>
+              <strong>Compras temporalmente deshabilitadas:</strong> La funcionalidad de compra de planes está temporalmente deshabilitada para mantenimiento.
+            </div>
+          </div>
+        )}
         
         {message && (
           <div className={`${styles.messageAlert} ${styles[message.type]}`}>
@@ -304,12 +344,13 @@ function PlanesContent() {
 
               <button
                 onClick={() => handleSelectPlan(tierKey)}
-                disabled={isCurrentPlan(tierKey) || processing === tierKey}
+                disabled={isCurrentPlan(tierKey) || processing === tierKey || (!planPurchasingEnabled && tierKey !== 'free')}
                 className={`${styles.selectButton} ${isCurrentPlan(tierKey) ? styles.currentButton : isUpgrade(tierKey) ? styles.upgradeButton : styles.downgradeButton}`}
                 style={!isCurrentPlan(tierKey) ? { 
                   backgroundColor: getTierColor(tierKey),
                   borderColor: getTierColor(tierKey),
-                  color: 'white'
+                  color: 'white',
+                  opacity: (!planPurchasingEnabled && tierKey !== 'free') ? 0.6 : 1
                 } : {}}
               >
                 {processing === tierKey ? (
@@ -319,6 +360,8 @@ function PlanesContent() {
                   </>
                 ) : isCurrentPlan(tierKey) ? (
                   'Plan Actual'
+                ) : !planPurchasingEnabled && tierKey !== 'free' ? (
+                  'Compras temporalmente deshabilitadas'
                 ) : isUpgrade(tierKey) ? (
                   `Pagar ${formatPrice(tier.price)} por ${tier.name}`
                 ) : (
