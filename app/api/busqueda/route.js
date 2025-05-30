@@ -53,7 +53,8 @@ export async function GET(req) {
         select: {
           id: true,
           username: true,
-          name: true,
+          nombre: true,
+          apellidos: true,
           image: true,
           university: true,
           campus: true,

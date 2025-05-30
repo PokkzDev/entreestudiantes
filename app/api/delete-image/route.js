@@ -47,7 +47,8 @@ export async function DELETE(request) {
       data: { image: null },
       select: {
         id: true,
-        name: true,
+        nombre: true,
+        apellidos: true,
         username: true,
         email: true,
         image: true,

@@ -155,47 +155,7 @@
   display: flex;
   gap: 1rem;
   align-items: center;
+  justify-content: flex-end;
 }
 
-.cancelButton {
-  background: #f8fafc;
-  color: #374151;
-  border: 1px solid #d1d5db;
-  padding: 0.75rem 1.5rem;
-  border-radius: 8px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  font-size: 0.95rem;
-}
-
-.cancelButton:hover:not(:disabled) {
-  background: #f1f5f9;
-  border-color: #9ca3af;
-}
-
-.cancelButton:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.deleteButton {
-  background: #dc2626;
-  color: white;
-  border: none;
-  padding: 0.75rem 1.5rem;
-  border-radius: 8px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background-color 0.2s ease;
-  font-size: 0.95rem;
-}
-
-.deleteButton:hover:not(:disabled) {
-  background: #b91c1c;
-}
-
-.deleteButton:disabled {
-  background: #9ca3af;
-  cursor: not-allowed;
-}
+/* Remove old button styles - now using global button styles */

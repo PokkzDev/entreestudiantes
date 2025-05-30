@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { chileanUniversities } from "@/utils/unicampus";
 import styles from "./UniversityChangeSection.module.css";
+import buttonStyles from "@/styles/buttons.module.css";
 
 export default function UniversityChangeSection() {
   const { data: session, update } = useSession();
@@ -86,75 +87,92 @@ export default function UniversityChangeSection() {
 
   return (
     <div className={styles.section}>
-      <div className={styles.header}>
-        <p className={styles.subtitle}>
-          Actualiza tu universidad y campus. Puedes cambiar esta información hasta 3 veces.
-        </p>
-        <div className={styles.changeCounter}>
-          <span className={`${styles.counter} ${!canChange ? styles.counterLimit : ""}`}>
-            Cambios restantes: {remainingChanges}/3
-          </span>
-        </div>
-      </div>
-
-      <form onSubmit={handleSubmit} className={styles.form}>
-        <div className={styles.currentInfo}>
-          <h4>Información actual:</h4>
-          <p><strong>Universidad:</strong> {userInfo?.university || "No especificada"}</p>
-          <p><strong>Campus:</strong> {userInfo?.campus || "No especificado"}</p>
+      <div className={styles.form}>
+        {/* Current Information Section */}
+        <div className={styles.formSection}>
+          <h4 className={styles.sectionTitle}>Información actual</h4>
+          <div className={styles.currentInfo}>
+            <div className={styles.infoItem}>
+              <span className={styles.infoLabel}>Universidad:</span>
+              <span className={styles.infoValue}>{userInfo?.university || "No especificada"}</span>
+            </div>
+            <div className={styles.infoItem}>
+              <span className={styles.infoLabel}>Campus:</span>
+              <span className={styles.infoValue}>{userInfo?.campus || "No especificado"}</span>
+            </div>
+          </div>
         </div>
 
-        <div className={styles.formGroup}>
-          <label htmlFor="university" className={styles.label}>
-            Nueva Universidad
-          </label>
-          <select
-            id="university"
-            name="university"
-            required
-            value={university}
-            onChange={(e) => {
-              setUniversity(e.target.value);
-              setCampus(""); // Reset campus when university changes
-            }}
-            disabled={!canChange || loading}
-            className={styles.select}
-          >
-            <option value="">Selecciona tu universidad</option>
-            {chileanUniversities.map((uni) => (
-              <option key={uni.name} value={uni.name}>
-                {uni.name}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div className={styles.formGroup}>
-          <label htmlFor="campus" className={styles.label}>
-            Nuevo Campus
-          </label>
-          <select
-            id="campus"
-            name="campus"
-            required
-            value={campus}
-            onChange={(e) => setCampus(e.target.value)}
-            disabled={!university || !canChange || loading}
-            className={styles.select}
-          >
-            <option value="">
-              {university ? 'Selecciona tu campus' : 'Primero selecciona una universidad'}
-            </option>
-            {university && 
-              chileanUniversities
-                .find(uni => uni.name === university)
-                ?.campuses.map((campusName) => (
-                  <option key={campusName} value={campusName}>
-                    {campusName}
+        {/* Change University Section */}
+        <div className={styles.formSection}>
+          <h4 className={styles.sectionTitle}>Cambiar universidad y campus</h4>
+          <div className={styles.formRow}>
+            <div className={styles.formColumn}>
+              <div className={styles.formGroup}>
+                <label htmlFor="university" className={styles.label}>
+                  Universidad
+                </label>
+                <select
+                  id="university"
+                  name="university"
+                  required
+                  value={university}
+                  onChange={(e) => {
+                    setUniversity(e.target.value);
+                    setCampus(""); // Reset campus when university changes
+                  }}
+                  disabled={!canChange || loading}
+                  className={styles.select}
+                >
+                  <option value="">Selecciona tu universidad</option>
+                  {chileanUniversities.map((uni) => (
+                    <option key={uni.name} value={uni.name}>
+                      {uni.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+            
+            <div className={styles.formColumn}>
+              <div className={styles.formGroup}>
+                <label htmlFor="campus" className={styles.label}>
+                  Campus
+                </label>
+                <select
+                  id="campus"
+                  name="campus"
+                  required
+                  value={campus}
+                  onChange={(e) => setCampus(e.target.value)}
+                  disabled={!university || !canChange || loading}
+                  className={styles.select}
+                >
+                  <option value="">
+                    {university ? 'Selecciona tu campus' : 'Primero selecciona una universidad'}
                   </option>
-                ))
-            }
-          </select>
+                  {university && 
+                    chileanUniversities
+                      .find(uni => uni.name === university)
+                      ?.campuses.map((campusName) => (
+                        <option key={campusName} value={campusName}>
+                          {campusName}
+                        </option>
+                      ))
+                  }
+                </select>
+              </div>
+            </div>
+          </div>
+          
+          <div className={styles.changeInfo}>
+            <small className={`${styles.fieldHint} ${!canChange ? styles.limitReached : ''}`}>
+              {canChange 
+                ? `Cambios restantes: ${remainingChanges}` 
+                : "Has alcanzado el límite máximo de cambios"
+              }
+            </small>
+          </div>
         </div>
 
         {message && (
@@ -163,21 +181,24 @@ export default function UniversityChangeSection() {
           </div>
         )}
 
-        <button
-          type="submit"
-          disabled={!canChange || loading || !university || !campus}
-          className={styles.submitButton}
-        >
-          {loading ? "Actualizando..." : "Actualizar Universidad y Campus"}
-        </button>
+        <div className={styles.buttonRow}>
+          <button
+            type="submit"
+            disabled={!canChange || loading || !university || !campus}
+            className={`${buttonStyles.primary} ${loading ? buttonStyles.loading : ''}`}
+            onClick={handleSubmit}
+          >
+            {loading ? "Actualizando..." : "Guardar cambios"}
+          </button>
+        </div>
 
         {!canChange && (
-          <div className={styles.limitReached}>
+          <div className={styles.limitReachedContainer}>
             <p>Has alcanzado el límite de cambios de universidad y campus.</p>
             <p>Si necesitas realizar más cambios, contacta al soporte.</p>
           </div>
         )}
-      </form>
+      </div>
     </div>
   );
 } 

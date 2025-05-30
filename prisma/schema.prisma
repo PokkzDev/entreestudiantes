@@ -16,7 +16,8 @@ datasource db {
 model User {
   id                  String    @id @default(cuid())
   username            String?   @unique
-  name                String?
+  nombre              String?   // First name
+  apellidos           String?   // Last name(s)
   email               String    @unique
   rut                 String?   @unique // RUT chileno (opcional pero recomendado para pagos)
   password            String

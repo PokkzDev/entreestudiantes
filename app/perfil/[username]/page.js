@@ -101,7 +101,7 @@ export default function PerfilUsuario(props) {
             {usuario.image ? (
               <Image
                 src={usuario.image}
-                alt={usuario.name || usuario.username}
+                alt={usuario.nombre && usuario.apellidos ? `${usuario.nombre} ${usuario.apellidos}` : usuario.nombre || usuario.apellidos || usuario.username}
                 className={styles.avatar}
                 width={120}
                 height={120}
@@ -114,7 +114,7 @@ export default function PerfilUsuario(props) {
             )}
           </div>
           <div className={styles.userInfo}>
-            <h1 className={styles.userName}>{usuario.name || usuario.username}</h1>
+            <h1 className={styles.userName}>{usuario.nombre && usuario.apellidos ? `${usuario.nombre} ${usuario.apellidos}` : usuario.nombre || usuario.apellidos || usuario.username}</h1>
             <p className={styles.userUsername}>@{usuario.username}</p>
             {usuario.university && (
               <div className={styles.userUniversity}>
@@ -156,7 +156,7 @@ export default function PerfilUsuario(props) {
       {/* Publications section */}
       <div className={styles.publicacionesSection}>
         <h2 className={styles.sectionTitle}>
-          Publicaciones de {usuario.name || usuario.username}
+          Publicaciones de {usuario.nombre && usuario.apellidos ? `${usuario.nombre} ${usuario.apellidos}` : usuario.nombre || usuario.apellidos || usuario.username}
         </h2>
         
         {publicaciones.length === 0 ? (

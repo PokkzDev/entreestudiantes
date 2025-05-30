@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
 import styles from "./ChangePasswordSection.module.css";
+import buttonStyles from "@/styles/buttons.module.css";
 
 export default function ChangePasswordSection() {
   const [formData, setFormData] = useState({
@@ -105,121 +106,115 @@ export default function ChangePasswordSection() {
 
   return (
     <div className={styles.section}>
-      <p className={styles.sectionDescription}>
-        Actualiza tu contraseña para mantener tu cuenta segura
-      </p>
-
-      <form onSubmit={handleSubmit} className={styles.form}>
-        <div className={styles.inputGroup}>
-          <label htmlFor="currentPassword" className={styles.label}>
-            Contraseña Actual
-          </label>
-          <div className={styles.passwordInputContainer}>
-            <input
-              type={showCurrentPassword ? "text" : "password"}
-              id="currentPassword"
-              name="currentPassword"
-              value={formData.currentPassword}
-              onChange={handleChange}
-              required
-              className={styles.input}
-              placeholder="Ingresa tu contraseña actual"
-            />
-            <button
-              type="button"
-              className={styles.eyeButton}
-              onClick={() => setShowCurrentPassword(!showCurrentPassword)}
-              aria-label={showCurrentPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
-            >
-              {showCurrentPassword ? <FaEyeSlash /> : <FaEye />}
-            </button>
+      <div className={styles.form}>
+        {/* Current Password Section */}
+        <div className={styles.formSection}>
+          <h4 className={styles.sectionTitle}>Contraseña actual</h4>
+          <div className={styles.formGroup}>
+            <label htmlFor="currentPassword" className={styles.label}>
+              Contraseña actual
+            </label>
+            <div className={styles.passwordContainer}>
+              <input
+                type={showCurrentPassword ? "text" : "password"}
+                id="currentPassword"
+                name="currentPassword"
+                value={formData.currentPassword}
+                onChange={handleChange}
+                required
+                className={styles.passwordInput}
+                placeholder="Ingresa tu contraseña actual"
+              />
+              <button
+                type="button"
+                className={styles.toggleButton}
+                onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                aria-label={showCurrentPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
+              >
+                {showCurrentPassword ? <FaEyeSlash /> : <FaEye />}
+              </button>
+            </div>
           </div>
         </div>
 
-        <div className={styles.inputGroup}>
-          <label htmlFor="newPassword" className={styles.label}>
-            Nueva Contraseña
-          </label>
-          <div className={styles.passwordInputContainer}>
-            <input
-              type={showNewPassword ? "text" : "password"}
-              id="newPassword"
-              name="newPassword"
-              value={formData.newPassword}
-              onChange={handleChange}
-              required
-              className={styles.input}
-              placeholder="Ingresa tu nueva contraseña"
-            />
-            <button
-              type="button"
-              className={styles.eyeButton}
-              onClick={() => setShowNewPassword(!showNewPassword)}
-              aria-label={showNewPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
-            >
-              {showNewPassword ? <FaEyeSlash /> : <FaEye />}
-            </button>
+        {/* New Password Section */}
+        <div className={styles.formSection}>
+          <h4 className={styles.sectionTitle}>Nueva contraseña</h4>
+          <div className={styles.formRow}>
+            <div className={styles.formColumn}>
+              <div className={styles.formGroup}>
+                <label htmlFor="newPassword" className={styles.label}>
+                  Nueva contraseña
+                </label>
+                <div className={styles.passwordContainer}>
+                  <input
+                    type={showNewPassword ? "text" : "password"}
+                    id="newPassword"
+                    name="newPassword"
+                    value={formData.newPassword}
+                    onChange={handleChange}
+                    required
+                    className={styles.passwordInput}
+                    placeholder="Ingresa tu nueva contraseña"
+                  />
+                  <button
+                    type="button"
+                    className={styles.toggleButton}
+                    onClick={() => setShowNewPassword(!showNewPassword)}
+                    aria-label={showNewPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
+                  >
+                    {showNewPassword ? <FaEyeSlash /> : <FaEye />}
+                  </button>
+                </div>
+              </div>
+            </div>
+            <div className={styles.formColumn}>
+              <div className={styles.formGroup}>
+                <label htmlFor="confirmPassword" className={styles.label}>
+                  Confirmar nueva contraseña
+                </label>
+                <div className={styles.passwordContainer}>
+                  <input
+                    type={showConfirmPassword ? "text" : "password"}
+                    id="confirmPassword"
+                    name="confirmPassword"
+                    value={formData.confirmPassword}
+                    onChange={handleChange}
+                    required
+                    className={styles.passwordInput}
+                    placeholder="Confirma tu nueva contraseña"
+                  />
+                  <button
+                    type="button"
+                    className={styles.toggleButton}
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    aria-label={showConfirmPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
+                  >
+                    {showConfirmPassword ? <FaEyeSlash /> : <FaEye />}
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
           
-          {/* Password validation indicators */}
-          <div className={styles.passwordValidations}>
-            <div className={`${styles.validationItem} ${passwordValidations.length ? styles.valid : styles.invalid}`}>
-              <span className={styles.validationIcon}>
-                {passwordValidations.length ? '✔' : '✖'}
-              </span>
-              Al menos 8 caracteres
-            </div>
-            <div className={`${styles.validationItem} ${passwordValidations.uppercase ? styles.valid : styles.invalid}`}>
-              <span className={styles.validationIcon}>
-                {passwordValidations.uppercase ? '✔' : '✖'}
-              </span>
-              Una letra mayúscula
-            </div>
-            <div className={`${styles.validationItem} ${passwordValidations.lowercase ? styles.valid : styles.invalid}`}>
-              <span className={styles.validationIcon}>
-                {passwordValidations.lowercase ? '✔' : '✖'}
-              </span>
-              Una letra minúscula
-            </div>
-            <div className={`${styles.validationItem} ${passwordValidations.number ? styles.valid : styles.invalid}`}>
-              <span className={styles.validationIcon}>
-                {passwordValidations.number ? '✔' : '✖'}
-              </span>
-              Un número
-            </div>
-            <div className={`${styles.validationItem} ${passwordValidations.symbol ? styles.valid : styles.invalid}`}>
-              <span className={styles.validationIcon}>
-                {passwordValidations.symbol ? '✔' : '✖'}
-              </span>
-              Un símbolo
-            </div>
-          </div>
-        </div>
-
-        <div className={styles.inputGroup}>
-          <label htmlFor="confirmPassword" className={styles.label}>
-            Confirmar Nueva Contraseña
-          </label>
-          <div className={styles.passwordInputContainer}>
-            <input
-              type={showConfirmPassword ? "text" : "password"}
-              id="confirmPassword"
-              name="confirmPassword"
-              value={formData.confirmPassword}
-              onChange={handleChange}
-              required
-              className={styles.input}
-              placeholder="Confirma tu nueva contraseña"
-            />
-            <button
-              type="button"
-              className={styles.eyeButton}
-              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-              aria-label={showConfirmPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
-            >
-              {showConfirmPassword ? <FaEyeSlash /> : <FaEye />}
-            </button>
-          </div>
+          {/* Password validation using semaforo style */}
+          <ul className={styles.passwordValidations}>
+            <li className={passwordValidations.length ? styles.valid : styles.invalid}>
+              {passwordValidations.length ? '✔' : '✖'} Al menos 8 caracteres
+            </li>
+            <li className={passwordValidations.uppercase ? styles.valid : styles.invalid}>
+              {passwordValidations.uppercase ? '✔' : '✖'} Una letra mayúscula
+            </li>
+            <li className={passwordValidations.lowercase ? styles.valid : styles.invalid}>
+              {passwordValidations.lowercase ? '✔' : '✖'} Una letra minúscula
+            </li>
+            <li className={passwordValidations.number ? styles.valid : styles.invalid}>
+              {passwordValidations.number ? '✔' : '✖'} Un número
+            </li>
+            <li className={passwordValidations.symbol ? styles.valid : styles.invalid}>
+              {passwordValidations.symbol ? '✔' : '✖'} Un símbolo
+            </li>
+          </ul>
         </div>
 
         {message && (
@@ -228,14 +223,17 @@ export default function ChangePasswordSection() {
           </div>
         )}
 
-        <button
-          type="submit"
-          disabled={loading}
-          className={styles.submitButton}
-        >
-          {loading ? "Actualizando..." : "Cambiar Contraseña"}
-        </button>
-      </form>
+        <div className={styles.buttonRow}>
+          <button
+            type="submit"
+            disabled={loading}
+            className={`${buttonStyles.primary} ${loading ? buttonStyles.loading : ''}`}
+            onClick={handleSubmit}
+          >
+            {loading ? "Actualizando..." : "Guardar cambios"}
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

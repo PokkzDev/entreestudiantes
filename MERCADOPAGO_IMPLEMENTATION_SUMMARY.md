@@ -15,6 +15,8 @@ This document summarizes the MercadoPago payment integration and the new Plan De
    - Payment verification and validation
    - Environment support (sandbox/production)
    - Automatic return URLs with auto-redirect for approved payments
+   - **Enhanced Payer Information**: Includes separate `payer.name` and `payer.last_name` fields for improved fraud prevention and approval rates
+   - **Item Categorization**: Includes `items.category_id` field for optimized payment security validation
 
 2. **Database Schema**
    - `PaymentIntent` model for tracking payment attempts
@@ -139,6 +141,8 @@ The plan details panel fetches and displays:
 - ✅ Transaction safety for subscription cancellations
 - ✅ Proper error handling and user feedback
 - ✅ Protection against unauthorized access
+- ✅ **Enhanced Payment Security**: Separate `payer.last_name` field improves MercadoPago's fraud prevention validation and approval rates
+- ✅ **Item Categorization Security**: `items.category_id` field provides optimized payment validation and reduces fraud rejection rates
 
 ## Future Enhancements
 
