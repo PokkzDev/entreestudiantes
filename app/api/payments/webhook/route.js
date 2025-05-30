@@ -18,18 +18,27 @@ export async function POST(request) {
   console.log('🔔 Request URL:', request.url);
   
   try {
+    // Extract query parameters from the URL
+    const url = new URL(request.url);
+    const dataId = url.searchParams.get('data.id') || url.searchParams.get('id');
+    
     // Get headers for signature verification
     const xSignature = request.headers.get('x-signature');
     const xRequestId = request.headers.get('x-request-id');
+    
+    // Get the raw body text for signature verification
+    const rawBody = await request.text();
     
     // Log the webhook request for debugging
     console.log('🔔 Webhook received:', {
       signature: xSignature,
       requestId: xRequestId,
+      dataId: dataId,
       timestamp: new Date().toISOString()
     });
 
-    const body = await request.json();
+    // Parse the body as JSON
+    const body = JSON.parse(rawBody);
     
     // Log webhook type and payment ID for tracking
     if (body.type === 'payment' && body.data?.id) {
@@ -37,12 +46,15 @@ export async function POST(request) {
     }
     
     // Verify webhook signature (if signature verification is enabled)
-    if (process.env.MERCADOPAGO_WEBHOOK_SECRET && xSignature && xRequestId) {
-      const isValidSignature = verifyWebhookSignature(request, xSignature, xRequestId);
+    if (process.env.MERCADOPAGO_WEBHOOK_SECRET && xSignature && xRequestId && dataId) {
+      const isValidSignature = verifyWebhookSignature(rawBody, xSignature, xRequestId, dataId);
       if (!isValidSignature) {
         console.error('Invalid webhook signature');
         return NextResponse.json({ success: false, error: 'Invalid signature' }, { status: 401 });
       }
+      console.log('✅ Webhook signature verified successfully');
+    } else {
+      console.log('⚠️ Webhook signature verification skipped (missing required parameters)');
     }
     
     // Log the webhook body
