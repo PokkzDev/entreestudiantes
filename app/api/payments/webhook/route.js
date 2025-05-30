@@ -13,13 +13,20 @@ export const revalidate = 0;
 
 export async function POST(request) {
   // Add comprehensive logging for production debugging
-  console.log('🔔 Webhook POST request received at:', new Date().toISOString());
+  console.log('🔔 ==================== WEBHOOK POST REQUEST ====================');
+  console.log('🔔 Timestamp:', new Date().toISOString());
   console.log('🔔 Request method:', request.method);
   console.log('🔔 Request URL:', request.url);
+  console.log('🔔 Request headers:', Object.fromEntries(request.headers.entries()));
   
   try {
     // Extract query parameters from the URL
     const url = new URL(request.url);
+    console.log('🔔 Full URL object:', {
+      pathname: url.pathname,
+      search: url.search,
+      searchParams: Object.fromEntries(url.searchParams.entries())
+    });
     
     // Handle both URL formats MercadoPago uses
     const dataId = url.searchParams.get('data.id') || 
@@ -42,6 +49,8 @@ export async function POST(request) {
     
     // Get the raw body text for signature verification
     const rawBody = await request.text();
+    console.log('🔔 Raw body received:', rawBody);
+    console.log('🔔 Raw body length:', rawBody.length);
     
     // Log the webhook request for debugging
     console.log('🔔 Webhook received:', {
@@ -52,7 +61,18 @@ export async function POST(request) {
     });
 
     // Parse the body as JSON
-    const body = JSON.parse(rawBody);
+    let body;
+    try {
+      body = JSON.parse(rawBody);
+      console.log('🔔 Parsed JSON body:', JSON.stringify(body, null, 2));
+    } catch (parseError) {
+      console.error('❌ Failed to parse JSON body:', parseError.message);
+      console.log('Raw body that failed to parse:', rawBody);
+      return NextResponse.json({ 
+        success: false, 
+        error: 'Invalid JSON in webhook body' 
+      }, { status: 400 });
+    }
     
     // Log webhook type and payment ID for tracking
     if ((body.type === 'payment' || type === 'payment') && (body.data?.id || dataId)) {
@@ -65,6 +85,7 @@ export async function POST(request) {
     
     // Determine webhook type for signature verification
     const webhookType = body.type || type || body.topic || topic || 'unknown';
+    console.log('🔔 Determined webhook type for signature verification:', webhookType);
     
     if (process.env.MERCADOPAGO_WEBHOOK_SECRET && xSignature && xRequestId && dataId) {
       // Skip signature verification for merchant_order webhooks as they seem to use a different algorithm
@@ -108,8 +129,28 @@ export async function POST(request) {
     // Handle both body.type and URL type parameter
     const webhookTypeForProcessing = body.type || type || body.topic || topic;
     
-    console.log('🔔 Determined webhook type:', webhookTypeForProcessing);
+    console.log('🔔 Determined webhook type for processing:', webhookTypeForProcessing);
     
+    // Handle MercadoPago simulation format specifically
+    if (body.action === 'payment.updated' && body.data?.id) {
+      console.log('🔔 Detected MercadoPago simulation/test webhook format');
+      const paymentId = body.data.id;
+      
+      // For test/simulation webhooks, just log and return success
+      if (!body.live_mode || body.id === '123456' || paymentId === '123456') {
+        console.log(`🧪 Test webhook for payment ID: ${paymentId} (test mode or simulation)`);
+        console.log('🧪 This is a test/simulation, returning success without processing');
+        return NextResponse.json({ 
+          success: true, 
+          message: 'Test/simulation webhook received successfully',
+          processed: false,
+          reason: 'test_mode_or_simulation',
+          paymentId: paymentId
+        });
+      }
+    }
+    
+    // Also handle test payment IDs in regular payment processing
     if (webhookTypeForProcessing === 'payment') {
       const paymentId = body.data?.id || dataId;
       
@@ -118,11 +159,24 @@ export async function POST(request) {
         return NextResponse.json({ success: false, error: 'No payment ID' }, { status: 400 });
       }
       
+      // Skip verification for test/simulation payment IDs
+      if (paymentId === '123456' || (typeof paymentId === 'string' && paymentId.includes('test'))) {
+        console.log(`🧪 Skipping verification for test payment ID: ${paymentId}`);
+        return NextResponse.json({ 
+          success: true, 
+          message: 'Test payment webhook processed',
+          processed: false,
+          reason: 'test_payment_id',
+          paymentId: paymentId
+        });
+      }
+      
       // Verify payment with MercadoPago
       const paymentResult = await verifyPayment(paymentId);
       
       if (!paymentResult.success) {
         console.error('Failed to verify payment:', paymentResult.error);
+        console.error('Payment ID that failed:', paymentId);
         return NextResponse.json({ success: false, error: 'Payment verification failed' }, { status: 400 });
       }
       
@@ -199,25 +253,41 @@ export async function POST(request) {
       }
     } else if (webhookTypeForProcessing === 'test') {
       // Handle test notifications
-      console.log('Test webhook received');
+      console.log('🧪 Test webhook received');
     } else if (webhookTypeForProcessing === 'merchant_order') {
       // Handle merchant order notifications
       console.log('📦 Merchant order webhook received:', dataId);
       // Merchant order webhooks are typically sent alongside payment webhooks
       // and don't require additional processing for basic payment flows
     } else {
-      console.log('Unknown webhook type:', webhookTypeForProcessing);
-      console.log('Available data:', { bodyType: body.type, urlType: type, bodyTopic: body.topic, urlTopic: topic });
+      console.log('❓ Unknown webhook type:', webhookTypeForProcessing);
+      console.log('Available data:', { 
+        bodyType: body.type, 
+        urlType: type, 
+        bodyTopic: body.topic, 
+        urlTopic: topic,
+        bodyAction: body.action 
+      });
+      console.log('Full body for debugging:', JSON.stringify(body, null, 2));
     }
     
     // Always return success to MercadoPago to prevent retries
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ 
+      success: true,
+      timestamp: new Date().toISOString(),
+      processed: true
+    });
     
   } catch (error) {
-    console.error('Webhook error:', error);
+    console.error('💥 Webhook error:', error);
+    console.error('Stack trace:', error.stack);
     // Return success even on error to prevent webhook retries from MercadoPago
     // Log the error for investigation
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ 
+      success: true,
+      error_logged: true,
+      timestamp: new Date().toISOString()
+    });
   } finally {
     await prisma.$disconnect();
   }
