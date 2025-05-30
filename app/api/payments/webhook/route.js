@@ -27,7 +27,50 @@ async function handlePOST(request) {
     );
   }
 
-  // === 1) Signature verification ===
+  // Debug logging
+  console.log('[MP] Webhook received:', {
+    body: body,
+    headers: {
+      'X-Mercadopago-Signature': request.headers.get('X-Mercadopago-Signature'),
+      'X-Request-Id': request.headers.get('X-Request-Id'),
+      'x-signature': request.headers.get('x-signature'),
+      'x-request-id': request.headers.get('x-request-id'),
+      'content-type': request.headers.get('content-type')
+    },
+    hasWebhookSecret: !!process.env.MERCADOPAGO_WEBHOOK_SECRET
+  });
+
+  // === 2) Ignore test/test-mode webhooks (but allow them to bypass signature verification) ===
+  if (body.live_mode === false) {
+    console.log('[MP] Test webhook detected - bypassing signature verification');
+    
+    // Still process test webhooks but with limited functionality
+    const topic = body.type || body.topic;
+    if (topic !== 'payment') {
+      console.log(`[MP] Test non-payment webhook ("${topic}") ignored`);
+      return NextResponse.json(
+        { success: true, message: `Test ignored topic: ${topic}` },
+        { status: 200, headers: CORS_HEADERS }
+      );
+    }
+
+    const paymentId = body.data?.id;
+    if (!paymentId) {
+      return NextResponse.json(
+        { success: false, error: 'Missing payment ID in test webhook' },
+        { status: 400, headers: CORS_HEADERS }
+      );
+    }
+
+    // For test webhooks, just return success without processing
+    console.log('[MP] Test webhook processed successfully');
+    return NextResponse.json(
+      { success: true, message: 'Test webhook processed', test_mode: true },
+      { status: 200, headers: CORS_HEADERS }
+    );
+  }
+
+  // === 1) Signature verification (only for live webhooks) ===
   const signature = request.headers.get('X-Mercadopago-Signature');
   const requestId = request.headers.get('X-Request-Id');
   const secret = process.env.MERCADOPAGO_WEBHOOK_SECRET;
@@ -46,15 +89,6 @@ async function handlePOST(request) {
     return NextResponse.json(
       { success: false, error: 'Invalid webhook signature' },
       { status: 401, headers: CORS_HEADERS }
-    );
-  }
-
-  // === 2) Ignore test/test-mode webhooks ===
-  if (body.live_mode === false) {
-    console.log('[MP] Test webhook ignored');
-    return NextResponse.json(
-      { success: true, message: 'Test webhook ignored' },
-      { status: 200, headers: CORS_HEADERS }
     );
   }
 
