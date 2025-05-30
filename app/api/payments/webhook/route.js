@@ -95,7 +95,9 @@ export async function POST(request) {
     
     // MercadoPago sends different types of notifications
     // Handle both body.type and URL type parameter
-    const webhookType = body.type || type;
+    const webhookType = body.type || type || body.topic || topic;
+    
+    console.log('🔔 Determined webhook type:', webhookType);
     
     if (webhookType === 'payment') {
       const paymentId = body.data?.id || dataId;
@@ -187,8 +189,14 @@ export async function POST(request) {
     } else if (webhookType === 'test') {
       // Handle test notifications
       console.log('Test webhook received');
+    } else if (webhookType === 'merchant_order') {
+      // Handle merchant order notifications
+      console.log('📦 Merchant order webhook received:', dataId);
+      // Merchant order webhooks are typically sent alongside payment webhooks
+      // and don't require additional processing for basic payment flows
     } else {
       console.log('Unknown webhook type:', webhookType);
+      console.log('Available data:', { bodyType: body.type, urlType: type, bodyTopic: body.topic, urlTopic: topic });
     }
     
     // Always return success to MercadoPago to prevent retries
