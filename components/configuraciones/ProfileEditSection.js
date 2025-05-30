@@ -2,10 +2,11 @@ import React, { useState, useRef, useEffect } from "react";
 import Image from "next/image";
 import { useSession } from "next-auth/react";
 import styles from "./ProfileEditSection.module.css";
+import buttonStyles from "@/styles/buttons.module.css";
+import { formatRutInput, validateRut } from "@/utils/rutValidation";
 
 export default function ProfileEditSection({ session, onProfileUpdate }) {
   const { data: sessionData, update } = useSession();
-  const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(false);
   const [dataLoading, setDataLoading] = useState(true); // Loading state for initial data fetch
   const [message, setMessage] = useState("");
@@ -14,7 +15,8 @@ export default function ProfileEditSection({ session, onProfileUpdate }) {
   const [imageKey, setImageKey] = useState(Date.now()); // For cache busting
   
   const [formData, setFormData] = useState({
-    name: "",
+    nombre: "",
+    apellidos: "",
     username: "",
     image: "",
     email: "", // Add email to formData instead of using session
@@ -137,7 +139,8 @@ export default function ProfileEditSection({ session, onProfileUpdate }) {
         
         // Update session with the new user data
         await update({
-          name: result.user.name,
+          nombre: result.user.nombre,
+          apellidos: result.user.apellidos,
           username: result.user.username,
           email: result.user.email,
           image: result.user.image,
@@ -171,19 +174,7 @@ export default function ProfileEditSection({ session, onProfileUpdate }) {
 
   // Function to validate and format RUT
   const validateAndFormatRut = (rut) => {
-    if (!rut) return '';
-    
-    // Remove all non-numeric characters except K and k
-    const cleanRut = rut.replace(/[^0-9kK]/g, '');
-    
-    if (cleanRut.length < 2) return rut;
-    
-    // Separate body and digit
-    const body = cleanRut.slice(0, -1);
-    const digit = cleanRut.slice(-1).toLowerCase();
-    
-    // Add dash before the last digit
-    return `${body}-${digit}`;
+    return formatRutInput(rut);
   };
 
   const handleRutChange = (e) => {
@@ -203,7 +194,8 @@ export default function ProfileEditSection({ session, onProfileUpdate }) {
       const data = await res.json();
       if (data && data.user) {
         setFormData({
-          name: data.user.name || "",
+          nombre: data.user.nombre || "",
+          apellidos: data.user.apellidos || "",
           username: data.user.username || "",
           image: data.user.image || "",
           email: data.user.email || "",
@@ -232,7 +224,7 @@ export default function ProfileEditSection({ session, onProfileUpdate }) {
     setMessage("");
 
     // Check if user has reached change limits before attempting to save
-    const nameChanged = formData.name !== session?.user?.name;
+    const nameChanged = formData.nombre !== session?.user?.nombre || formData.apellidos !== session?.user?.apellidos;
     const usernameChanged = formData.username !== session?.user?.username;
     
     if (nameChanged && formData.nameChangeCount >= 3) {
@@ -251,7 +243,8 @@ export default function ProfileEditSection({ session, onProfileUpdate }) {
 
     // Only send the image if it was changed (uploaded or removed)
     const payload = {
-      name: formData.name,
+      nombre: formData.nombre,
+      apellidos: formData.apellidos,
       username: formData.username,
       rut: formData.rut
     };
@@ -276,7 +269,8 @@ export default function ProfileEditSection({ session, onProfileUpdate }) {
         
         // Update the session with new data
         await update({
-          name: result.user.name,
+          nombre: result.user.nombre,
+          apellidos: result.user.apellidos,
           username: result.user.username,
           email: result.user.email,
           image: result.user.image,
@@ -286,7 +280,6 @@ export default function ProfileEditSection({ session, onProfileUpdate }) {
         
         setMessage("Perfil actualizado correctamente");
         setSuccess(true);
-        setIsEditing(false);
         
         // Call parent callback if provided
         if (onProfileUpdate) {
@@ -324,73 +317,15 @@ export default function ProfileEditSection({ session, onProfileUpdate }) {
   const handleCancel = () => {
     // Reset to fresh data from database instead of session
     fetchUserData();
-    setIsEditing(false);
     setMessage("");
   };
 
-  if (!isEditing) {
+  if (dataLoading) {
     return (
       <section className={styles.section}>
-        <div className={styles.profileCard}>
-          {dataLoading ? (
-            <div style={{ textAlign: "center", padding: "2rem" }}>
-              <p>Cargando información del perfil...</p>
-            </div>
-          ) : (
-            <>
-              <div className={styles.profileHeader}>
-                <div className={styles.avatarSection}>
-                  <div className={styles.avatarContainer}>
-                    {formData.image ? (
-                      <Image 
-                        key={`profile-avatar-${imageKey}`}
-                        src={getCacheBustedImageUrl(formData.image)}
-                        alt="Foto de perfil" 
-                        className={styles.avatar}
-                        fill
-                        sizes="96px"
-                        style={{ objectFit: 'cover' }}
-                        onError={(e) => {
-                          e.target.onerror = null;
-                          e.target.src = "/pageImages/placeholder_userimage.png";
-                        }}
-                      />
-                    ) : (
-                      <div className={styles.avatarPlaceholder}>
-                        <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                          <circle cx="12" cy="7" r="4"></circle>
-                        </svg>
-                      </div>
-                    )}
-                  </div>
-                </div>
-                <div className={styles.profileInfo}>
-                  <h3 className={styles.profileName}>{formData.name || "Sin nombre"}</h3>
-                  <p className={styles.profileUsername}>@{formData.username || "sin-usuario"}</p>
-                  <p className={styles.profileEmail}>{formData.email}</p>
-                </div>
-              </div>
-              
-              <button 
-                className={styles.editButton}
-                onClick={() => setIsEditing(true)}
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                </svg>
-                Editar perfil
-              </button>
-            </>
-          )}
+        <div style={{ textAlign: "center", padding: "2rem" }}>
+          <p>Cargando información del perfil...</p>
         </div>
-        
-        {message && (
-          <div className={success ? styles.successMsg : styles.errorMsg}>
-            {message}
-          </div>
-        )}
       </section>
     );
   }
@@ -424,113 +359,165 @@ export default function ProfileEditSection({ session, onProfileUpdate }) {
               </div>
             )}
           </div>
-          <div className={styles.avatarActions}>
-            <input
-              type="file"
-              ref={fileInputRef}
-              onChange={handleImageUpload}
-              accept="image/*"
-              style={{ display: "none" }}
-            />
-            <button
-              type="button"
-              className={styles.imageButton}
-              onClick={() => fileInputRef.current?.click()}
-              disabled={imageUploading}
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"></path>
-                <circle cx="12" cy="13" r="3"></circle>
-              </svg>
-              {imageUploading ? "Subiendo..." : "Cambiar foto"}
-            </button>
-            {formData.image && (
+          <div>
+            <h4 className={styles.sectionSubtitle}>Foto de perfil</h4>
+            <div className={styles.avatarActions}>
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleImageUpload}
+                accept="image/*"
+                style={{ display: "none" }}
+              />
               <button
                 type="button"
-                className={styles.removeImageButton}
-                onClick={handleRemoveImage}
+                className={`${buttonStyles.primary} ${buttonStyles.small}`}
+                onClick={() => fileInputRef.current?.click()}
                 disabled={imageUploading}
               >
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M3 6h18"></path>
-                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                  <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"></path>
+                  <circle cx="12" cy="13" r="3"></circle>
                 </svg>
-                {imageUploading ? "Eliminando..." : "Eliminar"}
+                {imageUploading ? "Subiendo..." : "Cambiar foto"}
               </button>
-            )}
+              {formData.image && (
+                <button
+                  type="button"
+                  className={`${buttonStyles.danger} ${buttonStyles.small}`}
+                  onClick={handleRemoveImage}
+                  disabled={imageUploading}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M3 6h18"></path>
+                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                  </svg>
+                  {imageUploading ? "Eliminando..." : "Eliminar"}
+                </button>
+              )}
+            </div>
           </div>
         </div>
 
-        {/* Form Fields */}
-        <div className={styles.formGroup}>
-          <label htmlFor="name" className={styles.label}>Nombre completo</label>
-          <input
-            type="text"
-            id="name"
-            name="name"
-            value={formData.name}
-            onChange={handleInputChange}
-            className={`${styles.input} ${formData.nameChangeCount >= 3 ? styles.inputDisabled : ''}`}
-            placeholder="Tu nombre completo"
-            required
-            disabled={formData.nameChangeCount >= 3}
-          />
-          <small className={`${styles.fieldHint} ${formData.nameChangeCount >= 3 ? styles.limitReached : ''}`}>
-            {formData.nameChangeCount >= 3 
-              ? "Has alcanzado el límite máximo de cambios de nombre" 
-              : `Cambios de nombre restantes: ${Math.max(3 - (formData.nameChangeCount ?? 0), 0)}`
-            }
-          </small>
-        </div>
-        <div className={styles.formGroup}>
-          <label htmlFor="username" className={styles.label}>Nombre de usuario</label>
-          <input
-            type="text"
-            id="username"
-            name="username"
-            value={formData.username}
-            onChange={handleInputChange}
-            className={`${styles.input} ${formData.usernameChangeCount >= 3 ? styles.inputDisabled : ''}`}
-            placeholder="tu-usuario"
-            minLength={4}
-            required
-            disabled={formData.usernameChangeCount >= 3}
-          />
-          <small className={`${styles.fieldHint} ${formData.usernameChangeCount >= 3 ? styles.limitReached : ''}`}>
-            {formData.usernameChangeCount >= 3 
-              ? "Has alcanzado el límite máximo de cambios de nombre de usuario" 
-              : `Cambios de usuario restantes: ${Math.max(3 - (formData.usernameChangeCount ?? 0), 0)}`
-            }
-          </small>
+        {/* Personal Information Section */}
+        <div className={styles.formSection}>
+          <h4 className={styles.sectionTitle}>Información personal</h4>
+          <div className={styles.formRow}>
+            <div className={styles.formColumn}>
+              <div className={styles.formGroup}>
+                <label htmlFor="nombre" className={styles.label}>Nombre</label>
+                <input
+                  type="text"
+                  id="nombre"
+                  name="nombre"
+                  value={formData.nombre}
+                  onChange={handleInputChange}
+                  className={`${styles.input} ${formData.nameChangeCount >= 3 ? styles.inputDisabled : ''}`}
+                  placeholder="Tu nombre"
+                  required
+                  disabled={formData.nameChangeCount >= 3}
+                />
+              </div>
+            </div>
+            <div className={styles.formColumn}>
+              <div className={styles.formGroup}>
+                <label htmlFor="apellidos" className={styles.label}>Apellidos</label>
+                <input
+                  type="text"
+                  id="apellidos"
+                  name="apellidos"
+                  value={formData.apellidos}
+                  onChange={handleInputChange}
+                  className={`${styles.input} ${formData.nameChangeCount >= 3 ? styles.inputDisabled : ''}`}
+                  placeholder="Tu apellido"
+                  required
+                  disabled={formData.nameChangeCount >= 3}
+                />
+              </div>
+            </div>
+          </div>
+          
+          <div className={styles.changeInfo}>
+            <small className={`${styles.fieldHint} ${formData.nameChangeCount >= 3 ? styles.limitReached : ''}`}>
+              {formData.nameChangeCount >= 3 
+                ? "Has alcanzado el límite máximo de cambios de nombre" 
+                : `Cambios de nombre restantes: ${Math.max(3 - (formData.nameChangeCount ?? 0), 0)}`
+              }
+            </small>
+          </div>
+          
+          <div className={styles.formGroup}>
+            <label htmlFor="rut" className={styles.label}>RUT</label>
+            <input
+              type="text"
+              id="rut"
+              name="rut"
+              value={formData.rut || ""}
+              onChange={handleRutChange}
+              className={`${styles.input} ${
+                formData.rut && formData.rut.length >= 9 
+                  ? (validateRut(formData.rut) ? styles.inputValid : styles.inputInvalid)
+                  : ''
+              }`}
+              placeholder="12345678-9"
+              maxLength="12"
+            />
+            <small className={styles.fieldHint}>
+              {formData.rut && formData.rut.length >= 9 ? (
+                validateRut(formData.rut) ? (
+                  <span style={{ color: '#059669' }}>✓ RUT válido</span>
+                ) : (
+                  <span style={{ color: '#dc2626' }}>✗ RUT inválido - Por favor verifica el dígito verificador</span>
+                )
+              ) : (
+                "Formato: 12345678-9 (sin puntos, con guión)"
+              )}
+            </small>
+          </div>
         </div>
 
-        <div className={styles.formGroup}>
-          <label className={styles.label}>Correo electrónico</label>
-          <input
-            type="email"
-            value={formData.email || ""}
-            className={`${styles.input} ${styles.inputDisabled}`}
-            disabled
-          />
-          <small className={styles.fieldHint}>
-            El correo electrónico no se puede cambiar.
-          </small>
-        </div>
-
-        <div className={styles.formGroup}>
-          <label htmlFor="rut" className={styles.label}>RUT</label>
-          <input
-            type="text"
-            id="rut"
-            name="rut"
-            value={formData.rut || ""}
-            onChange={handleRutChange}
-            className={styles.input}
-            placeholder="12.345.678-9"
-          />
-          <small className={styles.fieldHint}>
-            Formato válido: 12345678-9 (sin puntos, con guión)
-          </small>
+        {/* Account Information Section */}
+        <div className={styles.formSection}>
+          <h4 className={styles.sectionTitle}>Información de cuenta</h4>
+          <div className={styles.formRow}>
+            <div className={styles.formColumn}>
+              <div className={styles.formGroup}>
+                <label className={styles.label}>Correo electrónico</label>
+                <input
+                  type="email"
+                  value={formData.email || ""}
+                  className={`${styles.input} ${styles.inputDisabled}`}
+                  disabled
+                />
+                <small className={styles.fieldHint}>
+                  El correo electrónico no se puede cambiar.
+                </small>
+              </div>
+            </div>
+            <div className={styles.formColumn}>
+              <div className={styles.formGroup}>
+                <label htmlFor="username" className={styles.label}>Nombre de usuario</label>
+                <input
+                  type="text"
+                  id="username"
+                  name="username"
+                  value={formData.username}
+                  onChange={handleInputChange}
+                  className={`${styles.input} ${formData.usernameChangeCount >= 3 ? styles.inputDisabled : ''}`}
+                  placeholder="tu-usuario"
+                  minLength={4}
+                  required
+                  disabled={formData.usernameChangeCount >= 3}
+                />
+                <small className={`${styles.fieldHint} ${formData.usernameChangeCount >= 3 ? styles.limitReached : ''}`}>
+                  {formData.usernameChangeCount >= 3 
+                    ? "Has alcanzado el límite máximo de cambios de nombre de usuario" 
+                    : `Cambios de usuario restantes: ${Math.max(3 - (formData.usernameChangeCount ?? 0), 0)}`
+                  }
+                </small>
+              </div>
+            </div>
+          </div>
         </div>
 
         {message && (
@@ -542,24 +529,24 @@ export default function ProfileEditSection({ session, onProfileUpdate }) {
         <div className={styles.buttonRow}>
           <button
             type="button"
-            className={styles.saveButton}
+            className={`${buttonStyles.primary} ${loading ? buttonStyles.loading : ''}`}
             onClick={handleSave}
             disabled={loading || (
               // Disable if trying to change name but reached limit
-              (formData.name !== session?.user?.name && formData.nameChangeCount >= 3) ||
+              (formData.nombre !== session?.user?.nombre && formData.nameChangeCount >= 3) ||
               // Or if trying to change username but reached limit
               (formData.username !== session?.user?.username && formData.usernameChangeCount >= 3)
             )}
           >
-            {loading ? "Guardando..." : "Guardar cambios"}
+            {loading ? "Guardando..." : "Guardar"}
           </button>
           <button
             type="button"
-            className={styles.cancelButton}
+            className={buttonStyles.secondary}
             onClick={handleCancel}
             disabled={loading}
           >
-            Cancelar
+            Restablecer
           </button>
         </div>
       </div>

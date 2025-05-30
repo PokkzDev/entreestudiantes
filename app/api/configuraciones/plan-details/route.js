@@ -22,7 +22,9 @@ export async function GET() {
       select: {
         id: true,
         email: true,
-        name: true,
+        nombre: true,
+        apellidos: true,
+        username: true,
         accountTier: true,
         subscriptionStatus: true,
         tierStartDate: true,
@@ -100,7 +102,7 @@ export async function GET() {
       user: {
         id: user.id,
         email: user.email,
-        name: user.name,
+        name: user.nombre && user.apellidos ? `${user.nombre} ${user.apellidos}` : user.nombre || user.apellidos || user.username,
         accountTier: user.accountTier,
         subscriptionStatus: user.subscriptionStatus,
         tierStartDate: user.tierStartDate,

@@ -1,0 +1,306 @@
+.page {
+  min-height: 80vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.card {
+  background: #fff;
+  border-radius: 20px;
+  box-shadow: 0 8px 32px 0 rgba(31,38,135,0.07);
+  padding: 2.5rem 2rem;
+  max-width: 600px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+@media (min-width: 768px) {
+  .card {
+    max-width: 700px;
+    padding: 3rem 3rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .card {
+    max-width: 800px;
+    padding: 3.5rem 4rem;
+  }
+}
+
+.title {
+  font-size: 1.8rem;
+  font-weight: 800;
+  color: #2563eb;
+  margin-bottom: 0.5rem;
+  letter-spacing: -0.02em;
+}
+
+.subtitle {
+  font-size: 1.05rem;
+  color: #64748b;
+  text-align: center;
+  margin: -1rem 0 0;
+}
+
+.form {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+}
+
+@media (min-width: 768px) {
+  .form {
+    gap: 1.5rem;
+  }
+}
+
+.inputGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.formGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+@media (min-width: 768px) {
+  .formGroup {
+    gap: 0.7rem;
+  }
+}
+
+.label {
+  font-weight: 600;
+  color: #334155;
+}
+
+.input {
+  padding: 0.85rem 1rem;
+  border-radius: 10px;
+  border: 1.5px solid #e0e7ef;
+  font-size: 1.08rem;
+  outline: none;
+  background: #f8fafc;
+  color: #334155;
+  transition: border 0.2s;
+}
+
+.inputDisabled {
+  padding: 0.85rem 1rem;
+  border-radius: 10px;
+  border: 1.5px solid #e0e7ef;
+  font-size: 1.08rem;
+  outline: none;
+  background: #f1f5f9;
+  color: #64748b;
+}
+
+.passwordContainer {
+  position: relative;
+}
+
+.toggleButton {
+  position: absolute;
+  right: 0.7rem;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  margin: 0;
+  color: #64748b;
+  font-size: 1.2rem;
+  display: flex;
+  align-items: center;
+}
+
+.valid {
+  color: #22c55e;
+  font-weight: 600;
+  white-space: nowrap;
+  font-size: 0.9rem;
+}
+
+.invalid {
+  color: #ef4444;
+  font-weight: 600;
+  white-space: nowrap;
+  font-size: 0.9rem;
+}
+
+.passwordInputGroup {
+  position: relative;
+}
+
+.passwordInput {
+  padding: 0.85rem 2.5rem 0.85rem 1rem;
+  border-radius: 10px;
+  border: 1.5px solid #e0e7ef;
+  font-size: 1.08rem;
+  outline: none;
+  background: #f8fafc;
+  color: #334155;
+  transition: border 0.2s;
+  width: 100%;
+}
+
+.passwordToggle {
+  position: absolute;
+  right: 0.7rem;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  margin: 0;
+  color: #64748b;
+  font-size: 1.2rem;
+  display: flex;
+  align-items: center;
+}
+
+.passwordValidations {
+  list-style: none;
+  padding: 0;
+  margin: 0.5rem 0 0 0;
+  font-size: 0.9rem;
+  line-height: 1.4;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 1rem;
+}
+
+@media (min-width: 768px) {
+  .passwordValidations {
+    gap: 0.3rem 1.5rem;
+  }
+}
+
+.validationItem {
+  font-weight: 600;
+}
+
+.validationValid {
+  color: #22c55e;
+}
+
+.validationInvalid {
+  color: #ef4444;
+}
+
+.error {
+  color: #ef4444;
+  font-weight: 600;
+  text-align: center;
+}
+
+.submitButton {
+  background: linear-gradient(90deg, #334155 0%, #6366f1 100%);
+  color: #fff;
+  font-weight: 700;
+  font-size: 1.13rem;
+  border: none;
+  border-radius: 10px;
+  padding: 0.85rem 2.2rem;
+  box-shadow: 0 8px 24px -8px #33415533;
+  cursor: pointer;
+  transition: all 0.3s;
+  margin-top: 0.5rem;
+}
+
+.submitButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.successCard {
+  background: #fff;
+  border-radius: 20px;
+  box-shadow: 0 8px 32px 0 rgba(31,38,135,0.07);
+  padding: 2.5rem 2rem;
+  max-width: 600px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+  text-align: center;
+}
+
+@media (min-width: 768px) {
+  .successCard {
+    max-width: 700px;
+    padding: 3rem 3rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .successCard {
+    max-width: 800px;
+    padding: 3.5rem 4rem;
+  }
+}
+
+.successIcon {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: #e6ffea;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1rem;
+}
+
+.successTitle {
+  font-size: 1.8rem;
+  font-weight: 800;
+  color: #22c55e;
+  letter-spacing: -0.02em;
+}
+
+.successText {
+  font-size: 1.1rem;
+  color: #64748b;
+  line-height: 1.6;
+}
+
+.successLink {
+  color: #6366f1;
+  font-weight: 600;
+  text-decoration: none;
+  display: inline-block;
+  margin-top: 1rem;
+}
+
+.successLinkContainer {
+  margin-top: 1rem;
+}
+
+.formRow {
+  display: flex;
+  gap: 1.5rem;
+  width: 100%;
+}
+
+.formColumn {
+  flex: 1;
+}
+
+@media (max-width: 767px) {
+  .formRow {
+    flex-direction: column;
+    gap: 1.2rem;
+  }
+} 

@@ -41,10 +41,11 @@ export async function POST(request) {
       where: { email: session.user.email },
       select: {
         id: true,
-        name: true,
         email: true,
         accountTier: true,
-        rut: true
+        rut: true,
+        nombre: true,
+        apellidos: true
       }
     });
 
@@ -75,7 +76,8 @@ export async function POST(request) {
 
     const userData = {
       id: user.id,
-      name: user.name,
+      nombre: user.nombre,
+      apellidos: user.apellidos,
       email: user.email,
       rut: user.rut
     };

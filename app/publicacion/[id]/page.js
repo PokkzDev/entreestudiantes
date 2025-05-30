@@ -454,7 +454,7 @@ export default function PublicacionDetalle(props) {
                         {publicacion.author.image ? (
                           <Image
                             src={publicacion.author.image}
-                            alt={publicacion.author.name || publicacion.author.username}
+                            alt={publicacion.author.nombre && publicacion.author.apellidos ? `${publicacion.author.nombre} ${publicacion.author.apellidos}` : publicacion.author.nombre || publicacion.author.apellidos || publicacion.author.username}
                             width={32}
                             height={32}
                             className={styles.avatarImageMini}

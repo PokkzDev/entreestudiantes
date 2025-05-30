@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "../auth/[...nextauth]/route";
 import prisma from "@/lib/prisma";
+import { validateRut } from "@/utils/rutValidation";
 
 export async function POST(request) {
   try {
@@ -12,11 +13,15 @@ export async function POST(request) {
     }
 
     const body = await request.json();
-    const { name, username, image, rut } = body;
+    const { nombre, apellidos, username, image, rut } = body;
 
     // Validate input
-    if (!name || name.trim().length === 0) {
+    if (!nombre || nombre.trim().length === 0) {
       return NextResponse.json({ error: "El nombre no puede estar vacío" }, { status: 400 });
+    }
+
+    if (!apellidos || apellidos.trim().length === 0) {
+      return NextResponse.json({ error: "Los apellidos no pueden estar vacíos" }, { status: 400 });
     }
 
     if (!username || username.trim().length < 4) {
@@ -25,10 +30,9 @@ export async function POST(request) {
 
     // Validate RUT format if provided
     if (rut && rut.trim()) {
-      const rutRegex = /^[0-9]+[-|‐]{1}[0-9kK]{1}$/;
-      if (!rutRegex.test(rut.trim())) {
+      if (!validateRut(rut.trim())) {
         return NextResponse.json({ 
-          error: "El formato del RUT no es válido. Usar formato: 12345678-9" 
+          error: "El RUT ingresado no es válido. Por favor verifica el dígito verificador." 
         }, { status: 400 });
       }
     }
@@ -58,7 +62,7 @@ export async function POST(request) {
     // Get current user data to check for changes
     const currentUser = await prisma.user.findUnique({
       where: { id: session.user.id },
-      select: { name: true, username: true, nameChangeCount: true, usernameChangeCount: true }
+      select: { nombre: true, apellidos: true, username: true, nameChangeCount: true, usernameChangeCount: true }
     });
 
     if (!currentUser) {
@@ -66,7 +70,7 @@ export async function POST(request) {
     }
 
     // Check if name is being changed and validate change limit
-    const nameChanged = currentUser.name !== name.trim();
+    const nameChanged = currentUser.nombre !== nombre.trim() || currentUser.apellidos !== apellidos.trim();
     if (nameChanged && currentUser.nameChangeCount >= 3) {
       return NextResponse.json({ 
         error: "Has alcanzado el límite máximo de 3 cambios de nombre" 
@@ -83,7 +87,8 @@ export async function POST(request) {
 
     // Prepare update data
     const updateData = {
-      name: name.trim(),
+      nombre: nombre.trim(),
+      apellidos: apellidos.trim(),
       username: username.trim()
     };
 
@@ -112,7 +117,8 @@ export async function POST(request) {
       data: updateData,
       select: {
         id: true,
-        name: true,
+        nombre: true,
+        apellidos: true,
         username: true,
         email: true,
         image: true,
@@ -145,7 +151,8 @@ export async function GET(request) {
       where: { id: session.user.id },
       select: {
         id: true,
-        name: true,
+        nombre: true,
+        apellidos: true,
         username: true,
         email: true,
         image: true,

@@ -36,7 +36,6 @@ export async function POST(request) {
       select: {
         id: true,
         username: true,
-        name: true,
         email: true,
         accountTier: true,
         subscriptionStatus: true,
@@ -46,7 +45,9 @@ export async function POST(request) {
           where: { status: 'active' },
           orderBy: { startDate: 'desc' },
           take: 1
-        }
+        },
+        nombre: true,
+        apellidos: true,
       }
     });
 
@@ -114,7 +115,7 @@ export async function POST(request) {
           userId: user.id,
           username: user.username,
           email: user.email,
-          name: user.name,
+          name: user.nombre && user.apellidos ? `${user.nombre} ${user.apellidos}` : user.nombre || user.apellidos || null,
           subscriptionId: activeSubscription?.id,
           planId: activeSubscription?.planId || user.accountTier,
           previousAccountTier: user.accountTier,

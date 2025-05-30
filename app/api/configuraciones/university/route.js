@@ -87,13 +87,13 @@ export async function PUT(request) {
       select: {
         id: true,
         username: true,
-        name: true,
+        nombre: true,
+        apellidos: true,
         email: true,
         university: true,
         campus: true,
         universityChangeCount: true,
         image: true,
-        bio: true,
       },
     });
 

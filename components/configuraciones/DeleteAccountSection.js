@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import React, { useState } from "react";
 import { signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import styles from "./DeleteAccountSection.module.css";
+import buttonStyles from "@/styles/buttons.module.css";
 
 export default function DeleteAccountSection() {
   const [showConfirmation, setShowConfirmation] = useState(false);
@@ -147,7 +148,7 @@ export default function DeleteAccountSection() {
               type="button"
               onClick={handleCancel}
               disabled={loading}
-              className={styles.cancelButton}
+              className={buttonStyles.secondary}
             >
               Cancelar
             </button>
@@ -155,7 +156,7 @@ export default function DeleteAccountSection() {
               type="button"
               onClick={handleDeleteConfirm}
               disabled={loading || confirmText.toLowerCase() !== "eliminar"}
-              className={styles.deleteButton}
+              className={`${buttonStyles.danger} ${loading ? buttonStyles.loading : ''}`}
             >
               {loading ? "Eliminando..." : "Eliminar Cuenta"}
             </button>
@@ -167,7 +168,7 @@ export default function DeleteAccountSection() {
         <button
           type="button"
           onClick={handleDeleteRequest}
-          className={styles.deleteButton}
+          className={buttonStyles.danger}
         >
           Eliminar mi cuenta
         </button>

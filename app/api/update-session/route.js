@@ -11,7 +11,7 @@ export async function PATCH(request) {
     }
     const body = await request.json();
     // Only allow updating certain fields
-    const allowedFields = ["name", "username", "image", "nameChangeCount", "usernameChangeCount"];
+    const allowedFields = ["nombre", "apellidos", "username", "image", "nameChangeCount", "usernameChangeCount"];
     const updateData = {};
     for (const key of allowedFields) {
       if (body[key] !== undefined) {
@@ -27,7 +27,8 @@ export async function PATCH(request) {
       data: updateData,
       select: {
         id: true,
-        name: true,
+        nombre: true,
+        apellidos: true,
         username: true,
         email: true,
         image: true,
