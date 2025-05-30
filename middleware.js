@@ -5,6 +5,12 @@ export default withAuth(
   function middleware(req) {
     const { pathname, searchParams } = req.nextUrl;
     
+    // Debug logging for webhook routes
+    if (pathname.includes('/api/payments')) {
+      console.log(`🔍 Middleware processing payment route: ${pathname}`);
+      console.log('🔍 This should be excluded from authentication!');
+    }
+    
     // Security: Block WordPress admin and suspicious requests
     const suspiciousPatterns = [
       /wp-admin/i,
@@ -76,6 +82,13 @@ export default withAuth(
   {
     callbacks: {
       authorized: ({ token, req }) => {
+        // Debug logging for webhook routes
+        if (req.nextUrl.pathname.includes('/api/payments')) {
+          console.log(`🔍 Authorized callback for payment route: ${req.nextUrl.pathname}`);
+          console.log('🔍 This should return true without requiring authentication!');
+          return true; // Always allow payment routes
+        }
+        
         // Define public routes that don't require authentication
         const publicRoutes = [
           '/', // Home page
@@ -130,6 +143,6 @@ export const config = {
      * - pageImages (static images in public folder)
      * - images (uploaded images)
      */
-    "/((?!api/auth|api/register|api/resend-verification|api/complete-registration|api/allowed-domains|api/busqueda|api/publicacion|api/check-session|api/check-verified|api/payments|api/verify-turnstile|api/cron|api/update-session|_next/static|_next/image|favicon.ico|pageImages|images).*)",
+    '/((?!api/auth|api/register|api/resend-verification|api/complete-registration|api/allowed-domains|api/busqueda|api/publicacion|api/check-session|api/check-verified|api/payments|api/verify-turnstile|api/cron|api/update-session|_next/static|_next/image|favicon.ico|pageImages|images).*)',
   ],
 }; 
