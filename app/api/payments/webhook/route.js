@@ -63,19 +63,16 @@ export async function POST(request) {
     // Verify webhook signature (if signature verification is enabled)
     let signatureValid = false;
     
-    // TEMPORARY: Disable signature verification until webhook secret is fixed
-    console.log('⚠️ NOTICE: Webhook signature verification is temporarily disabled');
-    console.log('⚠️ TO FIX: Update MERCADOPAGO_WEBHOOK_SECRET with the correct secret from MercadoPago panel');
-    signatureValid = true; // Temporarily bypass signature verification
-    
-    /* UNCOMMENT AFTER FIXING WEBHOOK SECRET:
     if (process.env.MERCADOPAGO_WEBHOOK_SECRET && xSignature && xRequestId && dataId) {
       signatureValid = verifyWebhookSignature(rawBody, xSignature, xRequestId, dataId);
       if (!signatureValid) {
         console.error('❌ Invalid webhook signature');
-        // In production, you might want to reject invalid signatures
-        // For now, we'll log and continue to debug
-        console.log('⚠️ Continuing despite invalid signature for debugging...');
+        console.log('⚠️ Webhook signature verification failed. Please check your MERCADOPAGO_WEBHOOK_SECRET.');
+        // Return error for invalid signatures in production
+        return NextResponse.json({ 
+          success: false, 
+          error: 'Invalid webhook signature' 
+        }, { status: 401 });
       } else {
         console.log('✅ Webhook signature verified successfully');
       }
@@ -87,8 +84,13 @@ export async function POST(request) {
         requestId: !xRequestId,
         dataId: !dataId
       });
+      
+      // If webhook secret is not configured, log a warning but continue
+      if (!process.env.MERCADOPAGO_WEBHOOK_SECRET) {
+        console.log('⚠️ NOTICE: MERCADOPAGO_WEBHOOK_SECRET is not configured');
+        console.log('⚠️ TO FIX: Add the correct webhook secret from your MercadoPago dashboard');
+      }
     }
-    */
     
     // Log the webhook body
     console.log('Webhook body:', JSON.stringify(body, null, 2));
