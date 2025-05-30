@@ -120,12 +120,16 @@ export const config = {
      * - api/publicacion (public publication API)
      * - api/check-session (session validation API)
      * - api/check-verified (check verification status API)
+     * - api/payments (payment webhooks and public payment routes)
+     * - api/verify-turnstile (CAPTCHA verification)
+     * - api/cron (scheduled tasks)
+     * - api/update-session (session updates)
      * - _next/static (static files)
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
      * - pageImages (static images in public folder)
      * - images (uploaded images)
      */
-    "/((?!api/auth|api/register|api/resend-verification|api/complete-registration|api/allowed-domains|api/busqueda|api/publicacion|api/check-session|api/check-verified|_next/static|_next/image|favicon.ico|pageImages|images).*)",
+    "/((?!api/auth|api/register|api/resend-verification|api/complete-registration|api/allowed-domains|api/busqueda|api/publicacion|api/check-session|api/check-verified|api/payments|api/verify-turnstile|api/cron|api/update-session|_next/static|_next/image|favicon.ico|pageImages|images).*)",
   ],
 }; 
