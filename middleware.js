@@ -122,6 +122,6 @@ export default withAuth(
 
 export const config = {
   matcher: [
-    "/((?!api/auth|api/register|api/resend-verification|api/complete-registration|api/allowed-domains|api/busqueda|api/publicacion|api/check-session|api/check-verified|api/payments/webhook|api/payments|api/verify-turnstile|api/cron|api/update-session|_next/static|_next/image|favicon.ico|pageImages|images).*)"
+    "/((?!api/auth|api/register|api/resend-verification|api/complete-registration|api/allowed-domains|api/busqueda|api/publicacion|api/check-session|api/check-verified|api/payments/verify|api/payments/failure|api/payments/pending|api/payments/success|api/payments/webhook|api/payments|api/verify-turnstile|api/cron|api/update-session|_next/static|_next/image|favicon.ico|pageImages|images).*)"
   ],
 }; 
