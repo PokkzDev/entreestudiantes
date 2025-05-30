@@ -9,11 +9,8 @@ const nextConfig = {
       },
     ],
   },
-  // Ensure API routes are treated as serverless functions in production
-  experimental: {
-    // Force dynamic rendering for API routes
-    serverComponentsExternalPackages: ['@prisma/client']
-  },
+  // External packages configuration for server components
+  serverExternalPackages: ['@prisma/client'],
   // Security headers
   async headers() {
     return [
