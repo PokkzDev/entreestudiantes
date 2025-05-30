@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "../auth/[...nextauth]/route";
 import prisma from "@/lib/prisma";
+import { validateRut } from "@/utils/rutValidation";
 
 export async function POST(request) {
   try {
@@ -29,10 +30,9 @@ export async function POST(request) {
 
     // Validate RUT format if provided
     if (rut && rut.trim()) {
-      const rutRegex = /^[0-9]+[-|‐]{1}[0-9kK]{1}$/;
-      if (!rutRegex.test(rut.trim())) {
+      if (!validateRut(rut.trim())) {
         return NextResponse.json({ 
-          error: "El formato del RUT no es válido. Usar formato: 12345678-9" 
+          error: "El RUT ingresado no es válido. Por favor verifica el dígito verificador." 
         }, { status: 400 });
       }
     }

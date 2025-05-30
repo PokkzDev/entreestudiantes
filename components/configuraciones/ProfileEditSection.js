@@ -3,6 +3,7 @@ import Image from "next/image";
 import { useSession } from "next-auth/react";
 import styles from "./ProfileEditSection.module.css";
 import buttonStyles from "@/styles/buttons.module.css";
+import { formatRutInput, validateRut } from "@/utils/rutValidation";
 
 export default function ProfileEditSection({ session, onProfileUpdate }) {
   const { data: sessionData, update } = useSession();
@@ -173,19 +174,7 @@ export default function ProfileEditSection({ session, onProfileUpdate }) {
 
   // Function to validate and format RUT
   const validateAndFormatRut = (rut) => {
-    if (!rut) return '';
-    
-    // Remove all non-numeric characters except K and k
-    const cleanRut = rut.replace(/[^0-9kK]/g, '');
-    
-    if (cleanRut.length < 2) return rut;
-    
-    // Separate body and digit
-    const body = cleanRut.slice(0, -1);
-    const digit = cleanRut.slice(-1).toLowerCase();
-    
-    // Add dash before the last digit
-    return `${body}-${digit}`;
+    return formatRutInput(rut);
   };
 
   const handleRutChange = (e) => {
@@ -465,11 +454,24 @@ export default function ProfileEditSection({ session, onProfileUpdate }) {
               name="rut"
               value={formData.rut || ""}
               onChange={handleRutChange}
-              className={styles.input}
-              placeholder="12.345.678-9"
+              className={`${styles.input} ${
+                formData.rut && formData.rut.length >= 9 
+                  ? (validateRut(formData.rut) ? styles.inputValid : styles.inputInvalid)
+                  : ''
+              }`}
+              placeholder="12345678-9"
+              maxLength="12"
             />
             <small className={styles.fieldHint}>
-              Formato válido: 12345678-9 (sin puntos, con guión)
+              {formData.rut && formData.rut.length >= 9 ? (
+                validateRut(formData.rut) ? (
+                  <span style={{ color: '#059669' }}>✓ RUT válido</span>
+                ) : (
+                  <span style={{ color: '#dc2626' }}>✗ RUT inválido - Por favor verifica el dígito verificador</span>
+                )
+              ) : (
+                "Formato: 12345678-9 (sin puntos, con guión)"
+              )}
             </small>
           </div>
         </div>
