@@ -1,4 +1,3 @@
-// middleware.ts
 import { withAuth } from "next-auth/middleware";
 import { NextResponse } from "next/server";
 
@@ -6,13 +5,13 @@ export default withAuth(
   function middleware(req) {
     const { pathname, searchParams } = req.nextUrl;
     
-    // Skip auth for your webhook and payment endpoints
-    if (pathname === '/api/webhook' || pathname.includes('/api/payments')) {
-      console.log(`🔍 Skipping auth for route: ${pathname}`);
-      return NextResponse.next();
+    // Debug logging for webhook routes
+    if (pathname.includes('/api/payments')) {
+      console.log(`🔍 Middleware processing payment route: ${pathname}`);
+      console.log('🔍 This should be excluded from authentication!');
     }
     
-    // Block known suspicious WP/php paths
+    // Security: Block WordPress admin and suspicious requests
     const suspiciousPatterns = [
       /wp-admin/i,
       /wp-content/i,
@@ -24,80 +23,105 @@ export default withAuth(
       /administrator/i,
       /setup-config\.php/i
     ];
+    
+    // Check URL path and callback URLs for suspicious patterns
     const callbackUrl = searchParams.get('callbackUrl');
-    const isSuspiciousPath = suspiciousPatterns.some(p => p.test(pathname));
-    const isSuspiciousCallback =
-      callbackUrl && suspiciousPatterns.some(p => p.test(decodeURIComponent(callbackUrl)));
+    const isSuspiciousPath = suspiciousPatterns.some(pattern => pattern.test(pathname));
+    const isSuspiciousCallback = callbackUrl && suspiciousPatterns.some(pattern => pattern.test(decodeURIComponent(callbackUrl)));
+    
     if (isSuspiciousPath || isSuspiciousCallback) {
-      console.warn(`Blocked suspicious request: ${pathname}`);
-      return NextResponse.json({ error: "Access denied" }, { status: 403 });
+      console.warn(`Blocked suspicious request: ${pathname}${callbackUrl ? ` with callback: ${callbackUrl}` : ''}`);
+      return NextResponse.json(
+        { error: "Access denied" }, 
+        { status: 403 }
+      );
     }
     
-    // User status checks
     const token = req.nextauth.token;
+    
+    // If user is banned, suspended (and suspension hasn't expired), or inactive, redirect to login
+    // Note: We need to explicitly check for false, not just falsy values
     if (token && (
-      token.isBanned === true ||
+      token.isBanned === true || 
       token.isActive === false ||
       (token.isSuspended === true && token.suspensionEndsAt && new Date() < new Date(token.suspensionEndsAt)) ||
-      (token.isSuspended === true && !token.suspensionEndsAt)
+      (token.isSuspended === true && !token.suspensionEndsAt) // Indefinite suspension
     )) {
-      // Build a user-facing message
+      // Determine the appropriate message based on the user's status
       let message = "Tu sesión ha expirado";
-      if (token.isBanned) {
-        message = "Tu cuenta ha sido suspendida permanentemente. Contacta al soporte.";
+      if (token.isBanned === true) {
+        message = "Tu cuenta ha sido suspendida permanentemente. Contacta al soporte si crees que esto es un error.";
       } else if (token.isActive === false) {
-        message = "Tu cuenta está desactivada. Contacta al soporte.";
-      } else if (token.isSuspended && token.suspensionEndsAt) {
+        message = "Tu cuenta está desactivada. Contacta al soporte para más información.";
+      } else if (token.isSuspended === true && token.suspensionEndsAt) {
         const endDate = new Date(token.suspensionEndsAt).toLocaleDateString('es-ES');
-        message = `Tu cuenta está suspendida hasta el ${endDate}.`;
-      } else {
-        message = `Tu cuenta está suspendida indefinidamente.`;
+        message = `Tu cuenta está suspendida hasta el ${endDate}. Razón: ${token.suspensionReason || 'No especificada'}`;
+      } else if (token.isSuspended === true) {
+        message = `Tu cuenta está suspendida indefinidamente. Razón: ${token.suspensionReason || 'No especificada'}`;
       }
+      
+      // Redirect directly to login with the message, avoiding NextAuth signout flow
       const url = req.nextUrl.clone();
       url.pathname = '/login';
       url.searchParams.set('message', message);
-      url.searchParams.set('suspended', 'true');
-      const res = NextResponse.redirect(url);
-      res.cookies.delete('next-auth.session-token');
-      res.cookies.delete('__Secure-next-auth.session-token');
-      res.cookies.delete('next-auth.csrf-token');
-      res.cookies.delete('__Host-next-auth.csrf-token');
-      return res;
+      url.searchParams.set('suspended', 'true'); // Flag to indicate this is a suspension redirect
+      
+      const response = NextResponse.redirect(url);
+      
+      // Clear the NextAuth session cookies to ensure clean logout
+      response.cookies.delete('next-auth.session-token');
+      response.cookies.delete('__Secure-next-auth.session-token');
+      response.cookies.delete('next-auth.csrf-token');
+      response.cookies.delete('__Host-next-auth.csrf-token');
+      
+      return response;
     }
     
-    // Everything else: let withAuth handle it
     return NextResponse.next();
   },
   {
     callbacks: {
       authorized: ({ token, req }) => {
-        const path = req.nextUrl.pathname;
-        // Always allow webhooks & payment routes
-        if (path === '/api/webhook' || path.includes('/api/payments')) {
-          console.log(`🔍 Authorized (no auth) for: ${path}`);
-          return true;
+        // Debug logging for webhook routes
+        if (req.nextUrl.pathname.includes('/api/payments')) {
+          console.log(`🔍 Authorized callback for payment route: ${req.nextUrl.pathname}`);
+          console.log('🔍 This should return true without requiring authentication!');
+          return true; // Always allow payment routes
         }
-        // Public pages
+        
+        // Define public routes that don't require authentication
         const publicRoutes = [
-          '/', '/login', '/registro', '/completar-registro',
-          '/recuperar-contrasena', '/reset-contrasena',
-          '/busqueda', '/publicacion', '/planes'
+          '/', // Home page
+          '/login', 
+          '/registro', 
+          '/completar-registro', 
+          '/recuperar-contrasena', 
+          '/reset-contrasena',
+          '/busqueda', // Search page should be public
+          '/publicacion', // Individual publication pages should be public (will be handled by API)
+          '/planes' // Plans page should be public to allow users to see pricing
         ];
-        if (publicRoutes.some(route =>
-          route === '/' ? path === '/' : path.startsWith(route)
-        )) {
+        
+        const isPublicRoute = publicRoutes.some(route => {
+          if (route === '/') {
+            return req.nextUrl.pathname === '/';
+          }
+          return req.nextUrl.pathname.startsWith(route);
+        });
+        
+        if (isPublicRoute) {
           return true;
         }
-        // Otherwise require a session token
+        
+        // For protected routes, require a valid token
         return !!token;
       },
     },
   }
 );
 
-// Exclude these from auth middleware:
 export const config = {
   matcher: [
-    "/((?!api/auth|api/register|api/resend-verification|api/complete-registration|api/allowed-domains|api/busqueda|api/publicacion|api/check-session|api/check-verified|api/payments|api/webhook|api/verify-turnstile|api/cron|api/update-session|_next/static|_next/image|favicon.ico|pageImages|images).*)"
+    "/((?!api/auth|api/register|api/resend-verification|api/complete-registration|api/allowed-domains|api/busqueda|api/publicacion|api/check-session|api/check-verified|api/payments/webhook|api/payments|api/verify-turnstile|api/cron|api/update-session|_next/static|_next/image|favicon.ico|pageImages|images).*)"
   ],
-};
+}; 
