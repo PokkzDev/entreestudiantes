@@ -5,7 +5,18 @@ import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
+// Force this route to be dynamic and not statically generated
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
+// Ensure this route supports POST method
+export const revalidate = 0;
+
 export async function POST(request) {
+  // Add comprehensive logging for production debugging
+  console.log('🔔 Webhook POST request received at:', new Date().toISOString());
+  console.log('🔔 Request method:', request.method);
+  console.log('🔔 Request URL:', request.url);
+  
   try {
     // Get headers for signature verification
     const xSignature = request.headers.get('x-signature');
