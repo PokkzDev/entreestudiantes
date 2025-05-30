@@ -7,7 +7,7 @@ export default withAuth(
     const { pathname, searchParams } = req.nextUrl;
     
     // Skip auth for your webhook and payment endpoints
-    if (pathname === '/api/webhooks' || pathname.includes('/api/payments')) {
+    if (pathname === '/api/webhook' || pathname.includes('/api/payments')) {
       console.log(`🔍 Skipping auth for route: ${pathname}`);
       return NextResponse.next();
     }
@@ -73,7 +73,7 @@ export default withAuth(
       authorized: ({ token, req }) => {
         const path = req.nextUrl.pathname;
         // Always allow webhooks & payment routes
-        if (path === '/api/webhooks' || path.includes('/api/payments')) {
+        if (path === '/api/webhook' || path.includes('/api/payments')) {
           console.log(`🔍 Authorized (no auth) for: ${path}`);
           return true;
         }
@@ -98,6 +98,6 @@ export default withAuth(
 // Exclude these from auth middleware:
 export const config = {
   matcher: [
-    "/((?!api/auth|api/register|api/resend-verification|api/complete-registration|api/allowed-domains|api/busqueda|api/publicacion|api/check-session|api/check-verified|api/payments|api/webhooks|api/verify-turnstile|api/cron|api/update-session|_next/static|_next/image|favicon.ico|pageImages|images).*)"
+    "/((?!api/auth|api/register|api/resend-verification|api/complete-registration|api/allowed-domains|api/busqueda|api/publicacion|api/check-session|api/check-verified|api/payments|api/webhook|api/verify-turnstile|api/cron|api/update-session|_next/static|_next/image|favicon.ico|pageImages|images).*)"
   ],
 };
