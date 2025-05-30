@@ -5,8 +5,8 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "node .next/standalone/server.js",
-    "start:next": "next start",
+    "start": "next start",
+    "start:standalone": "node .next/standalone/server.js",
     "lint": "next lint",
     "db:seed": "node prisma/seed.js",
     "deploy": "npm run build && pm2 restart ecosystem.config.js",

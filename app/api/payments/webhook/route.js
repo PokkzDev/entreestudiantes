@@ -230,4 +230,17 @@ export async function GET() {
     status: 'webhook endpoint active',
     timestamp: new Date().toISOString()
   });
+}
+
+// Handle CORS preflight requests
+export async function OPTIONS() {
+  console.log('Webhook endpoint OPTIONS request (CORS preflight)');
+  return new NextResponse(null, {
+    status: 200,
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Signature, X-Request-Id',
+    },
+  });
 } 

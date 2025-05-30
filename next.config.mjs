@@ -46,6 +46,18 @@ const nextConfig = {
           {
             key: 'Cache-Control',
             value: 'no-cache, no-store, must-revalidate'
+          },
+          {
+            key: 'Access-Control-Allow-Origin',
+            value: '*'
+          },
+          {
+            key: 'Access-Control-Allow-Methods',
+            value: 'GET, POST, PUT, DELETE, OPTIONS'
+          },
+          {
+            key: 'Access-Control-Allow-Headers',
+            value: 'Content-Type, Authorization, X-Signature, X-Request-Id'
           }
         ]
       }
@@ -98,26 +110,6 @@ const nextConfig = {
   },
   // Ensure proper production behavior
   reactStrictMode: true,
-  // Force API routes to be dynamic in production
-  output: 'standalone',
-  // Disable HMR in production
-  webpack: (config, { dev, isServer }) => {
-    if (!dev && !isServer) {
-      // Disable HMR in production client builds
-      config.optimization = {
-        ...config.optimization,
-        splitChunks: {
-          ...config.optimization.splitChunks,
-          cacheGroups: {
-            ...config.optimization.splitChunks.cacheGroups,
-            default: false,
-            vendors: false,
-          },
-        },
-      };
-    }
-    return config;
-  },
   // Additional production optimizations
   poweredByHeader: false,
   compress: true,
