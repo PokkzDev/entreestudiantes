@@ -57,7 +57,7 @@ const nextConfig = {
           },
           {
             key: 'Access-Control-Allow-Headers',
-            value: 'Content-Type, Authorization, X-Signature, X-Request-Id'
+            value: 'Content-Type, Authorization, x-signature, x-request-id'
           }
         ]
       }

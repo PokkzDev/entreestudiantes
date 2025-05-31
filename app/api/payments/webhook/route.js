@@ -12,7 +12,7 @@ export const revalidate = 0;
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Mercadopago-Signature, X-Request-Id',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization, x-signature, x-request-id',
 };
 
 async function handlePOST(request) {
@@ -31,8 +31,6 @@ async function handlePOST(request) {
   console.log('[MP] Webhook received:', {
     body: body,
     headers: {
-      'X-Mercadopago-Signature': request.headers.get('X-Mercadopago-Signature'),
-      'X-Request-Id': request.headers.get('X-Request-Id'),
       'x-signature': request.headers.get('x-signature'),
       'x-request-id': request.headers.get('x-request-id'),
       'content-type': request.headers.get('content-type')
@@ -71,23 +69,14 @@ async function handlePOST(request) {
   }
 
   // === 1) Signature verification (only for live webhooks) ===
-  const signature = request.headers.get('X-Mercadopago-Signature');
-  const requestId = request.headers.get('X-Request-Id');
+  const signature = request.headers.get('x-signature');
+  const requestId = request.headers.get('x-request-id');
   const secret = process.env.MERCADOPAGO_WEBHOOK_SECRET;
 
   if (!signature || !requestId || !secret) {
     console.error('[MP] Missing signature, request-id or secret');
     return NextResponse.json(
       { success: false, error: 'Webhook signature not present or misconfigured' },
-      { status: 401, headers: CORS_HEADERS }
-    );
-  }
-
-  const sigValid = verifyWebhookSignature(rawBody, signature, requestId, secret);
-  if (!sigValid) {
-    console.error('[MP] Invalid webhook signature');
-    return NextResponse.json(
-      { success: false, error: 'Invalid webhook signature' },
       { status: 401, headers: CORS_HEADERS }
     );
   }
@@ -107,6 +96,16 @@ async function handlePOST(request) {
     return NextResponse.json(
       { success: false, error: 'Missing payment ID' },
       { status: 400, headers: CORS_HEADERS }
+    );
+  }
+
+  // Verificar la firma usando el data.id según la documentación de MercadoLibre
+  const sigValid = verifyWebhookSignature(signature, requestId, paymentId.toString(), secret);
+  if (!sigValid) {
+    console.error('[MP] Invalid webhook signature');
+    return NextResponse.json(
+      { success: false, error: 'Invalid webhook signature' },
+      { status: 401, headers: CORS_HEADERS }
     );
   }
 

@@ -16,79 +16,23 @@ datasource db {
 model User {
   id                  String    @id @default(cuid())
   username            String?   @unique
-  nombre              String?   // First name
-  apellidos           String?   // Last name(s)
+  name                String?
   email               String    @unique
-  rut                 String?   @unique // RUT chileno (opcional pero recomendado para pagos)
   password            String
   image               String?
   bio                 String?   @db.Text
   university          String?   // Universidad del usuario
   campus              String?   // Campus de la universidad
-  
-  // Account tier system
-  accountTier         String    @default("free") // "free", "basic", "premium", "elite"
-  tierStartDate       DateTime? // When current tier started
-  tierEndDate         DateTime? // When current tier expires (null for lifetime/free)
-  subscriptionStatus  String    @default("active") // "active", "expired", "cancelled"
-  
   createdAt           DateTime  @default(now())
   updatedAt           DateTime  @updatedAt
   verificationToken   String?  // Token para verificar email
   isVerified          Boolean   @default(false) // Indica si el usuario ya completó el registro
   publicaciones       Publicacion[]
-  reports             Report[]  // Reports made by this user
   resetPasswordToken       String?
   resetPasswordTokenExpiry DateTime?
   nameChangeCount     Int      @default(0)
   usernameChangeCount Int      @default(0)
   universityChangeCount Int    @default(0)
-  
-  // User moderation flags
-  isBanned            Boolean  @default(false) // Permanently banned user
-  isSuspended         Boolean  @default(false) // Temporarily suspended user
-  isRestricted        Boolean  @default(false) // Limited functionality (can't post, comment, etc.)
-  isMuted             Boolean  @default(false) // Can't send messages or comments
-  isWarned            Boolean  @default(false) // Has received a warning
-  isFlagged           Boolean  @default(false) // Flagged for review by admin
-  
-  // Moderation tracking
-  banReason           String?  @db.Text // Reason for ban
-  suspensionReason    String?  @db.Text // Reason for suspension
-  restrictionReason   String?  @db.Text // Reason for restriction
-  muteReason          String?  @db.Text // Reason for mute
-  warningReason       String?  @db.Text // Reason for warning
-  flagReason          String?  @db.Text // Reason for flagging
-  
-  // Moderation dates
-  bannedAt            DateTime? // When user was banned
-  suspendedAt         DateTime? // When user was suspended
-  suspensionEndsAt    DateTime? // When suspension expires
-  restrictedAt        DateTime? // When user was restricted
-  restrictionEndsAt   DateTime? // When restriction expires
-  mutedAt             DateTime? // When user was muted
-  muteEndsAt          DateTime? // When mute expires
-  warnedAt            DateTime? // When user was warned
-  flaggedAt           DateTime? // When user was flagged
-  
-  // Admin tracking
-  moderatedBy         String?  // Admin ID who applied the moderation
-  moderationNotes     String?  @db.Text // Internal admin notes
-  
-  // User behavior tracking
-  reportsMade         Int      @default(0) // Number of reports this user has made
-  reportsReceived     Int      @default(0) // Number of times this user has been reported
-  warningCount        Int      @default(0) // Total warnings received
-  suspensionCount     Int      @default(0) // Total times suspended
-  
-  // Account status
-  isActive            Boolean  @default(true) // General account status
-  lastLoginAt         DateTime? // Last login timestamp
-  lastActivityAt      DateTime? // Last activity timestamp
-  
-  // Payment relations
-  paymentIntents      PaymentIntent[]
-  subscriptions       Subscription[]
 }
 
 model Publicacion {
@@ -106,18 +50,12 @@ model Publicacion {
   tags          String   // Comma-separated tags
   views         Int      @default(0)
   featured      Boolean  @default(false)
-  flagged       Boolean  @default(false) // Auto-flagged when reports exceed threshold
-  flaggedAt     DateTime? // When it was flagged
-  hiddenByReports Boolean @default(false) // Auto-hidden when reports reach 10
-  hiddenAt      DateTime? // When it was hidden due to reports
-  reportCount   Int      @default(0) // Cache of report count for performance
   university    String?  // Universidad del autor al momento de crear la publicación
   campus        String?  // Campus del autor al momento de crear la publicación
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
   author        User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
   authorId      String
-  reports       Report[] // Reports made against this publication
 }
 
 model DeletedAccountLog {
@@ -160,27 +98,6 @@ model DeletedPublicationLog {
   deletedAt     DateTime @default(now()) // When the publication was deleted
 }
 
-model SubscriptionCancellationLog {
-  id                   String    @id @default(cuid())
-  userId               String    // User who cancelled the subscription
-  username             String?   // Username at time of cancellation
-  email                String    // Email at time of cancellation
-  name                 String?   // Name at time of cancellation
-  subscriptionId       String?   // Original subscription ID (if available)
-  planId               String    // Plan that was cancelled ("basic", "premium", "elite")
-  previousAccountTier  String    // Account tier before cancellation
-  reason               String?   @db.Text // Reason for cancellation
-  ipAddress            String?   // IP address at time of cancellation
-  userAgent            String?   @db.Text // Browser/device info
-  subscriptionStartDate DateTime? // When the cancelled subscription started
-  subscriptionEndDate   DateTime? // When the cancelled subscription was supposed to end
-  cancelledAt          DateTime  @default(now()) // When the cancellation occurred
-  
-  @@index([userId])
-  @@index([planId])
-  @@index([cancelledAt])
-}
-
 model Admin {
   id        String   @id @default(cuid())
   username  String  @unique
@@ -192,93 +109,4 @@ model Admin {
   updatedAt DateTime @updatedAt
   otpSecret   String? // Secret for TOTP (2FA)
   otpEnabled  Boolean @default(false) // Is 2FA enabled?
-}
-
-model Report {
-  id            String    @id @default(cuid())
-  publicacionId String    // ID of the reported publication
-  reporterId    String?   // ID of the user who reported (null if anonymous)
-  reason        String    // Reason for the report
-  description   String?   @db.Text // Optional additional description
-  status        String    @default("pending") // "pending", "reviewed", "resolved", "dismissed"
-  ipAddress     String?   // IP address of the reporter
-  userAgent     String?   @db.Text // Browser/device info
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  
-  // Relations
-  publicacion   Publicacion @relation(fields: [publicacionId], references: [id], onDelete: Cascade)
-  reporter      User?       @relation(fields: [reporterId], references: [id], onDelete: SetNull)
-}
-
-model AllowedEmailDomain {
-  id          String   @id @default(cuid())
-  domain      String   @unique // e.g., "inacapmail.cl", "inacap.cl"
-  description String?  @db.Text // Optional description for the domain
-  isActive    Boolean  @default(true) // Whether this domain is currently allowed
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  
-  @@index([domain])
-  @@index([isActive])
-}
-
-model AppConfig {
-  id                        String   @id @default(cuid())
-  key                       String   @unique // Configuration key identifier
-  value                     String   @db.Text // Configuration value (JSON string for complex values)
-  description               String?  @db.Text // Description of what this config does
-  isActive                  Boolean  @default(true) // Whether this config is currently active
-  createdAt                 DateTime @default(now())
-  updatedAt                 DateTime @updatedAt
-  
-  @@index([key])
-  @@index([isActive])
-}
-
-model PaymentIntent {
-  id                      String   @id @default(cuid())
-  userId                  String   // User who initiated the payment
-  planId                  String   // Plan they're trying to purchase
-  amount                  Decimal  @db.Decimal(10, 2) // Amount in CLP
-  currency                String   @default("CLP")
-  status                  String   @default("pending") // "pending", "approved", "rejected", "cancelled"
-  mercadoPagoPreferenceId String?  // MercadoPago preference ID
-  mercadoPagoPaymentId    String?  // MercadoPago payment ID (when payment is completed)
-  externalReference       String   @unique // External reference for tracking
-  createdAt               DateTime @default(now())
-  updatedAt               DateTime @updatedAt
-  
-  // Relations
-  user                    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
-  @@index([userId])
-  @@index([status])
-  @@index([externalReference])
-}
-
-model Subscription {
-  id                      String   @id @default(cuid())
-  userId                  String   // User who owns the subscription
-  planId                  String   // Plan identifier ("basic", "premium", "elite")
-  status                  String   @default("active") // "active", "cancelled", "expired", "paused"
-  startDate               DateTime // When subscription starts
-  endDate                 DateTime // When subscription ends
-  amount                  Decimal  @db.Decimal(10, 2) // Amount paid for this subscription
-  currency                String   @default("CLP")
-  paymentId               String?  // MercadoPago payment ID
-  autoRenew               Boolean  @default(false) // Whether subscription auto-renews
-  cancelledAt             DateTime? // When subscription was cancelled
-  cancelReason            String?  @db.Text // Reason for cancellation
-  createdAt               DateTime @default(now())
-  updatedAt               DateTime @updatedAt
-  
-  // Relations
-  user                    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
-  @@index([userId])
-  @@index([status])
-  @@index([planId])
-  @@index([endDate])
-  @@unique([userId, paymentId])
 }
