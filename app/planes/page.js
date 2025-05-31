@@ -68,14 +68,14 @@ function PlanesContent() {
     }
   }, []);
 
-  const handlePaymentSuccess = useCallback(async (paymentId) => {
+  const handlePaymentSuccess = useCallback(async (token) => {
     try {
-      const response = await fetch('/api/payments/verify', {
+      const response = await fetch('/api/flow/verify', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ paymentId }),
+        body: JSON.stringify({ token }),
       });
       
       const data = await response.json();
@@ -112,40 +112,26 @@ function PlanesContent() {
   }, [status, fetchAccountInfo, checkPlanPurchasingStatus]);
 
   useEffect(() => {
-    // Check for payment status in URL params
-    const paymentStatus = searchParams.get('payment');
-    const paymentId = searchParams.get('payment_id');
-    const collectionStatus = searchParams.get('collection_status');
+    // Check for Flow.cl payment status in URL params
+    const token = searchParams.get('token');
+    const flowStatus = searchParams.get('status');
     
-    if (paymentStatus) {
-      switch (paymentStatus) {
+    if (token && flowStatus) {
+      switch (flowStatus) {
         case 'success':
-          if (collectionStatus === 'approved' && paymentId) {
-            // Payment was approved, call endpoint to verify and update subscription
-            handlePaymentSuccess(paymentId);
-          } else {
-            setMessage({
-              type: 'success',
-              text: '¡Pago procesado exitosamente! Tu plan ha sido actualizado.'
-            });
-          }
-          // Refresh account info after successful payment
-          if (session) {
-            setTimeout(() => {
-              fetchAccountInfo();
-            }, 2000);
-          }
+          // Payment was approved, call endpoint to verify and update subscription
+          handlePaymentSuccess(token);
           break;
-        case 'error':
+        case 'cancelled':
+          setMessage({
+            type: 'warning',
+            text: 'El pago fue cancelado. Puedes intentar nuevamente cuando desees.'
+          });
+          break;
+        case 'failed':
           setMessage({
             type: 'error',
             text: 'Hubo un problema con el pago. Por favor, intenta nuevamente.'
-          });
-          break;
-        case 'pending':
-          setMessage({
-            type: 'warning',
-            text: 'Tu pago está siendo procesado. Te notificaremos cuando esté confirmado.'
           });
           break;
       }
@@ -195,8 +181,8 @@ function PlanesContent() {
     setProcessing(tierKey);
     
     try {
-      // Create payment preference
-      const response = await fetch('/api/payments/create-preference', {
+      // Create Flow.cl payment
+      const response = await fetch('/api/flow/create-payment', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -207,17 +193,12 @@ function PlanesContent() {
       const data = await response.json();
       
       if (data.success) {
-        // Redirect to Flow.cl Checkout
-        // Choose the correct checkout URL based on environment
-        const checkoutUrl = data.environment === 'production' 
-          ? data.preference.init_point 
-          : data.preference.sandbox_init_point;
-        
-        console.log(`Using ${data.environment} checkout URL:`, checkoutUrl);
-        
-        window.location.href = checkoutUrl;
+        // Redirect to Flow.cl payment page
+        const redirectUrl = data.url + "?token=" + data.token;
+        console.log('Redirecting to Flow.cl:', redirectUrl);
+        window.location.href = redirectUrl;
       } else {
-        throw new Error(data.error || 'Error al crear la preferencia de pago');
+        throw new Error(data.error || 'Error al crear el pago en Flow.cl');
       }
     } catch (error) {
       console.error('Error al procesar el pago:', error);

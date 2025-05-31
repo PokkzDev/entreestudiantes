@@ -18,7 +18,12 @@ async function main() {
     university: 'INACAP',
     campus: 'Sede Chillán',
     isVerified: true,
-    isActive: true
+    isActive: true,
+    // Set account to free plan explicitly (only using existing database fields)
+    accountTier: 'free',
+    tierStartDate: new Date(),
+    tierEndDate: null,
+    subscriptionStatus: 'active'
   };
 
   const existingLuisUser = await prisma.user.findUnique({
@@ -35,8 +40,20 @@ async function main() {
       }
     });
     console.log(`✓ Created user: ${luisContrerasUser.email} (${luisContrerasUser.name}) - RUT: ${luisContrerasUser.rut}`);
+    console.log(`✓ Account set to FREE plan with 3 publication limit`);
   } else {
+    // Update existing user to ensure they have free plan (only using existing database fields)
+    await prisma.user.update({
+      where: { email: luisContrerasUser.email },
+      data: {
+        accountTier: 'free',
+        tierStartDate: new Date(),
+        tierEndDate: null,
+        subscriptionStatus: 'active'
+      }
+    });
     console.log(`- User already exists: ${luisContrerasUser.email}`);
+    console.log(`✓ Updated user to FREE plan with 3 publication limit`);
   }
 
   console.log('Seeding completed successfully!');

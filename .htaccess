@@ -9,7 +9,11 @@ RewriteCond %{REQUEST_METHOD} POST
 RewriteCond %{REQUEST_URI} ^/api/.*
 RewriteRule ^(.*)$ $1 [L,QSA]
 
-# Handle webhook specifically
+# Handle Flow.cl webhook specifically
+RewriteCond %{REQUEST_URI} ^/api/flow/webhook
+RewriteRule ^(.*)$ $1 [L,QSA]
+
+# Handle legacy payments webhook (if needed)
 RewriteCond %{REQUEST_URI} ^/api/payments/webhook
 RewriteRule ^(.*)$ $1 [L,QSA]
 

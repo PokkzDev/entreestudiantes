@@ -22,6 +22,9 @@ export async function GET(req) {
       select: {
         id: true,
         accountTier: true,
+        subscriptionTier: true,
+        subscriptionActive: true,
+        subscriptionEndDate: true,
         tierStartDate: true,
         tierEndDate: true,
         subscriptionStatus: true,
@@ -60,7 +63,7 @@ export async function GET(req) {
       limit: limitInfo.limit,
       remaining: limitInfo.remaining,
       isUnlimited: limitInfo.isUnlimited,
-      subscriptionActive: user.accountTier === 'free' || user.subscriptionStatus === 'active'
+      subscriptionActive: user.accountTier === 'free' || user.subscriptionActive
     });
 
   } catch (error) {
