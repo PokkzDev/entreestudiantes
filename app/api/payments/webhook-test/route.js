@@ -4,6 +4,12 @@ import { NextResponse } from 'next/server';
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 
+const CORS_HEADERS = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization, x-signature, x-request-id',
+};
+
 export async function POST(request) {
   console.log('🧪 ==================== WEBHOOK TEST POST ====================');
   console.log('🧪 Timestamp:', new Date().toISOString());
@@ -53,10 +59,6 @@ export async function OPTIONS() {
   console.log('🧪 Test webhook OPTIONS request');
   return new NextResponse(null, {
     status: 200,
-    headers: {
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Signature, X-Request-Id',
-    },
+    headers: CORS_HEADERS,
   });
 } 

@@ -23,8 +23,8 @@ async function testWebhook() {
     headers: {
       'Content-Type': 'application/json',
       'Content-Length': Buffer.byteLength(postData),
-      'X-Signature': 'ts=1635738122,v1=dummy_signature_for_testing',
-      'X-Request-Id': 'test_request_id'
+      'x-signature': 'ts=1635738122,v1=dummy_signature_for_testing',
+      'x-request-id': 'test_request_id'
     }
   };
 
