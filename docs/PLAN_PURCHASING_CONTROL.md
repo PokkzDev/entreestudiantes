@@ -7,7 +7,7 @@ This document explains how to enable and disable plan purchasing functionality w
 The plan purchasing control feature allows administrators to dynamically enable or disable the ability for users to purchase new subscription plans. This is useful for:
 
 - **Maintenance periods**: Temporarily disable purchases during system maintenance
-- **Payment processor issues**: Quickly disable purchases if there are problems with MercadoPago
+- **Payment processor issues**: Quickly disable purchases if there are problems with Flow.cl
 - **Emergency situations**: Immediately stop new subscriptions if needed
 - **Testing**: Safely test the application with purchases disabled
 

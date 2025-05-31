@@ -207,7 +207,7 @@ function PlanesContent() {
       const data = await response.json();
       
       if (data.success) {
-        // Redirect to MercadoPago Checkout Pro
+        // Redirect to Flow.cl Checkout
         // Choose the correct checkout URL based on environment
         const checkoutUrl = data.environment === 'production' 
           ? data.preference.init_point 

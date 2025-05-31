@@ -20,7 +20,7 @@ export default function ProfileEditSection({ session, onProfileUpdate }) {
     username: "",
     image: "",
     email: "", // Add email to formData instead of using session
-    rut: "", // RUT del usuario para pagos de MercadoPago
+    rut: "", // RUT del usuario para pagos de Flow.cl
     nameChangeCount: 0,
     usernameChangeCount: 0
   });
