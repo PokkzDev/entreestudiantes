@@ -10,8 +10,21 @@ import ReportModal from "@/components/ReportModal";
 import ModalContactWarning from "@/components/ModalContactWarning";
 
 export default function PublicacionDetalle(props) {
-  // Next.js 14+: params es una promesa, usar React.use() para obtener el valor
-  const params = React.use(props.params);
+  // Handle params properly - check if it's a promise or already resolved
+  let params;
+  try {
+    // If props.params is a promise, use React.use() to resolve it
+    if (props.params && typeof props.params.then === 'function') {
+      params = React.use(props.params);
+    } else {
+      // If props.params is already an object, use it directly
+      params = props.params;
+    }
+  } catch (error) {
+    console.error('Error resolving params:', error);
+    params = props.params || {};
+  }
+  
   const id = params?.id;
   const router = useRouter();
   const [publicacion, setPublicacion] = useState(null);
@@ -454,7 +467,7 @@ export default function PublicacionDetalle(props) {
                         {publicacion.author.image ? (
                           <Image
                             src={publicacion.author.image}
-                            alt={publicacion.author.nombre && publicacion.author.apellidos ? `${publicacion.author.nombre} ${publicacion.author.apellidos}` : publicacion.author.nombre || publicacion.author.apellidos || publicacion.author.username}
+                            alt={publicacion.author.name || publicacion.author.username}
                             width={32}
                             height={32}
                             className={styles.avatarImageMini}

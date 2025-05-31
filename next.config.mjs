@@ -9,8 +9,6 @@ const nextConfig = {
       },
     ],
   },
-  // External packages configuration for server components
-  serverExternalPackages: ['@prisma/client'],
   // Security headers
   async headers() {
     return [

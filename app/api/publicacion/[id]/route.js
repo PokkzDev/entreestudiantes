@@ -24,8 +24,7 @@ export async function GET(req, context) {
           select: {
             id: true,
             username: true,
-            nombre: true,
-            apellidos: true,
+            name: true,
             image: true,
             university: true,
             campus: true,

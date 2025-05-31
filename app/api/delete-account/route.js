@@ -48,7 +48,7 @@ export async function DELETE(request) {
         userId: user.id,
         username: user.username,
         email: user.email,
-        name: user.nombre && user.apellidos ? `${user.nombre} ${user.apellidos}` : user.nombre || user.apellidos || null,
+        name: user.name || null,
         reason,
         ipAddress,
         userAgent,

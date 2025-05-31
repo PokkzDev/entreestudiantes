@@ -87,8 +87,7 @@ export async function PUT(request) {
       select: {
         id: true,
         username: true,
-        nombre: true,
-        apellidos: true,
+        name: true,
         email: true,
         university: true,
         campus: true,

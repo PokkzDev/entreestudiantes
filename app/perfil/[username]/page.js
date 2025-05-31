@@ -8,7 +8,21 @@ import { FaCalendarAlt, FaUniversity, FaMapMarkerAlt, FaUser, FaArrowLeft } from
 import { getCategoryLabel } from "@/lib/categoryOptions";
 
 export default function PerfilUsuario(props) {
-  const params = React.use(props.params);
+  // Handle params properly - check if it's a promise or already resolved
+  let params;
+  try {
+    // If props.params is a promise, use React.use() to resolve it
+    if (props.params && typeof props.params.then === 'function') {
+      params = React.use(props.params);
+    } else {
+      // If props.params is already an object, use it directly
+      params = props.params;
+    }
+  } catch (error) {
+    console.error('Error resolving params:', error);
+    params = props.params || {};
+  }
+  
   const username = params?.username;
   const router = useRouter();
   const [usuario, setUsuario] = useState(null);
@@ -101,7 +115,7 @@ export default function PerfilUsuario(props) {
             {usuario.image ? (
               <Image
                 src={usuario.image}
-                alt={usuario.nombre && usuario.apellidos ? `${usuario.nombre} ${usuario.apellidos}` : usuario.nombre || usuario.apellidos || usuario.username}
+                alt={usuario.name || usuario.username}
                 className={styles.avatar}
                 width={120}
                 height={120}
@@ -114,7 +128,7 @@ export default function PerfilUsuario(props) {
             )}
           </div>
           <div className={styles.userInfo}>
-            <h1 className={styles.userName}>{usuario.nombre && usuario.apellidos ? `${usuario.nombre} ${usuario.apellidos}` : usuario.nombre || usuario.apellidos || usuario.username}</h1>
+            <h1 className={styles.userName}>{usuario.name || usuario.username}</h1>
             <p className={styles.userUsername}>@{usuario.username}</p>
             {usuario.university && (
               <div className={styles.userUniversity}>
@@ -156,7 +170,7 @@ export default function PerfilUsuario(props) {
       {/* Publications section */}
       <div className={styles.publicacionesSection}>
         <h2 className={styles.sectionTitle}>
-          Publicaciones de {usuario.nombre && usuario.apellidos ? `${usuario.nombre} ${usuario.apellidos}` : usuario.nombre || usuario.apellidos || usuario.username}
+          Publicaciones de {usuario.name || usuario.username}
         </h2>
         
         {publicaciones.length === 0 ? (

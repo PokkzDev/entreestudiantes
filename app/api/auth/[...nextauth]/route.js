@@ -105,9 +105,7 @@ export const authOptions = {
       if (user) {
         token.id = user.id;
         token.isVerified = user.isVerified;
-        token.nombre = user.nombre;
-        token.apellidos = user.apellidos;
-        token.name = user.nombre && user.apellidos ? `${user.nombre} ${user.apellidos}` : user.nombre || user.apellidos || user.username;
+        token.name = user.name || user.username;
         token.username = user.username;
         token.email = user.email;
         token.createdAt = user.createdAt;
@@ -166,8 +164,7 @@ export const authOptions = {
             where: { id: token.id },
             select: {
               id: true,
-              nombre: true,
-              apellidos: true,
+              name: true,
               username: true,
               email: true,
               image: true,
@@ -192,9 +189,7 @@ export const authOptions = {
           
           if (dbUser) {
             // Update token with fresh data from database
-            token.nombre = dbUser.nombre;
-            token.apellidos = dbUser.apellidos;
-            token.name = dbUser.nombre && dbUser.apellidos ? `${dbUser.nombre} ${dbUser.apellidos}` : dbUser.nombre || dbUser.apellidos || dbUser.username;
+            token.name = dbUser.name;
             token.username = dbUser.username;
             token.email = dbUser.email;
             token.image = dbUser.image;
@@ -228,8 +223,6 @@ export const authOptions = {
       if (token) {
         session.user.id = token.id;
         session.user.isVerified = token.isVerified;
-        session.user.nombre = token.nombre;
-        session.user.apellidos = token.apellidos;
         session.user.name = token.name;
         session.user.username = token.username;
         session.user.email = token.email;
