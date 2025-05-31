@@ -204,7 +204,7 @@ export async function POST(request) {
       email: email,
       paymentMethod: paymentMethod,
       urlConfirmation: `${FLOW_CONFIG.baseUrl}/api/flow/webhook`,
-      urlReturn: `${FLOW_CONFIG.baseUrl}/planes?status=success`,
+      urlReturn: `${FLOW_CONFIG.baseUrl}/api/flow/return`,
       optional: optionalData
     };
 
