@@ -5,33 +5,86 @@ import { ACCOUNT_TIERS } from '@/lib/accountTiers';
 import crypto from 'crypto';
 
 // Flow.cl configuration
+// API Documentation: https://www.flow.cl/docs/api.html
 const FLOW_CONFIG = {
   apiKey: process.env.FLOW_API_KEY,
-  secretKey: process.env.FLOW_API_SECRET,
+  secretKey: process.env.FLOW_API_SECRET?.trim(), // Remove invisible whitespace
   apiUrl: process.env.FLOW_API_URL || 'https://sandbox.flow.cl/api',
   baseUrl: process.env.NEXTAUTH_URL || 'http://localhost:3000'
 };
 
-// Generate Flow.cl signature
+// Generate Flow.cl signature according to official documentation
+// https://sandbox.flow.cl/docs/api.html#section/Introduccion/Autenticacion-y-Seguridad
 function generateSignature(params, secretKey) {
-  // Sort parameters by key (alphabetically)
-  const sortedKeys = Object.keys(params).sort();
+  // CRITICAL: Exclude the 's' parameter from signature generation
+  const paramsForSigning = Object.fromEntries(
+    Object.entries(params).filter(([key]) => key !== 's')
+  );
   
-  // Concatenate as: keyvalue keyvalue (without separators)
-  const stringToSign = sortedKeys
-    .map(key => `${key}${params[key]}`)
-    .join('');
+  // Sort parameters alphabetically by key name (CRITICAL: exact order matters)
+  const sortedKeys = Object.keys(paramsForSigning).sort();
+  
+  // Concatenate parameters as: keyvalue keyvalue (no separators, no spaces, no =)
+  // Flow.cl spec: "Nombre_del_parametro valor nombre_del_parametro valor"
+  let stringToSign = '';
+  for (const key of sortedKeys) {
+    const value = String(paramsForSigning[key]);
+    stringToSign += key + value;
+  }
   
   // Create HMAC SHA256 signature
-  return crypto
+  const signature = crypto
     .createHmac('sha256', secretKey)
-    .update(stringToSign)
+    .update(stringToSign, 'utf8')
     .digest('hex');
+  
+  // Debug logging
+  console.log('=== Flow.cl Signature Generation Debug ===');
+  console.log('1. Parameters for signing:', JSON.stringify(paramsForSigning, null, 2));
+  console.log('2. Sorted keys:', sortedKeys);
+  console.log('3. String to sign:', `"${stringToSign}"`);
+  console.log('4. String length:', stringToSign.length);
+  console.log('5. Secret key exists:', !!secretKey);
+  console.log('6. Secret key length:', secretKey ? secretKey.length : 'N/A');
+  console.log('7. Generated signature:', signature);
+  console.log('==========================================');
+  
+  return signature;
 }
 
 // Generate commerce order ID
 function generateCommerceOrder() {
   return `ENT-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+}
+
+// Test function to validate signature generation with Flow.cl documentation example
+function testFlowSignature() {
+  console.log('=== Flow.cl Documentation Test ===');
+  // Example from Flow.cl docs: "amount5000apiKeyXXXX-XXXX-XXXXcurrencyCLP"
+  const testParams = {
+    amount: 5000,
+    apiKey: 'XXXX-XXXX-XXXX',
+    currency: 'CLP'
+  };
+  
+  const sortedKeys = Object.keys(testParams).sort();
+  let testStringToSign = '';
+  for (const key of sortedKeys) {
+    testStringToSign += key + String(testParams[key]);
+  }
+  
+  console.log('Test params:', testParams);
+  console.log('Test sorted keys:', sortedKeys);
+  console.log('Test string generated:', `"${testStringToSign}"`);
+  console.log('Test string should be: "amount5000apiKeyXXXX-XXXX-XXXXcurrencyCLP"');
+  console.log('String matches expected:', testStringToSign === 'amount5000apiKeyXXXX-XXXX-XXXXcurrencyCLP');
+  
+  const testSignature = crypto
+    .createHmac('sha256', 'test-secret-key')
+    .update(testStringToSign, 'utf8')
+    .digest('hex');
+  console.log('Test signature generated:', testSignature);
+  console.log('=====================================');
 }
 
 export async function POST(request) {
@@ -85,65 +138,169 @@ export async function POST(request) {
     // Validate Flow.cl configuration
     if (!FLOW_CONFIG.apiKey || !FLOW_CONFIG.secretKey) {
       console.error('Flow.cl configuration missing');
+      console.error('Missing:', {
+        apiKey: !FLOW_CONFIG.apiKey ? 'FLOW_API_KEY env var missing' : 'present',
+        secretKey: !FLOW_CONFIG.secretKey ? 'FLOW_API_SECRET env var missing' : 'present'
+      });
       return NextResponse.json(
         { success: false, error: 'Configuración de pagos no disponible' },
         { status: 500 }
       );
     }
 
-    // Prepare Flow.cl payment parameters
+    // Debug: Log configuration (safely) and validate format
+    console.log('Flow.cl Config Debug:');
+    console.log('API Key format:', FLOW_CONFIG.apiKey ? `${FLOW_CONFIG.apiKey.substring(0, 8)}...` : 'missing');
+    console.log('Secret Key format:', FLOW_CONFIG.secretKey ? `${FLOW_CONFIG.secretKey.substring(0, 8)}...` : 'missing');
+    console.log('Secret Key length:', FLOW_CONFIG.secretKey ? FLOW_CONFIG.secretKey.length : 'N/A');
+    console.log('Secret Key RAW (for debugging):', `"${FLOW_CONFIG.secretKey}"`);
+    console.log('API URL:', FLOW_CONFIG.apiUrl);
+    
+    // Validate secret key format (should be hex string, typically 40 characters)
+    if (FLOW_CONFIG.secretKey && !/^[a-f0-9]+$/i.test(FLOW_CONFIG.secretKey)) {
+      console.warn('WARNING: Secret key does not appear to be a valid hex string');
+      console.warn('Secret key format:', FLOW_CONFIG.secretKey.substring(0, 20) + '...');
+      console.warn('Secret key contains non-hex characters');
+    }
+    
+    // Clean secret key to remove any potential hidden characters
+    const cleanSecretKey = FLOW_CONFIG.secretKey.replace(/[^a-f0-9]/gi, '');
+    if (cleanSecretKey !== FLOW_CONFIG.secretKey) {
+      console.warn('WARNING: Secret key contained non-hex characters, cleaned from', 
+        FLOW_CONFIG.secretKey.length, 'to', cleanSecretKey.length, 'characters');
+    }
+
+    // Run Flow.cl documentation test
+    testFlowSignature();
+
+    // Prepare Flow.cl payment parameters - EXACT parameter names as per Flow.cl spec
     const commerceOrder = generateCommerceOrder();
     const amount = tier.price;
-    const subject = `Plan ${tier.name} - EntreEstudiantes`;
+    
+    // Clean subject - remove accents and special characters
+    const cleanTierName = tier.name.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    const subject = `Plan ${cleanTierName} - EntreEstudiantes`;
     const email = session.user.email;
 
+    // Prepare optional data as clean JSON string (no extra spaces, consistent formatting)
+    const optionalData = JSON.stringify({
+      userId: session.user.id,
+      planId,
+      planName: cleanTierName,
+      paymentType: 'direct'
+    });
+
+    console.log('→ Optional JSON that will be signed:', optionalData);
+    console.log('→ Optional JSON length:', optionalData.length);
+
+    // CRITICAL: Use exact parameter names as per Flow.cl specification
+    // These must be camelCase as documented: apiKey, commerceOrder, subject, currency, amount, email, paymentMethod, urlConfirmation, urlReturn, optional
     const paymentParams = {
       apiKey: FLOW_CONFIG.apiKey,
-      commerceOrder,
-      subject,
+      commerceOrder: commerceOrder,
+      subject: subject,
       currency: 'CLP',
-      amount,
-      email,
+      amount: amount,
+      email: email,
       paymentMethod: paymentMethod,
       urlConfirmation: `${FLOW_CONFIG.baseUrl}/api/flow/webhook`,
       urlReturn: `${FLOW_CONFIG.baseUrl}/planes?status=success`,
-      optional: JSON.stringify({
-        userId: session.user.id,
-        planId,
-        planName: tier.name,
-        paymentType: 'direct'
-      })
+      optional: optionalData
     };
 
-    // Add timeout if specified
+    // Add timeout if specified (optional parameter)
     if (timeout && timeout > 0) {
       paymentParams.timeout = timeout;
     }
 
-    // Generate signature
-    const signature = generateSignature(paymentParams, FLOW_CONFIG.secretKey);
+    console.log('→ Payment params before signing:', JSON.stringify(paymentParams, null, 2));
+
+    // Generate signature BEFORE adding it to params
+    const signature = generateSignature(paymentParams, cleanSecretKey);
+    
+    // Now add the signature to the parameters
     paymentParams.s = signature;
 
-    // Make request to Flow.cl API
+    // Debug: Log the exact request being sent to Flow.cl
+    console.log('Flow.cl Request Debug:');
+    console.log('API URL:', `${FLOW_CONFIG.apiUrl}/payment/create`);
+    console.log('Payment params (with signature):', JSON.stringify(paymentParams, null, 2));
+
+    // CRITICAL: Build URLSearchParams ensuring EXACT same values that were signed
+    const urlParams = new URLSearchParams();
+    
+    // Add parameters in the EXACT same order and format as used for signature generation
+    // We must ensure that String(value) here produces the same result as in generateSignature
+    const sortedKeys = Object.keys(paymentParams).filter(key => key !== 's').sort();
+    
+    console.log('→ Sorted parameter keys for request:', sortedKeys);
+    
+    for (const key of sortedKeys) {
+      const value = String(paymentParams[key]);
+      urlParams.append(key, value);
+      console.log(`→ Adding param: ${key}="${value}"`);
+    }
+    
+    // Add signature last
+    urlParams.append('s', paymentParams.s);
+    console.log(`→ Adding signature: s="${paymentParams.s}"`);
+
+    console.log('→ Final URL-encoded body:', urlParams.toString());
+    
+    // VERIFICATION: Check that the optional parameter in body matches what was signed
+    const optionalInBody = urlParams.get('optional');
+    if (optionalInBody !== optionalData) {
+      console.error('CRITICAL ERROR: optional parameter in body differs from what was signed!');
+      console.error('Signed:', optionalData);
+      console.error('In body:', optionalInBody);
+      throw new Error('Parameter mismatch between signature and request body');
+    }
+
+    // Make request to Flow.cl API with explicit encoding
     const flowResponse = await fetch(`${FLOW_CONFIG.apiUrl}/payment/create`, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
+        'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+        'Accept': 'application/json',
+        'User-Agent': 'EntreEstudiantes/1.0'
       },
-      body: new URLSearchParams(paymentParams)
+      body: urlParams.toString()
     });
 
+    const responseText = await flowResponse.text();
+    console.log('Flow.cl Raw Response:', responseText);
+
     if (!flowResponse.ok) {
-      const errorText = await flowResponse.text();
-      console.error('Flow.cl API error:', errorText);
-      throw new Error('Error de comunicación con Flow.cl');
+      console.error('Flow.cl API error:', responseText);
+      
+      // Try to parse error response
+      let errorMessage = 'Error de comunicación con Flow.cl';
+      try {
+        const errorData = JSON.parse(responseText);
+        if (errorData.message) {
+          errorMessage = errorData.message;
+        }
+      } catch (parseError) {
+        // If it's not JSON, use the raw text if it's a reasonable length
+        if (responseText.length < 200) {
+          errorMessage = responseText;
+        }
+      }
+      
+      throw new Error(errorMessage);
     }
 
-    const flowData = await flowResponse.json();
+    let flowData;
+    try {
+      flowData = JSON.parse(responseText);
+    } catch (parseError) {
+      console.error('Failed to parse Flow.cl response:', responseText);
+      throw new Error('Respuesta inválida de Flow.cl');
+    }
 
     if (!flowData.url || !flowData.token) {
-      console.error('Invalid Flow.cl response:', flowData);
-      throw new Error('Respuesta inválida de Flow.cl');
+      console.error('Invalid Flow.cl response structure:', flowData);
+      throw new Error('Respuesta inválida de Flow.cl - falta URL o token');
     }
 
     // Log the payment creation
