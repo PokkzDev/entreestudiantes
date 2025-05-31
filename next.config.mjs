@@ -1,5 +1,13 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  experimental: {
+    // Allow cross-origin redirects from Flow.cl payment gateway
+    allowedDevOrigins: [
+      'sandbox.flow.cl',
+      'www.flow.cl',
+      'flow.cl'
+    ]
+  },
   images: {
     remotePatterns: [
       {
