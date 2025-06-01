@@ -15,6 +15,34 @@ const iconMap = {
   "crown": faCrown
 };
 
+// Loading component for Suspense fallback
+function PlanesLoading() {
+  return (
+    <div className={styles.container}>
+      <div className={styles.hero}>
+        <h1 className={styles.title}>Elige tu Plan</h1>
+        <p className={styles.subtitle}>
+          Encuentra el plan perfecto para tus necesidades y comienza a publicar más contenido
+        </p>
+        
+        {/* Payment Model Warning */}
+        <div className={styles.paymentNotice}>
+          <div className={styles.noticeIcon}>ℹ️</div>
+          <div className={styles.noticeContent}>
+            <strong>Información sobre los planes:</strong> Los planes tienen una duración de 30 días. 
+            Al finalizar este período, podrás renovar fácilmente tu plan para continuar disfrutando de los beneficios.
+          </div>
+        </div>
+      </div>
+      
+      <div className={styles.loadingContainer}>
+        <div className={styles.loadingSpinner}></div>
+        <p>Cargando planes disponibles...</p>
+      </div>
+    </div>
+  );
+}
+
 function PlanesContent() {
   const [accountInfo, setAccountInfo] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -112,35 +140,174 @@ function PlanesContent() {
   }, [status, fetchAccountInfo, checkPlanPurchasingStatus]);
 
   useEffect(() => {
-    // Check for Flow.cl payment status in URL params
-    const token = searchParams.get('token');
-    const flowStatus = searchParams.get('status');
+    if (!searchParams) {
+      console.log('⚠️ searchParams is null/undefined, skipping processing');
+      return;
+    }
+
+    // Check for Flow.cl payment status in URL params with null safety
+    let token, flowStatus, errorParam, messageParam, flowReturn;
     
-    if (token && flowStatus) {
+    try {
+      token = searchParams.get('token');
+      flowStatus = searchParams.get('status');
+      errorParam = searchParams.get('error');
+      messageParam = searchParams.get('message');
+      flowReturn = searchParams.get('flow_return');
+    } catch (searchParamsError) {
+      console.error('❌ Error getting search params:', searchParamsError);
+      return;
+    }
+    
+    // Log for debugging with null safety
+    console.log('🔍 URL params detected:', { 
+      token: token || 'null', 
+      flowStatus: flowStatus || 'null', 
+      errorParam: errorParam || 'null', 
+      messageParam: messageParam || 'null', 
+      flowReturn: flowReturn || 'null' 
+    });
+    
+    try {
+      console.log('🌐 Current URL:', typeof window !== 'undefined' && window.location ? window.location.href : 'N/A');
+    } catch (urlError) {
+      console.error('❌ Error getting current URL:', urlError);
+    }
+    
+    // Handle general error parameter (from redirect failures, etc.)
+    if (errorParam) {
+      let errorMessage = 'Hubo un problema con el procesamiento. Por favor, intenta nuevamente.';
+      
+      switch (errorParam) {
+        case 'redirect_failed':
+          errorMessage = 'Hubo un problema con el redirect después del pago. Por favor, verifica el estado de tu pago.';
+          break;
+        default:
+          if (messageParam === 'flow_return_error') {
+            errorMessage = 'Hubo un problema procesando la respuesta de Flow.cl. Por favor, verifica tu pago en tu banco o intenta nuevamente.';
+          }
+      }
+      
+      setMessage({
+        type: 'error',
+        text: errorMessage
+      });
+      
+      // Simple path-based URL cleanup - no URL constructor needed
+      setTimeout(() => {
+        try {
+          console.log('🧹 Attempting to clear error URL params');
+          if (typeof window !== 'undefined' && window.history && window.history.replaceState) {
+            window.history.replaceState({}, '', '/planes');
+            console.log('✅ Successfully cleared error URL params');
+          } else {
+            console.warn('⚠️ window.history.replaceState not available');
+          }
+        } catch (error) {
+          console.error('❌ Error cleaning up error URL params:', error);
+        }
+        
+        // Always clear the message regardless of URL cleanup success
+        setMessage(null);
+      }, 8000); // Longer timeout for error messages
+      
+      return; // Don't process other parameters if there's an error
+    }
+    
+    // Handle Flow.cl returns - both with and without tokens
+    if (flowStatus || flowReturn) {
+      console.log('🔄 Processing Flow.cl response');
+      
       switch (flowStatus) {
         case 'success':
-          // Payment was approved, call endpoint to verify and update subscription
-          handlePaymentSuccess(token);
+          if (token && token !== 'null' && token !== 'undefined') {
+            console.log('✅ Payment success with token - verifying payment');
+            // Payment was approved with token, call endpoint to verify and update subscription
+            handlePaymentSuccess(token);
+          } else {
+            console.log('✅ Payment success without token - Flow.cl scenario');
+            // Success without token - common in Flow.cl sandbox or certain payment methods
+            setMessage({
+              type: 'success',
+              text: '¡Pago completado! Tu plan será actualizado en breve. Si no ves los cambios en unos minutos, contacta al soporte.'
+            });
+            
+            // Still try to refresh account info in case the webhook already processed it
+            setTimeout(() => {
+              fetchAccountInfo();
+            }, 2000);
+          }
           break;
+          
         case 'cancelled':
           setMessage({
             type: 'warning',
             text: 'El pago fue cancelado. Puedes intentar nuevamente cuando desees.'
           });
           break;
+          
         case 'failed':
           setMessage({
             type: 'error',
             text: 'Hubo un problema con el pago. Por favor, intenta nuevamente.'
           });
           break;
+          
+        case 'error':
+          setMessage({
+            type: 'error',
+            text: 'Se produjo un error durante el proceso de pago. Por favor, verifica el estado de tu transacción.'
+          });
+          break;
+          
+        case 'unknown':
+          setMessage({
+            type: 'warning',
+            text: 'El estado del pago no pudo ser determinado. Por favor, verifica el estado de tu transacción en tu banco.'
+          });
+          break;
+          
+        default:
+          console.warn('⚠️ Unknown Flow.cl status:', flowStatus);
+          setMessage({
+            type: 'warning',
+            text: 'Estado de pago desconocido. Por favor, verifica el estado de tu transacción.'
+          });
       }
       
-      // Clear URL params after showing message
+      // Simple path-based URL cleanup - no URL constructor needed
       setTimeout(() => {
-        router.replace('/planes');
+        try {
+          console.log('🧹 Clearing Flow.cl URL params');
+          if (typeof window !== 'undefined' && window.history && window.history.replaceState) {
+            window.history.replaceState({}, '', '/planes');
+            console.log('✅ Successfully cleared Flow.cl URL params');
+          } else {
+            console.warn('⚠️ window.history.replaceState not available');
+          }
+        } catch (error) {
+          console.error('❌ Error clearing Flow.cl URL params:', error);
+        }
+        
         setMessage(null);
       }, 5000);
+      
+    } else if (token || flowStatus) {
+      // Handle edge cases with invalid parameters
+      console.warn('⚠️ Invalid Flow.cl parameters detected:', { token, flowStatus });
+      
+      // Simple path-based cleanup for invalid parameters
+      try {
+        console.log('🧹 Clearing invalid Flow.cl parameters');
+        if (typeof window !== 'undefined' && window.history && window.history.replaceState) {
+          window.history.replaceState({}, '', '/planes');
+          console.log('✅ Successfully cleared invalid parameters');
+        } else {
+          console.warn('⚠️ window.history.replaceState not available');
+        }
+      } catch (error) {
+        console.error('❌ Error clearing invalid parameters:', error);
+      }
     }
   }, [searchParams, session, router, handlePaymentSuccess, fetchAccountInfo]);
 
@@ -193,10 +360,23 @@ function PlanesContent() {
       const data = await response.json();
       
       if (data.success) {
-        // Redirect to Flow.cl payment page
+        // Redirect to Flow.cl payment page with validation
+        if (!data.url || !data.token) {
+          throw new Error('Flow.cl response missing URL or token');
+        }
+        
         const redirectUrl = data.url + "?token=" + data.token;
+        console.log('Flow.cl redirect data:', { url: data.url, token: data.token?.substring(0, 10) + '...' });
         console.log('Redirecting to Flow.cl:', redirectUrl);
-        window.location.href = redirectUrl;
+        
+        // Validate the URL before redirecting
+        try {
+          new URL(redirectUrl); // This will throw if invalid
+          window.location.href = redirectUrl;
+        } catch (urlError) {
+          console.error('Invalid redirect URL:', redirectUrl, urlError);
+          throw new Error('URL de redirección inválida recibida de Flow.cl');
+        }
       } else {
         throw new Error(data.error || 'Error al crear el pago en Flow.cl');
       }
@@ -368,21 +548,10 @@ function PlanesContent() {
 
 export default function Planes() {
   return (
-    <Suspense fallback={
-      <div className={styles.container}>
-        <div className={styles.hero}>
-          <h1 className={styles.title}>Elige tu Plan</h1>
-          <p className={styles.subtitle}>
-            Encuentra el plan perfecto para tus necesidades y comienza a publicar más contenido
-          </p>
-        </div>
-        <div className={styles.loadingContainer}>
-          <div className={styles.loadingSpinner}></div>
-          <p>Cargando planes disponibles...</p>
-        </div>
-      </div>
-    }>
-      <PlanesContent />
+    <Suspense fallback={<PlanesLoading />}>
+      <Suspense fallback={<PlanesLoading />}>
+        <PlanesContent />
+      </Suspense>
     </Suspense>
   );
 }

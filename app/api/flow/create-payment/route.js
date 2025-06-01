@@ -155,6 +155,27 @@ export async function POST(request) {
     console.log('Secret Key length:', FLOW_CONFIG.secretKey ? FLOW_CONFIG.secretKey.length : 'N/A');
     console.log('Secret Key RAW (for debugging):', `"${FLOW_CONFIG.secretKey}"`);
     console.log('API URL:', FLOW_CONFIG.apiUrl);
+    console.log('Base URL:', FLOW_CONFIG.baseUrl);
+    
+    // Validate baseUrl to prevent URL construction errors
+    if (!FLOW_CONFIG.baseUrl) {
+      console.error('Flow.cl baseUrl is missing or null');
+      return NextResponse.json(
+        { success: false, error: 'Configuración de URL base no disponible' },
+        { status: 500 }
+      );
+    }
+    
+    // Validate baseUrl format
+    try {
+      new URL(FLOW_CONFIG.baseUrl);
+    } catch (urlError) {
+      console.error('Invalid baseUrl format:', FLOW_CONFIG.baseUrl, urlError);
+      return NextResponse.json(
+        { success: false, error: 'Configuración de URL base inválida' },
+        { status: 500 }
+      );
+    }
     
     // Validate secret key format (should be hex string, typically 40 characters)
     if (FLOW_CONFIG.secretKey && !/^[a-f0-9]+$/i.test(FLOW_CONFIG.secretKey)) {
@@ -193,6 +214,25 @@ export async function POST(request) {
     console.log('→ Optional JSON that will be signed:', optionalData);
     console.log('→ Optional JSON length:', optionalData.length);
 
+    // Construct and validate URLs before using them
+    let urlConfirmation, urlReturn;
+    try {
+      urlConfirmation = `${FLOW_CONFIG.baseUrl}/api/flow/webhook`;
+      urlReturn = `${FLOW_CONFIG.baseUrl}/api/flow/return`;
+      
+      // Validate URL construction
+      new URL(urlConfirmation);
+      new URL(urlReturn);
+      
+      console.log('→ Constructed URLs:');
+      console.log('  - Confirmation URL:', urlConfirmation);
+      console.log('  - Return URL:', urlReturn);
+    } catch (urlConstructionError) {
+      console.error('Failed to construct Flow.cl URLs:', urlConstructionError);
+      console.error('Base URL used:', FLOW_CONFIG.baseUrl);
+      throw new Error('Error en construcción de URLs de callback');
+    }
+
     // CRITICAL: Use exact parameter names as per Flow.cl specification
     // These must be camelCase as documented: apiKey, commerceOrder, subject, currency, amount, email, paymentMethod, urlConfirmation, urlReturn, optional
     const paymentParams = {
@@ -203,8 +243,8 @@ export async function POST(request) {
       amount: amount,
       email: email,
       paymentMethod: paymentMethod,
-      urlConfirmation: `${FLOW_CONFIG.baseUrl}/api/flow/webhook`,
-      urlReturn: `${FLOW_CONFIG.baseUrl}/api/flow/return`,
+      urlConfirmation: urlConfirmation,
+      urlReturn: urlReturn,
       optional: optionalData
     };
 

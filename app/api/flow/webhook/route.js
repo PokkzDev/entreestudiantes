@@ -100,6 +100,10 @@ async function getExtendedPaymentStatus(token, secretKey, apiUrl, apiKey) {
 
 export async function POST(request) {
   try {
+    console.log('🔍 Flow.cl webhook - Starting processing...');
+    console.log('🔍 Request headers:', Object.fromEntries(request.headers.entries()));
+    console.log('🔍 Request URL:', request.url);
+    
     // Parse form data from Flow.cl webhook
     const formData = await request.formData();
     const params = {};
@@ -109,16 +113,34 @@ export async function POST(request) {
       params[key] = value;
     }
 
-    console.log('Flow.cl webhook received:', params);
+    console.log('🔍 Flow.cl webhook received raw params:', params);
+    console.log('🔍 Number of parameters received:', Object.keys(params).length);
+
+    // Check if we have a signature
+    if (!params.s) {
+      console.error('❌ Missing signature in webhook data');
+      return NextResponse.json(
+        { success: false, error: 'Missing signature' },
+        { status: 400 }
+      );
+    }
 
     // Extract signature and remove it from params for verification
     const receivedSignature = params.s;
     const verificationParams = { ...params };
     delete verificationParams.s;
 
+    console.log('🔍 Received signature:', receivedSignature);
+    console.log('🔍 Parameters for verification:', verificationParams);
+
     // Validate Flow.cl configuration
     if (!FLOW_CONFIG.secretKey) {
-      console.error('Flow.cl secret key not configured');
+      console.error('❌ Flow.cl secret key not configured');
+      console.log('🔍 FLOW_CONFIG:', {
+        hasApiKey: !!FLOW_CONFIG.apiKey,
+        hasSecretKey: !!FLOW_CONFIG.secretKey,
+        apiUrl: FLOW_CONFIG.apiUrl
+      });
       return NextResponse.json(
         { success: false, error: 'Configuration error' },
         { status: 500 }
@@ -126,8 +148,19 @@ export async function POST(request) {
     }
 
     // Verify webhook signature
-    if (!verifyWebhookSignature(verificationParams, receivedSignature, FLOW_CONFIG.secretKey)) {
-      console.error('Invalid webhook signature');
+    console.log('🔍 Attempting signature verification...');
+    const isSignatureValid = verifyWebhookSignature(verificationParams, receivedSignature, FLOW_CONFIG.secretKey);
+    console.log('🔍 Signature verification result:', isSignatureValid);
+    
+    if (!isSignatureValid) {
+      console.error('❌ Invalid webhook signature');
+      console.log('🔍 Expected signature would be generated from:', verificationParams);
+      console.log('🔍 Received signature:', receivedSignature);
+      
+      // Generate expected signature for debugging
+      const expectedSignature = generateSignature(verificationParams, FLOW_CONFIG.secretKey);
+      console.log('🔍 Expected signature:', expectedSignature);
+      
       return NextResponse.json(
         { success: false, error: 'Invalid signature' },
         { status: 400 }
@@ -137,12 +170,14 @@ export async function POST(request) {
     const { token, status } = params;
 
     if (!token) {
-      console.error('Missing token in webhook');
+      console.error('❌ Missing token in webhook');
       return NextResponse.json(
         { success: false, error: 'Missing token' },
         { status: 400 }
       );
     }
+
+    console.log('✅ Webhook validation passed, processing payment...');
 
     // Get payment details from Flow.cl using extended service
     let paymentStatus;

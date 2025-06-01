@@ -10,8 +10,17 @@ export async function GET(request) {
 
     console.log('🕐 Vercel cron job triggered: checking expired subscriptions');
 
+    // Get base URL with robust fallback
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXTAUTH_URL || 'http://localhost:3000';
+    
+    // Validate that baseUrl is not null or empty
+    if (!baseUrl || baseUrl === 'null' || baseUrl === 'undefined') {
+      console.error('Warning: baseUrl is null or invalid in cron job, using fallback');
+      throw new Error('Base URL configuration is invalid');
+    }
+
     // Call the expiration checker
-    const response = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/admin/check-expired-subscriptions`, {
+    const response = await fetch(`${baseUrl}/api/admin/check-expired-subscriptions`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${process.env.CRON_API_KEY}`,
