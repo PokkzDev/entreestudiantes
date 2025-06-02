@@ -6,3 +6,5 @@
 
 
 - ME LLEVAS? Transporte entre estudiantes, por un precio acordado entre ellos.
+
+- [x] Cambiar plan basico a "premium"

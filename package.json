@@ -9,6 +9,7 @@
     "start:standalone": "node .next/standalone/server.js",
     "lint": "next lint",
     "db:seed": "node prisma/seed.js",
+    "db:reset": "npx prisma db push --force-reset && npm run db:seed",
     "deploy": "npm run build && pm2 restart ecosystem.config.js",
     "deploy:fresh": "npm run build && pm2 delete all && pm2 start ecosystem.config.js",
     "logs": "pm2 logs entreestudiantes",

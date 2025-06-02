@@ -141,16 +141,16 @@ export default function PlanDetailsSection() {
     }
   };
 
-  const getStatusText = (user) => {
-    if (user.accountTier === 'free') {
+  const getStatusText = (user, currentSubscription) => {
+    if (user.effectiveAccountTier === 'free' || user.accountTier === 'free') {
       return { text: 'Activo', className: styles.statusActive };
     }
     
-    if (user.subscriptionStatus === 'active') {
-      const timeRemaining = getTimeRemaining(user.tierEndDate);
-      if (timeRemaining.expired) {
+    if (user.subscriptionStatus === 'active' && currentSubscription) {
+      const timeRemaining = getTimeRemaining(currentSubscription.endDate);
+      if (timeRemaining?.expired) {
         return { text: 'Expirado', className: styles.statusExpired };
-      } else if (timeRemaining.text.includes('restantes')) {
+      } else if (timeRemaining?.text.includes('restantes')) {
         return { text: timeRemaining.text, className: styles.statusWarning };
       } else {
         return { text: 'Activo', className: styles.statusActive };
@@ -226,9 +226,11 @@ export default function PlanDetailsSection() {
     );
   }
 
-  const { user } = planData;
-  const currentTier = ACCOUNT_TIERS[user.accountTier];
-  const statusInfo = getStatusText(user);
+  const { user, currentSubscription } = planData;
+  // Use effective tier for UI display (considers active subscription)
+  const effectiveTier = user.effectiveAccountTier || user.accountTier;
+  const currentTier = ACCOUNT_TIERS[effectiveTier];
+  const statusInfo = getStatusText(user, currentSubscription);
 
   return (
     <div className={styles.section}>
@@ -245,8 +247,8 @@ export default function PlanDetailsSection() {
       {/* Current Plan Card */}
       <div className={styles.currentPlanCard}>
         <div className={styles.currentPlanHeader}>
-          <div className={styles.planIcon} style={{ color: getTierColor(user.accountTier) }}>
-            {getTierIconComponent(user.accountTier)}
+          <div className={styles.planIcon} style={{ color: getTierColor(effectiveTier) }}>
+            {getTierIconComponent(effectiveTier)}
           </div>
           <div className={styles.planInfo}>
             <h3 className={styles.planName}>{currentTier.name}</h3>
@@ -289,7 +291,7 @@ export default function PlanDetailsSection() {
                   className={styles.progressFill}
                   style={{ 
                     width: `${Math.min((planData.publicationCount / currentTier.publicationLimit) * 100, 100)}%`,
-                    backgroundColor: getTierColor(user.accountTier)
+                    backgroundColor: getTierColor(effectiveTier)
                   }}
                 ></div>
               </div>
@@ -299,41 +301,41 @@ export default function PlanDetailsSection() {
       </div>
 
       {/* Subscription Details */}
-      {user.accountTier !== 'free' && (
+      {(effectiveTier !== 'free' || currentSubscription) && (
         <div className={styles.subscriptionDetails}>
           <h4>
             <FontAwesomeIcon icon={faCalendarAlt} />
             Detalles de la suscripción
           </h4>
           <div className={styles.subscriptionGrid}>
-            <div className={styles.subscriptionItem}>
-              <span className={styles.subscriptionLabel}>Fecha de inicio:</span>
-              <span className={styles.subscriptionValue}>{formatDate(user.tierStartDate)}</span>
-            </div>
-            <div className={styles.subscriptionItem}>
-              <span className={styles.subscriptionLabel}>Fecha de vencimiento:</span>
-              <span className={styles.subscriptionValue}>{formatDate(user.tierEndDate)}</span>
-            </div>
-            <div className={styles.subscriptionItem}>
-              <span className={styles.subscriptionLabel}>Estado:</span>
-              <span className={`${styles.subscriptionValue} ${statusInfo.className}`}>
-                {statusInfo.text}
-              </span>
-            </div>
-            {user.subscriptionStatus === 'active' && user.tierEndDate && (
-              <div className={styles.subscriptionItem}>
-                <span className={styles.subscriptionLabel}>Tiempo restante:</span>
-                <span className={styles.subscriptionValue}>
-                  {getTimeRemaining(user.tierEndDate).text}
-                </span>
-              </div>
-            )}
-            {planData.currentSubscription && (
+            {currentSubscription && (
               <>
+                <div className={styles.subscriptionItem}>
+                  <span className={styles.subscriptionLabel}>Fecha de inicio:</span>
+                  <span className={styles.subscriptionValue}>{formatDate(currentSubscription.startDate)}</span>
+                </div>
+                <div className={styles.subscriptionItem}>
+                  <span className={styles.subscriptionLabel}>Fecha de vencimiento:</span>
+                  <span className={styles.subscriptionValue}>{formatDate(currentSubscription.endDate)}</span>
+                </div>
+                <div className={styles.subscriptionItem}>
+                  <span className={styles.subscriptionLabel}>Estado:</span>
+                  <span className={`${styles.subscriptionValue} ${statusInfo.className}`}>
+                    {statusInfo.text}
+                  </span>
+                </div>
+                {user.subscriptionStatus === 'active' && currentSubscription.endDate && (
+                  <div className={styles.subscriptionItem}>
+                    <span className={styles.subscriptionLabel}>Tiempo restante:</span>
+                    <span className={styles.subscriptionValue}>
+                      {getTimeRemaining(currentSubscription.endDate)?.text || 'N/A'}
+                    </span>
+                  </div>
+                )}
                 <div className={styles.subscriptionItem}>
                   <span className={styles.subscriptionLabel}>Renovación automática:</span>
                   <span className={styles.subscriptionValue}>
-                    {planData.currentSubscription.autoRenew ? (
+                    {currentSubscription.autoRenew ? (
                       <span className={styles.autoRenewEnabled}>
                         <FontAwesomeIcon icon={faCheckCircle} /> Activada
                       </span>
@@ -347,13 +349,13 @@ export default function PlanDetailsSection() {
                 <div className={styles.subscriptionItem}>
                   <span className={styles.subscriptionLabel}>ID de pago:</span>
                   <span className={styles.subscriptionValue}>
-                    {planData.currentSubscription.paymentId || 'N/A'}
+                    {currentSubscription.paymentId || 'N/A'}
                   </span>
                 </div>
                 <div className={styles.subscriptionItem}>
                   <span className={styles.subscriptionLabel}>Monto pagado:</span>
                   <span className={styles.subscriptionValue}>
-                    {formatPrice(planData.currentSubscription.amount)}
+                    {formatPrice(currentSubscription.amount)}
                   </span>
                 </div>
               </>
@@ -361,15 +363,15 @@ export default function PlanDetailsSection() {
           </div>
           
           {/* Renewal Information */}
-          {user.subscriptionStatus === 'active' && !getTimeRemaining(user.tierEndDate).expired && (
+          {user.subscriptionStatus === 'active' && currentSubscription && !getTimeRemaining(currentSubscription.endDate)?.expired && (
             <div className={styles.renewalInfo}>
               <div className={styles.renewalNotice}>
                 <FontAwesomeIcon icon={faCalendarAlt} className={styles.renewalIcon} />
                 <div className={styles.renewalText}>
                   <strong>Próxima renovación:</strong>
                   <p>
-                    Tu plan expira el {formatDate(user.tierEndDate)}. 
-                    {planData.currentSubscription?.autoRenew ? (
+                    Tu plan expira el {formatDate(currentSubscription.endDate)}. 
+                    {currentSubscription.autoRenew ? (
                       " Se renovará automáticamente."
                     ) : (
                       " Deberás renovar manualmente para continuar."
@@ -382,12 +384,12 @@ export default function PlanDetailsSection() {
         </div>
       )}
 
-      {/* Payment History */}
+      {/* Unified Payment History - Shows payments with subscription context */}
       {planData.paymentHistory && planData.paymentHistory.length > 0 && (
         <div className={styles.paymentHistory}>
           <h4>
             <FontAwesomeIcon icon={faHistory} />
-            Historial de pagos ({planData.paymentHistory.length})
+            Historial de pagos y suscripciones ({planData.paymentHistory.length})
           </h4>
           <div className={styles.paymentsList}>
             {planData.paymentHistory.map((payment, index) => (
@@ -396,29 +398,38 @@ export default function PlanDetailsSection() {
                   <FontAwesomeIcon icon={faCreditCard} className={styles.paymentIcon} />
                   <div className={styles.paymentDetails}>
                     <span className={styles.paymentPlan}>Plan {formatTierName(payment.planId)}</span>
-                    <span className={styles.paymentDate}>{formatDateTime(payment.createdAt)}</span>
-                    <span className={styles.paymentPeriod}>
-                      Período: {formatDate(payment.startDate)} - {formatDate(payment.endDate)}
+                    <span className={styles.paymentDate}>
+                      Pagado: {formatDateTime(payment.paymentDate || payment.createdAt)}
                     </span>
+                    {payment.subscription && (
+                      <span className={styles.paymentPeriod}>
+                        Período: {formatDate(payment.subscription.startDate)} - {formatDate(payment.subscription.endDate)}
+                      </span>
+                    )}
                     {payment.paymentId && (
                       <span className={styles.paymentId}>
                         ID: {payment.paymentId}
+                      </span>
+                    )}
+                    {payment.subscription?.cancelReason && (
+                      <span className={styles.cancelReason}>
+                        Razón de cancelación: {payment.subscription.cancelReason}
                       </span>
                     )}
                   </div>
                 </div>
                 <div className={styles.paymentMeta}>
                   <div className={styles.paymentAmount}>
-                    {formatPrice(payment.amount)}
+                    {formatPrice(payment.amount)} {/* Amount is already in CLP, not cents */}
                   </div>
                   <div className={`${styles.paymentStatus} ${
-                    payment.status === 'active' ? styles.statusActive : 
-                    payment.status === 'cancelled' ? styles.statusCancelled : 
-                    payment.status === 'expired' ? styles.statusExpired : styles.statusInactive
+                    payment.status === 'completed' ? styles.statusActive : 
+                    payment.subscription?.subscriptionStatus === 'cancelled' ? styles.statusCancelled : 
+                    payment.subscription?.isExpired ? styles.statusExpired : styles.statusInactive
                   }`}>
-                    {payment.status === 'active' ? 'Activo' : 
-                     payment.status === 'cancelled' ? 'Cancelado' :
-                     payment.status === 'expired' ? 'Expirado' : 'Inactivo'}
+                    {payment.status === 'completed' ? 'Completado' : 
+                     payment.subscription?.subscriptionStatus === 'cancelled' ? 'Cancelado' :
+                     payment.subscription?.isExpired ? 'Expirado' : payment.status}
                   </div>
                 </div>
               </div>
@@ -457,10 +468,10 @@ export default function PlanDetailsSection() {
           </div>
           <div className={styles.summaryItem}>
             <div className={styles.summaryValue}>
-              {user.accountTier === 'free' ? 
+              {effectiveTier === 'free' ? 
                 'Gratis' : 
                 user.subscriptionStatus === 'active' ? 
-                  'Premium' : 'Inactivo'
+                  formatTierName(effectiveTier) : 'Inactivo'
               }
             </div>
             <div className={styles.summaryLabel}>Estado actual</div>
@@ -477,10 +488,10 @@ export default function PlanDetailsSection() {
           disabled={actionLoading}
         >
           <FontAwesomeIcon icon={faArrowUp} />
-          {user.accountTier === 'free' ? 'Actualizar Plan' : 'Cambiar Plan'}
+          {effectiveTier === 'free' ? 'Actualizar Plan' : 'Cambiar Plan'}
         </button>
 
-        {user.accountTier !== 'free' && user.subscriptionStatus === 'active' && (
+        {effectiveTier !== 'free' && user.subscriptionStatus === 'active' && currentSubscription && (
           <button
             type="button"
             onClick={handleCancelClick}
@@ -504,7 +515,7 @@ export default function PlanDetailsSection() {
           isOpen={showCancelModal}
           onConfirm={handleCancelSubscription}
           onClose={handleCancelModalClose}
-          userTier={user?.accountTier}
+          userTier={effectiveTier}
         />
       )}
     </div>

@@ -32,14 +32,8 @@ model User {
   usernameChangeCount Int      @default(0)
   universityChangeCount Int    @default(0)
   
-  // Subscription/Account Tier fields (Updated for Flow.cl)
+  // Simplified account tier (for backward compatibility, will be derived from active subscription)
   accountTier         String    @default("free") // "free", "basic", "premium", "elite"
-  subscriptionTier    String?   // Current subscription tier for Flow.cl
-  subscriptionActive  Boolean   @default(false) // Whether subscription is currently active
-  subscriptionEndDate DateTime? // When current subscription expires
-  tierStartDate       DateTime?
-  tierEndDate         DateTime?
-  subscriptionStatus  String    @default("active") // "active", "cancelled", "expired"
   
   // Moderation fields
   isBanned            Boolean   @default(false)
@@ -62,6 +56,7 @@ model User {
   sessions            Session[]
   reports             Report[]
   paymentLogs         PaymentLog[]
+  subscriptions       Subscription[]
   createdRefunds      RefundLog[] @relation("RefundCreator")
   cancelledRefunds    RefundLog[] @relation("RefundCanceller")
 }
@@ -99,18 +94,42 @@ model Publicacion {
   reports         Report[]
 }
 
+model Subscription {
+  id                  String    @id @default(cuid())
+  userId              String
+  planId              String    // The plan ID (basic, premium, elite)
+  status              String    // "active", "cancelled", "expired", "paused"
+  startDate           DateTime  // When subscription started
+  endDate             DateTime  // When subscription expires
+  autoRenew           Boolean   @default(false) // Whether to auto-renew
+  cancelledAt         DateTime? // When subscription was cancelled
+  cancelReason        String?   // Reason for cancellation
+  amount              Int       // Amount paid in CLP (Chilean pesos)
+  currency            String    @default("CLP")
+  paymentId           String    // Reference to the payment that created this subscription
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+  
+  // Relations
+  user                User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Ensure one subscription per user per payment
+  @@unique([userId, paymentId])
+  @@index([userId, status])
+  @@index([endDate, status])
+}
+
 model PaymentLog {
   id                  String    @id @default(cuid())
   userId              String
   planId              String    // The plan that was purchased
-  amount              Int       // Amount in CLP cents
+  amount              Int       // Amount in CLP (Chilean pesos)
   currency            String    @default("CLP")
   flowToken           String    @unique // Flow.cl token
   commerceOrder       String    // Commerce order ID
   flowOrder           String?   // Flow.cl order number
   status              String    // "pending", "completed", "failed", "cancelled"
   paymentDate         DateTime  @default(now())
-  subscriptionEndDate DateTime? // When this subscription expires
   createdAt           DateTime  @default(now())
   updatedAt           DateTime  @updatedAt
   
@@ -124,7 +143,7 @@ model RefundLog {
   flowRefundOrder       String?   // Flow.cl refund order number
   token                 String    @unique // Flow.cl refund token
   receiverEmail         String    // Email of refund receiver
-  amount                Int       // Refund amount in CLP cents
+  amount                Int       // Refund amount in CLP (Chilean pesos)
   fee                   Int?      // Flow.cl fee for the refund
   status                String    // "created", "pending", "accepted", "rejected", "cancelled", "completed", "expired"
   originalCommerceOrder String?   // Original payment commerce order
@@ -179,6 +198,25 @@ model DeletedPublicationLog {
   deletedBy     String    // "user" (self-deletion) or "admin" or "account-deletion"
   publicationCreatedAt DateTime // When the publication was originally created
   deletedAt     DateTime @default(now()) // When the publication was deleted
+}
+
+model SubscriptionCancellationLog {
+  id                      String    @id @default(cuid())
+  userId                  String    // User who cancelled
+  username                String?   // Username at time of cancellation
+  email                   String    // Email at time of cancellation
+  name                    String?   // Name at time of cancellation
+  university              String?   // University at time of cancellation
+  campus                  String?   // Campus at time of cancellation
+  subscriptionId          String?   // ID of the cancelled subscription
+  planId                  String    // Plan that was cancelled (basic, premium, elite)
+  previousAccountTier     String    // Account tier before cancellation
+  reason                  String?   @db.Text // Reason for cancellation
+  ipAddress               String?   // IP address at time of cancellation
+  userAgent               String?   @db.Text // Browser/device info
+  subscriptionStartDate   DateTime? // When the subscription originally started
+  subscriptionEndDate     DateTime? // When the subscription was supposed to end
+  cancelledAt             DateTime  @default(now()) // When the cancellation occurred
 }
 
 // NextAuth.js required models
@@ -238,6 +276,15 @@ model AppConfig {
   id          String    @id @default(cuid())
   key         String    @unique
   value       String    @db.Text
+  description String?   @db.Text
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model AllowedEmailDomain {
+  id          String    @id @default(cuid())
+  domain      String    @unique
   description String?   @db.Text
   isActive    Boolean   @default(true)
   createdAt   DateTime  @default(now())

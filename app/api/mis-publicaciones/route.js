@@ -3,6 +3,7 @@ import prisma from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "../auth/[...nextauth]/route";
 import { getEffectiveTier, canCreatePublication, formatTierName } from "@/lib/accountTiers";
+import { getCurrentActiveSubscription } from "@/lib/dbUtils";
 
 // GET /api/mis-publicaciones - Obtener publicaciones del usuario autenticado
 export async function GET(req) {
@@ -16,14 +17,11 @@ export async function GET(req) {
       }, { status: 401 });
     }
 
-    // Obtener todas las publicaciones del usuario junto con información de cuenta
+    // Obtener todas las publicaciones del usuario junto con información básica de cuenta
     const userWithPublications = await prisma.user.findUnique({
       where: { id: session.user.id },
       select: {
         accountTier: true,
-        tierStartDate: true,
-        tierEndDate: true,
-        subscriptionStatus: true,
         publicaciones: {
           orderBy: {
             createdAt: 'desc'
@@ -39,10 +37,24 @@ export async function GET(req) {
       }, { status: 404 });
     }
 
+    // Get current active subscription
+    const currentSubscription = await getCurrentActiveSubscription(session.user.id);
+
+    // Create user object compatible with getEffectiveTier function
+    const userForTierCalculation = {
+      accountTier: userWithPublications.accountTier,
+      currentSubscription
+    };
+
     // Calculate account tier information
-    const effectiveTier = getEffectiveTier(userWithPublications);
+    const effectiveTier = getEffectiveTier(userForTierCalculation, currentSubscription);
     const activePublicationsCount = userWithPublications.publicaciones.filter(p => p.status === 'activo').length;
     const limitInfo = canCreatePublication(effectiveTier, activePublicationsCount);
+
+    // Determine if subscription is active
+    const subscriptionActive = currentSubscription ? 
+      (currentSubscription.status === 'active' && new Date() <= new Date(currentSubscription.endDate)) :
+      (userWithPublications.accountTier === 'free'); // Free tier is always "active"
 
     return NextResponse.json({
       success: true,
@@ -55,7 +67,8 @@ export async function GET(req) {
         limit: limitInfo.limit,
         remaining: limitInfo.remaining,
         isUnlimited: limitInfo.isUnlimited,
-        subscriptionActive: userWithPublications.accountTier === 'free' || userWithPublications.subscriptionStatus === 'active'
+        subscriptionActive,
+        subscriptionEndDate: currentSubscription?.endDate || null
       }
     });
   } catch (error) {

@@ -39,9 +39,6 @@ export async function POST(request) {
         name: true,
         email: true,
         accountTier: true,
-        subscriptionStatus: true,
-        tierStartDate: true,
-        tierEndDate: true,
         subscriptions: {
           where: { status: 'active' },
           orderBy: { startDate: 'desc' },
@@ -60,6 +57,9 @@ export async function POST(request) {
       );
     }
 
+    // Get the active subscription
+    const activeSubscription = user.subscriptions[0];
+
     // Check if user has an active subscription to cancel
     if (user.accountTier === 'free') {
       return NextResponse.json(
@@ -68,9 +68,18 @@ export async function POST(request) {
       );
     }
 
-    if (user.subscriptionStatus !== 'active') {
+    // Check if there's actually an active subscription
+    if (!activeSubscription || activeSubscription.status !== 'active') {
       return NextResponse.json(
         { success: false, error: "Tu suscripción ya está cancelada o inactiva" },
+        { status: 400 }
+      );
+    }
+
+    // Check if subscription has already expired
+    if (new Date() > new Date(activeSubscription.endDate)) {
+      return NextResponse.json(
+        { success: false, error: "Tu suscripción ya ha expirado" },
         { status: 400 }
       );
     }
@@ -83,16 +92,11 @@ export async function POST(request) {
 
     // Begin transaction to update user, subscription records, and create log
     await prisma.$transaction(async (tx) => {
-      // Get the active subscription for logging
-      const activeSubscription = user.subscriptions[0];
-
       // Update user to free tier
       await tx.user.update({
         where: { id: user.id },
         data: {
           accountTier: 'free',
-          subscriptionStatus: 'cancelled',
-          tierEndDate: new Date(), // End subscription immediately
           updatedAt: new Date()
         }
       });
@@ -120,14 +124,14 @@ export async function POST(request) {
           name: user.name || user.username,
           university: user.university,
           campus: user.campus,
-          subscriptionId: activeSubscription?.id,
-          planId: activeSubscription?.planId || user.accountTier,
+          subscriptionId: activeSubscription.id,
+          planId: activeSubscription.planId,
           previousAccountTier: user.accountTier,
           reason: reason || 'No se proporcionó razón',
           ipAddress: ipAddress,
           userAgent: userAgent,
-          subscriptionStartDate: activeSubscription?.startDate || user.tierStartDate,
-          subscriptionEndDate: activeSubscription?.endDate || user.tierEndDate,
+          subscriptionStartDate: activeSubscription.startDate,
+          subscriptionEndDate: activeSubscription.endDate,
         }
       });
     });

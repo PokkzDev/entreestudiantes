@@ -18,6 +18,7 @@ function CompletarRegistro() {
   const [name, setName] = useState("");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [university, setUniversity] = useState("");
   const [campus, setCampus] = useState("");
   const [error, setError] = useState("");

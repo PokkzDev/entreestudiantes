@@ -48,6 +48,7 @@ function PlanesContent() {
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(null); // Track which plan is being processed
   const [message, setMessage] = useState(null);
+  const [messageTimeoutId, setMessageTimeoutId] = useState(null);
   const [planPurchasingEnabled, setPlanPurchasingEnabled] = useState(true);
   const { data: session, status } = useSession();
   const router = useRouter();
@@ -109,23 +110,31 @@ function PlanesContent() {
       const data = await response.json();
       
       if (data.success && data.subscriptionUpdated) {
-        setMessage({
+        setMessageWithTimeout({
           type: 'success',
           text: '¡Pago confirmado! Tu plan ha sido actualizado exitosamente.'
         });
         // Refresh account info immediately
         fetchAccountInfo();
+      } else if (data.success === false) {
+        // Payment verification failed - this means the payment was not approved
+        console.log('❌ Payment verification failed:', data);
+        setMessageWithTimeout({
+          type: 'error',
+          text: data.detailedError || data.error || 'El pago no fue aprobado. Por favor, intenta nuevamente.'
+        });
       } else {
-        setMessage({
+        // Unexpected response format
+        setMessageWithTimeout({
           type: 'warning',
           text: 'Pago recibido. La actualización del plan puede tomar unos minutos.'
         });
       }
     } catch (error) {
       console.error('Error verifying payment:', error);
-      setMessage({
-        type: 'warning',
-        text: 'Pago recibido. La actualización del plan puede tomar unos minutos.'
+      setMessageWithTimeout({
+        type: 'error',
+        text: 'Error al verificar el pago. Por favor, verifica el estado de tu transacción.'
       });
     }
   }, [fetchAccountInfo]);
@@ -168,10 +177,16 @@ function PlanesContent() {
       flowReturn: flowReturn || 'null' 
     });
     
+    // Safe URL logging that won't cause errors
     try {
-      console.log('🌐 Current URL:', typeof window !== 'undefined' && window.location ? window.location.href : 'N/A');
+      if (typeof window !== 'undefined' && window.location && window.location.href) {
+        console.log('🌐 Current URL:', window.location.href);
+      } else {
+        console.log('🌐 Current URL: Not available (SSR or window undefined)');
+      }
     } catch (urlError) {
       console.error('❌ Error getting current URL:', urlError);
+      console.log('🌐 Current URL: Error accessing window.location');
     }
     
     // Handle general error parameter (from redirect failures, etc.)
@@ -188,28 +203,10 @@ function PlanesContent() {
           }
       }
       
-      setMessage({
+      setMessageWithTimeout({
         type: 'error',
         text: errorMessage
       });
-      
-      // Simple path-based URL cleanup - no URL constructor needed
-      setTimeout(() => {
-        try {
-          console.log('🧹 Attempting to clear error URL params');
-          if (typeof window !== 'undefined' && window.history && window.history.replaceState) {
-            window.history.replaceState({}, '', '/planes');
-            console.log('✅ Successfully cleared error URL params');
-          } else {
-            console.warn('⚠️ window.history.replaceState not available');
-          }
-        } catch (error) {
-          console.error('❌ Error cleaning up error URL params:', error);
-        }
-        
-        // Always clear the message regardless of URL cleanup success
-        setMessage(null);
-      }, 8000); // Longer timeout for error messages
       
       return; // Don't process other parameters if there's an error
     }
@@ -227,7 +224,7 @@ function PlanesContent() {
           } else {
             console.log('✅ Payment success without token - Flow.cl scenario');
             // Success without token - common in Flow.cl sandbox or certain payment methods
-            setMessage({
+            setMessageWithTimeout({
               type: 'success',
               text: '¡Pago completado! Tu plan será actualizado en breve. Si no ves los cambios en unos minutos, contacta al soporte.'
             });
@@ -240,74 +237,52 @@ function PlanesContent() {
           break;
           
         case 'cancelled':
-          setMessage({
+          setMessageWithTimeout({
             type: 'warning',
             text: 'El pago fue cancelado. Puedes intentar nuevamente cuando desees.'
           });
           break;
           
         case 'failed':
-          setMessage({
+          setMessageWithTimeout({
             type: 'error',
             text: 'Hubo un problema con el pago. Por favor, intenta nuevamente.'
           });
           break;
           
         case 'error':
-          setMessage({
+          setMessageWithTimeout({
             type: 'error',
             text: 'Se produjo un error durante el proceso de pago. Por favor, verifica el estado de tu transacción.'
           });
           break;
           
         case 'unknown':
-          setMessage({
-            type: 'warning',
-            text: 'El estado del pago no pudo ser determinado. Por favor, verifica el estado de tu transacción en tu banco.'
-          });
+          if (token && token !== 'null' && token !== 'undefined') {
+            console.log('🔍 Unknown status with token - verifying payment status');
+            // Call verification endpoint to determine the actual payment status
+            handlePaymentSuccess(token);
+          } else {
+            console.log('⚠️ Unknown status without token');
+            setMessageWithTimeout({
+              type: 'warning',
+              text: 'El estado del pago no pudo ser determinado. Por favor, verifica el estado de tu transacción en tu banco.'
+            });
+          }
           break;
           
         default:
           console.warn('⚠️ Unknown Flow.cl status:', flowStatus);
-          setMessage({
+          setMessageWithTimeout({
             type: 'warning',
             text: 'Estado de pago desconocido. Por favor, verifica el estado de tu transacción.'
           });
       }
       
-      // Simple path-based URL cleanup - no URL constructor needed
-      setTimeout(() => {
-        try {
-          console.log('🧹 Clearing Flow.cl URL params');
-          if (typeof window !== 'undefined' && window.history && window.history.replaceState) {
-            window.history.replaceState({}, '', '/planes');
-            console.log('✅ Successfully cleared Flow.cl URL params');
-          } else {
-            console.warn('⚠️ window.history.replaceState not available');
-          }
-        } catch (error) {
-          console.error('❌ Error clearing Flow.cl URL params:', error);
-        }
-        
-        setMessage(null);
-      }, 5000);
-      
     } else if (token || flowStatus) {
       // Handle edge cases with invalid parameters
       console.warn('⚠️ Invalid Flow.cl parameters detected:', { token, flowStatus });
-      
-      // Simple path-based cleanup for invalid parameters
-      try {
-        console.log('🧹 Clearing invalid Flow.cl parameters');
-        if (typeof window !== 'undefined' && window.history && window.history.replaceState) {
-          window.history.replaceState({}, '', '/planes');
-          console.log('✅ Successfully cleared invalid parameters');
-        } else {
-          console.warn('⚠️ window.history.replaceState not available');
-        }
-      } catch (error) {
-        console.error('❌ Error clearing invalid parameters:', error);
-      }
+      // Removed URL cleanup for invalid parameters
     }
   }, [searchParams, session, router, handlePaymentSuccess, fetchAccountInfo]);
 
@@ -333,7 +308,7 @@ function PlanesContent() {
 
     // Check if plan purchasing is disabled
     if (!planPurchasingEnabled) {
-      setMessage({
+      setMessageWithTimeout({
         type: 'warning',
         text: 'La compra de planes está temporalmente deshabilitada. Intenta más tarde.'
       });
@@ -365,8 +340,20 @@ function PlanesContent() {
           throw new Error('Flow.cl response missing URL or token');
         }
         
-        const redirectUrl = data.url + "?token=" + data.token;
-        console.log('Flow.cl redirect data:', { url: data.url, token: data.token?.substring(0, 10) + '...' });
+        // Ensure the URL and token are not null or undefined strings
+        const urlValue = data.url;
+        const tokenValue = data.token;
+        
+        if (urlValue === 'null' || urlValue === 'undefined' || !urlValue.trim()) {
+          throw new Error('Flow.cl returned invalid URL');
+        }
+        
+        if (tokenValue === 'null' || tokenValue === 'undefined' || !tokenValue.trim()) {
+          throw new Error('Flow.cl returned invalid token');
+        }
+        
+        const redirectUrl = urlValue + "?token=" + tokenValue;
+        console.log('Flow.cl redirect data:', { url: urlValue, token: tokenValue?.substring(0, 10) + '...' });
         console.log('Redirecting to Flow.cl:', redirectUrl);
         
         // Validate the URL before redirecting
@@ -382,7 +369,7 @@ function PlanesContent() {
       }
     } catch (error) {
       console.error('Error al procesar el pago:', error);
-      setMessage({
+      setMessageWithTimeout({
         type: 'error',
         text: error.message || 'Error al procesar el pago. Por favor, intenta nuevamente.'
       });
@@ -405,6 +392,39 @@ function PlanesContent() {
     const icon = iconMap[iconName];
     return icon ? <FontAwesomeIcon icon={icon} /> : null;
   };
+
+  const clearMessageTimeout = () => {
+    if (messageTimeoutId) {
+      clearTimeout(messageTimeoutId);
+      setMessageTimeoutId(null);
+    }
+  };
+
+  const setMessageWithTimeout = (newMessage) => {
+    clearMessageTimeout(); // Clear any existing timeout
+    setMessage(newMessage);
+    
+    // Set new timeout based on message type
+    const timeoutDuration = newMessage?.type === 'success' ? 10000 : 15000;
+    const timeoutId = setTimeout(() => {
+      setMessage(null);
+      setMessageTimeoutId(null);
+    }, timeoutDuration);
+    
+    setMessageTimeoutId(timeoutId);
+  };
+
+  const dismissMessage = () => {
+    clearMessageTimeout();
+    setMessage(null);
+  };
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      clearMessageTimeout();
+    };
+  }, [messageTimeoutId]);
 
   return (
     <div className={styles.container}>
@@ -435,7 +455,16 @@ function PlanesContent() {
         
         {message && (
           <div className={`${styles.messageAlert} ${styles[message.type]}`}>
-            <p>{message.text}</p>
+            <div className={styles.messageContent}>
+              <p>{message.text}</p>
+              <button 
+                className={styles.dismissButton}
+                onClick={dismissMessage}
+                aria-label="Cerrar mensaje"
+              >
+                ×
+              </button>
+            </div>
           </div>
         )}
         
@@ -532,6 +561,8 @@ function PlanesContent() {
                   'Plan Actual'
                 ) : !planPurchasingEnabled && tierKey !== 'free' ? (
                   'Compras temporalmente deshabilitadas'
+                ) : tierKey === 'free' ? (
+                  'Plan Gratuito'
                 ) : isUpgrade(tierKey) ? (
                   `Pagar ${formatPrice(tier.price)} por ${tier.name}`
                 ) : (
@@ -549,9 +580,7 @@ function PlanesContent() {
 export default function Planes() {
   return (
     <Suspense fallback={<PlanesLoading />}>
-      <Suspense fallback={<PlanesLoading />}>
-        <PlanesContent />
-      </Suspense>
+      <PlanesContent />
     </Suspense>
   );
 }

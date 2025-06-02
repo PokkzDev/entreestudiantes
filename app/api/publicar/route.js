@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { requirePostAuth } from "@/lib/authHelpers";
 import { getEffectiveTier, canCreatePublication } from "@/lib/accountTiers";
+import { getCurrentActiveSubscription } from "@/lib/dbUtils";
 
 export async function POST(req) {
   try {
@@ -16,16 +17,13 @@ export async function POST(req) {
     
     const { user } = authResult;
 
-    // Get user's current university, campus, and tier information
+    // Get user's current university, campus, and basic account information
     const userDetails = await prisma.user.findUnique({
       where: { id: user.id },
       select: {
         university: true,
         campus: true,
         accountTier: true,
-        tierStartDate: true,
-        tierEndDate: true,
-        subscriptionStatus: true,
         _count: {
           select: {
             publicaciones: {
@@ -45,8 +43,17 @@ export async function POST(req) {
       }, { status: 404 });
     }
 
+    // Get current active subscription
+    const currentSubscription = await getCurrentActiveSubscription(user.id);
+
+    // Create user object compatible with getEffectiveTier function
+    const userForTierCalculation = {
+      accountTier: userDetails.accountTier,
+      currentSubscription
+    };
+
     // Check publication limits based on account tier
-    const effectiveTier = getEffectiveTier(userDetails);
+    const effectiveTier = getEffectiveTier(userForTierCalculation, currentSubscription);
     const currentPublicationCount = userDetails._count.publicaciones;
     const limitInfo = canCreatePublication(effectiveTier, currentPublicationCount);
 

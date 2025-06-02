@@ -1,4 +1,92 @@
 import { NextResponse } from 'next/server';
+import crypto from 'crypto';
+
+// Flow.cl configuration
+const FLOW_CONFIG = {
+  apiKey: process.env.FLOW_API_KEY,
+  secretKey: process.env.FLOW_API_SECRET,
+  apiUrl: process.env.FLOW_API_URL || 'https://sandbox.flow.cl/api'
+};
+
+// Generate Flow.cl signature
+function generateSignature(params, secretKey) {
+  // Sort parameters by key (alphabetically)
+  const sortedKeys = Object.keys(params).sort();
+  
+  // Concatenate as: keyvalue keyvalue (without separators)
+  const stringToSign = sortedKeys
+    .map(key => `${key}${params[key]}`)
+    .join('');
+  
+  // Create HMAC SHA256 signature
+  return crypto
+    .createHmac('sha256', secretKey)
+    .update(stringToSign)
+    .digest('hex');
+}
+
+// Get payment status from Flow.cl API
+async function getPaymentStatus(token) {
+  try {
+    const statusParams = {
+      apiKey: FLOW_CONFIG.apiKey,
+      token
+    };
+
+    const signature = generateSignature(statusParams, FLOW_CONFIG.secretKey);
+    statusParams.s = signature;
+
+    // Try extended status first (more reliable)
+    console.log('🔍 Trying Flow.cl extended status API...');
+    let flowResponse = await fetch(`${FLOW_CONFIG.apiUrl}/payment/getStatusExtended`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: new URLSearchParams(statusParams)
+    });
+
+    if (!flowResponse.ok) {
+      console.log('⚠️ Extended status failed, trying regular status API...');
+      // Fallback to regular status endpoint
+      flowResponse = await fetch(`${FLOW_CONFIG.apiUrl}/payment/getStatus`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: new URLSearchParams(statusParams)
+      });
+    }
+
+    if (!flowResponse.ok) {
+      const errorText = await flowResponse.text();
+      console.error('Flow.cl status check failed:', errorText);
+      return null;
+    }
+
+    const paymentStatus = await flowResponse.json();
+    console.log('📊 Flow.cl payment status response:', paymentStatus);
+    
+    // Check if there's an error in the response
+    if (paymentStatus.code && paymentStatus.message) {
+      console.error('Flow.cl API error:', paymentStatus);
+      return null;
+    }
+    
+    // Convert Flow.cl status to our status
+    switch (paymentStatus.status) {
+      case 1: return 'pending';
+      case 2: return 'success';
+      case 3: return 'failed';
+      case 4: return 'cancelled';
+      case 5: return 'refunded';
+      default: return null; // Return null to trigger fallback logic
+    }
+  } catch (error) {
+    console.error('Error checking payment status:', error);
+    return null;
+  }
+}
 
 export async function GET(request) {
   console.log('🔄 Flow.cl GET return handler called');
@@ -146,14 +234,32 @@ async function processFlowReturn(request, token, status, allParams) {
     console.log('⚠️ No token received from Flow.cl - this might be normal for sandbox or cancelled payments');
   }
   
-  // Handle status parameter
-  if (status && status !== 'null' && status !== 'undefined') {
-    console.log('📊 Status received from Flow.cl:', status);
-    redirectUrl.searchParams.set('status', status);
+  // Handle status parameter - if not provided, check with Flow.cl API
+  let finalStatus = status;
+  if (!status || status === 'null' || status === 'undefined') {
+    if (token && token !== 'null' && token !== 'undefined') {
+      console.log('🔍 No status provided, checking payment status with Flow.cl API...');
+      const checkedStatus = await getPaymentStatus(token);
+      if (checkedStatus) {
+        finalStatus = checkedStatus;
+        console.log('📊 Payment status from Flow.cl API:', checkedStatus);
+      } else {
+        console.log('⚠️ Could not get status from Flow.cl API');
+        // CRITICAL FIX: Do NOT default to success when status is unknown
+        // This was causing failed sandbox payments to be treated as successful
+        // Instead, set to 'unknown' and let the verification endpoint handle it properly
+        finalStatus = 'unknown';
+        console.log('🚨 Setting status to "unknown" - verification endpoint will determine actual status');
+      }
+    } else {
+      console.log('⚠️ No token and no status - setting as cancelled');
+      finalStatus = 'cancelled';
+    }
   } else {
-    console.log('⚠️ No status received from Flow.cl - setting default');
-    redirectUrl.searchParams.set('status', 'unknown');
+    console.log('📊 Status received from Flow.cl:', status);
   }
+  
+  redirectUrl.searchParams.set('status', finalStatus);
   
   // If we have no token but got some other parameters, it might be a cancellation or error
   if (!token && Object.keys(allParams).length === 0) {
@@ -175,7 +281,140 @@ async function processFlowReturn(request, token, status, allParams) {
   }
   
   console.log('✅ Redirecting user to planes page');
-  return NextResponse.redirect(finalUrl, { status: 307 });
+  
+  // Check if origin is null, which can cause issues with Next.js redirects
+  const origin = request.headers.get('origin');
+  console.log('🔍 Request origin:', origin);
+  
+  if (origin === 'null' || !origin) {
+    console.log('⚠️ Origin is null, using HTML redirect instead of NextResponse.redirect');
+    
+    // Use HTML response with JavaScript redirect as a workaround for null origin
+    const htmlResponse = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Procesando pago...</title>
+        <meta http-equiv="refresh" content="3; url=${finalUrl}">
+        <style>
+          body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            color: #1e293b;
+            text-align: center;
+            padding: 2rem;
+          }
+          .container {
+            background: white;
+            padding: 3rem 2rem;
+            border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            max-width: 400px;
+            width: 100%;
+          }
+          .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid #e2e8f0;
+            border-top: 3px solid #6366f1;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1.5rem;
+          }
+          @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+          }
+          h1 {
+            margin: 0 0 1rem 0;
+            color: #1e293b;
+            font-size: 1.5rem;
+          }
+          p {
+            margin: 0.5rem 0;
+            color: #64748b;
+            line-height: 1.6;
+          }
+          .countdown {
+            font-weight: bold;
+            color: #6366f1;
+          }
+          a {
+            color: #6366f1;
+            text-decoration: none;
+            font-weight: 600;
+          }
+          a:hover {
+            text-decoration: underline;
+          }
+        </style>
+        <script>
+          let countdown = 3;
+          
+          function updateCountdown() {
+            const countdownEl = document.getElementById('countdown');
+            if (countdownEl) {
+              countdownEl.textContent = countdown;
+            }
+            
+            if (countdown <= 0) {
+              console.log('Flow.cl return redirect (countdown complete)');
+              try {
+                window.location.replace('${finalUrl}');
+              } catch (e) {
+                console.error('Redirect failed:', e);
+                window.location.href = '${finalUrl}';
+              }
+            } else {
+              countdown--;
+              setTimeout(updateCountdown, 1000);
+            }
+          }
+          
+          document.addEventListener('DOMContentLoaded', function() {
+            console.log('Flow.cl return redirect page loaded');
+            updateCountdown();
+          });
+        </script>
+      </head>
+      <body>
+        <div class="container">
+          <div class="spinner"></div>
+          <h1>Procesando tu pago...</h1>
+          <p>Tu pago ha sido procesado exitosamente.</p>
+          <p>Serás redirigido automáticamente en <span id="countdown" class="countdown">3</span> segundos.</p>
+          <p>Si no eres redirigido automáticamente, <a href="${finalUrl}">haz clic aquí</a>.</p>
+        </div>
+      </body>
+      </html>
+    `;
+    
+    return new NextResponse(htmlResponse, {
+      status: 200,
+      headers: {
+        'Content-Type': 'text/html; charset=utf-8',
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0',
+      },
+    });
+  }
+  
+  // For normal origins, use standard redirect
+  const response = NextResponse.redirect(finalUrl, { status: 307 });
+  
+  // Add headers to help with the redirect
+  response.headers.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+  response.headers.set('Pragma', 'no-cache');
+  response.headers.set('Expires', '0');
+  
+  return response;
 }
 
 async function handleFlowError(request, error) {
@@ -204,19 +443,80 @@ async function handleFlowError(request, error) {
       <!DOCTYPE html>
       <html>
       <head>
-        <title>Redirecting...</title>
+        <title>Redirigiendo...</title>
+        <style>
+          body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            color: #1e293b;
+            text-align: center;
+            padding: 2rem;
+          }
+          .container {
+            background: white;
+            padding: 3rem 2rem;
+            border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            max-width: 400px;
+            width: 100%;
+          }
+          .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid #e2e8f0;
+            border-top: 3px solid #6366f1;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1.5rem;
+          }
+          @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+          }
+          h1 {
+            margin: 0 0 1rem 0;
+            color: #1e293b;
+            font-size: 1.5rem;
+          }
+          p {
+            margin: 0.5rem 0;
+            color: #64748b;
+            line-height: 1.6;
+          }
+          a {
+            color: #6366f1;
+            text-decoration: none;
+            font-weight: 600;
+          }
+          a:hover {
+            text-decoration: underline;
+          }
+        </style>
         <script>
           console.log('Flow.cl return redirect fallback');
-          try {
-            window.location.href = '/planes?status=error&error=redirect_failed&message=fallback_redirect';
-          } catch (e) {
-            console.error('Redirect failed:', e);
-            document.body.innerHTML = '<p>Redirect failed. Please <a href="/planes">click here</a> to continue.</p>';
-          }
+          setTimeout(function() {
+            try {
+              window.location.href = '/planes?status=error&error=redirect_failed&message=fallback_redirect';
+            } catch (e) {
+              console.error('Redirect failed:', e);
+              document.body.innerHTML = '<div class="container"><p>Error de redirección. Por favor <a href="/planes">haz clic aquí</a> para continuar.</p></div>';
+            }
+          }, 2000);
         </script>
       </head>
       <body>
-        <p>Redirecting from Flow.cl... If you are not redirected automatically, <a href="/planes">click here</a>.</p>
+        <div class="container">
+          <div class="spinner"></div>
+          <h1>Redirigiendo...</h1>
+          <p>Procesando la respuesta de Flow.cl...</p>
+          <p>Si no eres redirigido automáticamente, <a href="/planes">haz clic aquí</a> para continuar.</p>
+        </div>
       </body>
       </html>
     `;

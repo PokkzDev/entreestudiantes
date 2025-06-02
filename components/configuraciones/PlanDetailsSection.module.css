@@ -294,18 +294,23 @@
 
 .paymentItem {
   display: flex;
-  align-items: flex-start;
   justify-content: space-between;
-  gap: 1rem;
+  align-items: flex-start;
   padding: 1rem;
   background: #f8fafc;
   border: 1px solid #e2e8f0;
   border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.paymentItem:hover {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
 }
 
 .paymentInfo {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 0.75rem;
   flex-grow: 1;
 }
@@ -313,22 +318,62 @@
 .paymentIcon {
   color: #64748b;
   font-size: 1.25rem;
+  margin-top: 0.125rem;
+  flex-shrink: 0;
 }
 
 .paymentDetails {
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
+  flex-grow: 1;
 }
 
 .paymentPlan {
   font-weight: 600;
   color: #1e293b;
+  font-size: 1rem;
 }
 
 .paymentDate {
-  font-size: 0.85rem;
   color: #64748b;
+  font-size: 0.9rem;
+}
+
+.paymentPeriod {
+  color: #64748b;
+  font-size: 0.85rem;
+}
+
+.paymentId {
+  color: #64748b;
+  font-size: 0.8rem;
+  font-family: monospace;
+  background: #e2e8f0;
+  padding: 0.125rem 0.375rem;
+  border-radius: 4px;
+  width: fit-content;
+}
+
+.cancelReason {
+  color: #dc2626;
+  font-size: 0.85rem;
+  font-style: italic;
+  background: #fef2f2;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  border: 1px solid #fecaca;
+  width: fit-content;
+  margin-top: 0.25rem;
+}
+
+.paymentMeta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.5rem;
+  text-align: right;
+  flex-shrink: 0;
 }
 
 .paymentAmount {
@@ -338,31 +383,11 @@
 }
 
 .paymentStatus {
+  font-size: 0.85rem;
+  font-weight: 500;
   padding: 0.25rem 0.75rem;
-  border-radius: 6px;
-  font-size: 0.8rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.025em;
-}
-
-.paymentPeriod {
-  font-size: 0.8rem;
-  color: #64748b;
-  font-style: italic;
-}
-
-.paymentId {
-  font-size: 0.75rem;
-  color: #9ca3af;
-  font-family: monospace;
-}
-
-.paymentMeta {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 0.5rem;
+  border-radius: 12px;
+  border: 1px solid transparent;
 }
 
 .statusCancelled {

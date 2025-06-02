@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
 import crypto from 'crypto';
+import { createSubscriptionSafely } from '../../../../lib/dbUtils';
 
 const prisma = new PrismaClient();
 
@@ -209,7 +210,14 @@ export async function POST(request) {
         // Parse optional data to get plan information
         let planData;
         try {
-          planData = JSON.parse(paymentStatus.optional || '{}');
+          // Check if optional is already an object or a string  
+          if (typeof paymentStatus.optional === 'object') {
+            planData = paymentStatus.optional;
+            console.log('📦 Plan data from Flow.cl webhook (object):', planData);
+          } else {
+            planData = JSON.parse(paymentStatus.optional || '{}');
+            console.log('📦 Plan data from Flow.cl webhook (parsed):', planData);
+          }
         } catch (e) {
           console.error('Error parsing optional data:', e);
           planData = {};
@@ -218,23 +226,66 @@ export async function POST(request) {
         const { userId, planId, planName } = planData;
 
         if (userId && planId) {
-          // Calculate subscription end date (30 days from now)
-          const subscriptionEndDate = new Date();
-          subscriptionEndDate.setDate(subscriptionEndDate.getDate() + 30);
-
-          // Update user subscription
-          await prisma.user.update({
-            where: { id: userId },
-            data: {
-              subscriptionTier: planId,
-              subscriptionActive: true,
-              subscriptionEndDate: subscriptionEndDate,
-            }
+          // Use the safe subscription creation function (imported at top)
+          const subscriptionResult = await createSubscriptionSafely({
+            userId: userId,
+            planId: planId,
+            paymentId: paymentStatus.flowOrder || paymentStatus.commerceOrder,
+            amount: parseInt(paymentStatus.amount) || 0,
+            currency: paymentStatus.currency || 'CLP',
+            context: 'webhook'
           });
 
-          // Log the payment
-          await prisma.paymentLog.create({
-            data: {
+          if (subscriptionResult.success) {
+            console.log(`✅ Successfully processed subscription for user ${userId} to plan ${planId}`, {
+              commerceOrder: paymentStatus.commerceOrder,
+              flowOrder: paymentStatus.flowOrder,
+              amount: paymentStatus.amount,
+              paymentMedia: paymentStatus.paymentData?.media,
+              mediaType: paymentStatus.paymentData?.mediaType,
+              cardLast4: paymentStatus.paymentData?.cardLast4Numbers,
+              subscriptionId: subscriptionResult.subscription.id
+            });
+          } else {
+            console.error('Failed to create subscription:', subscriptionResult.error);
+          }
+
+          // Log the payment separately (always create payment log for record keeping)
+          console.log('💾 Attempting to create PaymentLog in webhook with data:', {
+            userId: userId,
+            planId: planId,
+            amount: paymentStatus.amount,
+            currency: paymentStatus.currency || 'CLP',
+            flowToken: token?.substring(0, 10) + '...',
+            commerceOrder: paymentStatus.commerceOrder,
+            flowOrder: paymentStatus.flowOrder,
+            status: 'completed'
+          });
+
+          try {
+            const paymentLogResult = await prisma.paymentLog.create({
+              data: {
+                userId: userId,
+                planId: planId,
+                amount: parseInt(paymentStatus.amount) || 0,
+                currency: paymentStatus.currency || 'CLP',
+                flowToken: token,
+                commerceOrder: paymentStatus.commerceOrder,
+                status: 'completed',
+                paymentDate: new Date(),
+                flowOrder: paymentStatus.flowOrder ? paymentStatus.flowOrder.toString() : null
+              }
+            });
+
+            console.log('✅ PaymentLog created successfully in webhook:', {
+              id: paymentLogResult.id,
+              flowToken: paymentLogResult.flowToken?.substring(0, 10) + '...',
+              commerceOrder: paymentLogResult.commerceOrder,
+              status: paymentLogResult.status
+            });
+          } catch (paymentLogError) {
+            console.error('❌ Critical error creating PaymentLog in webhook:', paymentLogError);
+            console.error('📋 PaymentLog data that failed:', {
               userId: userId,
               planId: planId,
               amount: paymentStatus.amount,
@@ -242,23 +293,21 @@ export async function POST(request) {
               flowToken: token,
               commerceOrder: paymentStatus.commerceOrder,
               status: 'completed',
-              paymentDate: new Date(),
-              subscriptionEndDate: subscriptionEndDate,
-              flowOrder: paymentStatus.flowOrder ? paymentStatus.flowOrder.toString() : null
-            }
-          }).catch(error => {
-            console.error('Error logging payment in webhook:', error);
-            // Don't fail the webhook if logging fails
-          });
-
-          console.log(`Successfully updated subscription for user ${userId} to plan ${planId}`, {
-            commerceOrder: paymentStatus.commerceOrder,
-            flowOrder: paymentStatus.flowOrder,
-            amount: paymentStatus.amount,
-            paymentMedia: paymentStatus.paymentData?.media,
-            mediaType: paymentStatus.paymentData?.mediaType,
-            cardLast4: paymentStatus.paymentData?.cardLast4Numbers
-          });
+              flowOrder: paymentStatus.flowOrder
+            });
+            
+            // Log additional debugging info
+            console.error('🔍 Detailed webhook error analysis:', {
+              errorName: paymentLogError.name,
+              errorMessage: paymentLogError.message,
+              errorCode: paymentLogError.code,
+              isPrismaError: paymentLogError.name?.includes('Prisma'),
+              constraints: paymentLogError.meta?.target || 'none'
+            });
+            
+            // This is critical for payment tracking
+            console.error('🚨 WEBHOOK PAYMENT TRACKING FAILURE - This payment will not be properly logged in PaymentLog table');
+          }
         }
       } catch (error) {
         console.error('Error processing approved payment:', error);
