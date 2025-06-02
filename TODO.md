@@ -8,3 +8,13 @@
 - ME LLEVAS? Transporte entre estudiantes, por un precio acordado entre ellos.
 
 - [x] Cambiar plan basico a "premium"
+
+- [x] Hasta 3 publicaciones registradas.
+
+- [x] Feedback de UI en mis publicaciones no se actualzia inmediatamente
+
+- [x] eliminar rango de precios en servicios, solo precio unico o contactar para mas info. 
+
+- [] Crear funcion para renovar el plan, creando una extension de la fecha por 30 dias "boton renovar"
+
+- [] Agregar publicaciones favoritas, en caso de publicacion eliminada, mostrar "publicacion fue eliminada"

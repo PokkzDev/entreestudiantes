@@ -49,7 +49,8 @@ export async function GET(req) {
     // Calculate account tier information
     const effectiveTier = getEffectiveTier(userForTierCalculation, currentSubscription);
     const activePublicationsCount = userWithPublications.publicaciones.filter(p => p.status === 'activo').length;
-    const limitInfo = canCreatePublication(effectiveTier, activePublicationsCount);
+    const totalPublicationsCount = userWithPublications.publicaciones.length; // All publications
+    const limitInfo = canCreatePublication(effectiveTier, totalPublicationsCount); // Use total for limit check
 
     // Determine if subscription is active
     const subscriptionActive = currentSubscription ? 
@@ -63,7 +64,8 @@ export async function GET(req) {
         currentTier: effectiveTier,
         tierName: formatTierName(effectiveTier),
         canCreate: limitInfo.canCreate,
-        currentCount: activePublicationsCount,
+        currentCount: totalPublicationsCount, // Show total registered publications
+        activeCount: activePublicationsCount, // Also provide active count for display
         limit: limitInfo.limit,
         remaining: limitInfo.remaining,
         isUnlimited: limitInfo.isUnlimited,

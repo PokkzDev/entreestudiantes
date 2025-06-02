@@ -475,7 +475,7 @@ function PlanesContent() {
             </span>
             <span>Plan actual: <strong>{accountInfo.tierName}</strong></span>
             <span className={styles.currentStats}>
-              ({accountInfo.currentCount}/{accountInfo.limit || '∞'} publicaciones)
+              ({accountInfo.currentCount}/{accountInfo.limit || '∞'} publicaciones registradas)
             </span>
           </div>
         )}

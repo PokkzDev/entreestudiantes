@@ -209,14 +209,25 @@ export default function MisPublicaciones() {
           type: "success"
         });
         
+        // Refresh account info to update counts
+        fetchAccountInfo();
+        
         // Ocultar mensaje después de 3 segundos
         setTimeout(() => setMessage(null), 3000);
       } else {
-        setMessage({
-          text: data.error || "Error al cambiar el estado de la publicación",
-          type: "error"
-        });
-        setTimeout(() => setMessage(null), 3000);
+        // Handle restricted feature for free users
+        if (data.restrictedFeature && data.currentTier === 'free') {
+          setMessage({
+            text: data.error,
+            type: "warning"
+          });
+        } else {
+          setMessage({
+            text: data.error || "Error al cambiar el estado de la publicación",
+            type: "error"
+          });
+        }
+        setTimeout(() => setMessage(null), 5000); // Show longer for restriction messages
       }
     } catch (error) {
       setMessage({
@@ -278,19 +289,19 @@ export default function MisPublicaciones() {
             <div className={styles.modalIcon} style={{ fontSize: '48px' }}>
               {getTierEmoji(limitData.currentTier)}
             </div>
-            <h2 className={styles.modalTitle}>Límite de publicaciones alcanzado</h2>
+            <h2 className={styles.modalTitle}>Límite de publicaciones registradas alcanzado</h2>
             <p className={styles.modalText}>
-              Has alcanzado el límite de publicaciones para tu plan <strong>{limitData.tierName}</strong>.
+              Has alcanzado el límite de publicaciones registradas para tu plan <strong>{limitData.tierName}</strong>.
             </p>
             <div className={styles.limitInfo}>
               <div className={styles.limitStat}>
-                <span>Publicaciones actuales:</span>
+                <span>Publicaciones registradas:</span>
                 <strong>{limitData.currentCount} / {limitData.limit || '∞'}</strong>
               </div>
             </div>
             <p className={styles.modalText}>
               {limitData.currentTier === 'free' 
-                ? 'Considera upgrading tu cuenta para crear más publicaciones y acceder a funciones premium.'
+                ? 'Para crear una nueva publicación, debes eliminar una existente o actualizar tu plan para acceder a más publicaciones y funciones premium.'
                 : 'Tu suscripción puede haber expirado o necesitas un plan superior.'
               }
             </p>
@@ -329,7 +340,7 @@ export default function MisPublicaciones() {
           </div>
           <div className={styles.publicationStats}>
             <span className={styles.statText}>
-              Publicaciones: <strong>{accountInfo.currentCount}</strong>
+              Publicaciones registradas: <strong>{accountInfo.currentCount}</strong>
               {accountInfo.isUnlimited ? (
                 <span className={styles.unlimitedBadge}> / ∞</span>
               ) : (
@@ -341,6 +352,11 @@ export default function MisPublicaciones() {
                 </>
               )}
             </span>
+            {accountInfo.activeCount !== undefined && accountInfo.currentTier === 'free' && (
+              <span className={styles.activeStatText}>
+                (Activas: <strong>{accountInfo.activeCount}</strong>)
+              </span>
+            )}
             {!accountInfo.isUnlimited && (
               <div className={styles.progressBar}>
                 <div 
@@ -353,15 +369,27 @@ export default function MisPublicaciones() {
               </div>
             )}
           </div>
-          {accountInfo.currentTier === 'free' && accountInfo.remaining <= 1 && (
-            <div className={styles.upgradePrompt}>
-              <span>¿Necesitas más publicaciones?</span>
-              <button 
-                onClick={() => router.push('/planes')}
-                className={styles.upgradeLink}
-              >
-                Ver planes premium
-              </button>
+          {accountInfo.currentTier === 'free' && (
+            <div className={styles.freeUserNotice}>
+              <p className={styles.noticeText}>
+                📋 En el plan Gratuito puedes tener hasta <strong>{accountInfo.limit} publicaciones registradas</strong>. 
+                {accountInfo.remaining > 0 ? (
+                  <span> Puedes crear <strong>{accountInfo.remaining}</strong> más.</span>
+                ) : (
+                  <span> <strong>Para crear una nueva, debes eliminar una existente.</strong></span>
+                )}
+              </p>
+              {accountInfo.remaining <= 1 && (
+                <div className={styles.upgradePrompt}>
+                  <span>¿Necesitas más publicaciones?</span>
+                  <button 
+                    onClick={() => router.push('/planes')}
+                    className={styles.upgradeLink}
+                  >
+                    Ver planes premium
+                  </button>
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -448,9 +476,21 @@ export default function MisPublicaciones() {
                 <button 
                   onClick={() => handleToggleStatus(pub.id, pub.status)}
                   className={`${styles.toggleButton} ${pub.status === 'activo' ? styles.pauseButton : styles.activateButton}`}
-                  title={pub.status === 'activo' ? 'Ocultar temporalmente esta publicación' : 'Hacer visible esta publicación'}
+                  title={
+                    accountInfo?.currentTier === 'free' 
+                      ? 'Función no disponible en plan Gratuito. Actualiza tu plan para pausar/activar publicaciones.'
+                      : (pub.status === 'activo' ? 'Ocultar temporalmente esta publicación' : 'Hacer visible esta publicación')
+                  }
+                  disabled={accountInfo?.currentTier === 'free'}
+                  style={{
+                    opacity: accountInfo?.currentTier === 'free' ? 0.5 : 1,
+                    cursor: accountInfo?.currentTier === 'free' ? 'not-allowed' : 'pointer'
+                  }}
                 >
-                  {pub.status === 'activo' ? 'Pausar publicación' : 'Activar publicación'}
+                  {accountInfo?.currentTier === 'free' 
+                    ? '🔒 Premium'
+                    : (pub.status === 'activo' ? 'Pausar publicación' : 'Activar publicación')
+                  }
                 </button>
                 <button 
                   onClick={() => openDeleteModal(pub.id)}

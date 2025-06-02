@@ -26,11 +26,7 @@ export async function POST(req) {
         accountTier: true,
         _count: {
           select: {
-            publicaciones: {
-              where: {
-                status: "activo" // Only count active publications
-              }
-            }
+            publicaciones: true // Count ALL publications regardless of status
           }
         }
       },
@@ -52,18 +48,18 @@ export async function POST(req) {
       currentSubscription
     };
 
-    // Check publication limits based on account tier
+    // Check publication limits based on account tier (NEW LOGIC - counts all publications)
     const effectiveTier = getEffectiveTier(userForTierCalculation, currentSubscription);
-    const currentPublicationCount = userDetails._count.publicaciones;
-    const limitInfo = canCreatePublication(effectiveTier, currentPublicationCount);
+    const totalPublicationCount = userDetails._count.publicaciones; // All publications
+    const limitInfo = canCreatePublication(effectiveTier, totalPublicationCount);
 
     if (!limitInfo.canCreate) {
       return NextResponse.json({ 
         success: false, 
-        error: `Has alcanzado el límite de publicaciones para tu plan ${effectiveTier === 'free' ? 'Gratuito' : effectiveTier}. ${limitInfo.limit ? `Límite: ${limitInfo.limit} publicaciones.` : ''} ${effectiveTier === 'free' ? 'Considera upgrading tu cuenta para crear más publicaciones.' : 'Tu suscripción puede haber expirado.'}`,
+        error: `Has alcanzado el límite de publicaciones registradas para tu plan ${effectiveTier === 'free' ? 'Gratuito' : effectiveTier}. ${limitInfo.limit ? `Límite: ${limitInfo.limit} publicaciones registradas.` : ''} ${effectiveTier === 'free' ? 'Para crear una nueva publicación, primero debes eliminar una existente.' : 'Tu suscripción puede haber expirado.'}`,
         limitReached: true,
         currentTier: effectiveTier,
-        currentCount: currentPublicationCount,
+        currentCount: totalPublicationCount,
         limit: limitInfo.limit
       }, { status: 403 });
     }

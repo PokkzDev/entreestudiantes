@@ -25,11 +25,7 @@ export async function GET(req) {
         accountTier: true,
         _count: {
           select: {
-            publicaciones: {
-              where: {
-                status: "activo" // Only count active publications
-              }
-            }
+            publicaciones: true // Count ALL publications regardless of status
           }
         }
       }
@@ -53,10 +49,10 @@ export async function GET(req) {
 
     // Get effective tier (considering subscription status)
     const effectiveTier = getEffectiveTier(userWithSubscription, currentSubscription);
-    const currentPublicationCount = user._count.publicaciones;
+    const totalPublicationCount = user._count.publicaciones; // All publications
     
-    // Check if user can create more publications
-    const limitInfo = canCreatePublication(effectiveTier, currentPublicationCount);
+    // Check if user can create more publications (NEW LOGIC - counts all publications)
+    const limitInfo = canCreatePublication(effectiveTier, totalPublicationCount);
     
     // Determine if subscription is active
     const subscriptionActive = currentSubscription ? 
@@ -68,7 +64,7 @@ export async function GET(req) {
       canCreate: limitInfo.canCreate,
       currentTier: effectiveTier,
       tierName: formatTierName(effectiveTier),
-      currentCount: currentPublicationCount,
+      currentCount: totalPublicationCount,
       limit: limitInfo.limit,
       remaining: limitInfo.remaining,
       isUnlimited: limitInfo.isUnlimited,

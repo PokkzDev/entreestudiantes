@@ -26,11 +26,9 @@ export async function GET() {
         username: true,
         accountTier: true,
         publicaciones: {
-          where: {
-            status: "activo" // Only count active publications
-          },
           select: {
-            id: true
+            id: true,
+            status: true // Get all publications with their status
           }
         }
       }
@@ -137,8 +135,9 @@ export async function GET() {
       })
     );
 
-    // Calculate publication count
-    const publicationCount = user.publicaciones.length;
+    // Calculate publication count (total registered publications)
+    const publicationCount = user.publicaciones.length; // All publications
+    const activePublicationCount = user.publicaciones.filter(p => p.status === 'activo').length; // Active publications for display
 
     // Determine effective account tier based on active subscription
     const effectiveAccountTier = currentSubscription ? currentSubscription.planId : 'free';
@@ -154,6 +153,7 @@ export async function GET() {
         subscriptionStatus: currentSubscription ? 'active' : 'inactive'
       },
       publicationCount,
+      activePublicationCount,
       currentSubscription: currentSubscription ? {
         id: currentSubscription.id,
         planId: currentSubscription.planId,

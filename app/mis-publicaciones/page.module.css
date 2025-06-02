@@ -36,9 +36,15 @@
 }
 
 .error {
-  background-color: #fee2e2;
-  color: #b91c1c;
-  border-left: 4px solid #ef4444;
+  background: #fef2f2;
+  color: #dc2626;
+  border-left: 4px solid #dc2626;
+}
+
+.warning {
+  background: #fffbeb;
+  color: #d97706;
+  border-left: 4px solid #d97706;
 }
 
 .header {
@@ -281,8 +287,14 @@
   color: #0ea5e9;
 }
 
-.pauseButton:hover {
+.pauseButton:hover:not(:disabled) {
   background: #bae6fd;
+}
+
+.pauseButton:disabled {
+  background: #f1f5f9;
+  color: #94a3b8;
+  cursor: not-allowed;
 }
 
 .activateButton {
@@ -290,8 +302,14 @@
   color: #10b981;
 }
 
-.activateButton:hover {
+.activateButton:hover:not(:disabled) {
   background: #a7f3d0;
+}
+
+.activateButton:disabled {
+  background: #f1f5f9;
+  color: #94a3b8;
+  cursor: not-allowed;
 }
 
 .viewButton {
@@ -624,4 +642,26 @@
   .tierEmoji {
     font-size: 1.25rem;
   }
+}
+
+.activeStatText {
+  color: #64748b;
+  font-size: 0.9rem;
+  margin-left: 0.5rem;
+  font-weight: normal;
+}
+
+.freeUserNotice {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-top: 0.75rem;
+}
+
+.noticeText {
+  color: #475569;
+  font-size: 0.95rem;
+  margin: 0 0 0.75rem 0;
+  line-height: 1.4;
 }

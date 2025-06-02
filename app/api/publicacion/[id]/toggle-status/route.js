@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { getEffectiveTier } from "@/lib/accountTiers";
+import { getCurrentActiveSubscription } from "@/lib/dbUtils";
 
 // PATCH /api/publicacion/[id]/toggle-status - Cambiar el estado de una publicación (activo/inactivo)
 export async function PATCH(request, context) {
@@ -34,6 +36,43 @@ export async function PATCH(request, context) {
       return NextResponse.json({ 
         success: false, 
         error: "No tienes permiso para modificar esta publicación" 
+      }, { status: 403 });
+    }
+
+    // Get user account information to check tier
+    const user = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: {
+        accountTier: true
+      }
+    });
+
+    if (!user) {
+      return NextResponse.json({ 
+        success: false, 
+        error: "Usuario no encontrado" 
+      }, { status: 404 });
+    }
+
+    // Get current active subscription
+    const currentSubscription = await getCurrentActiveSubscription(session.user.id);
+
+    // Create user object compatible with getEffectiveTier function
+    const userForTierCalculation = {
+      accountTier: user.accountTier,
+      currentSubscription
+    };
+
+    // Get effective tier
+    const effectiveTier = getEffectiveTier(userForTierCalculation, currentSubscription);
+
+    // Prevent free users from toggling publication status
+    if (effectiveTier === 'free') {
+      return NextResponse.json({ 
+        success: false, 
+        error: "Los usuarios del plan Gratuito no pueden pausar/activar publicaciones. Para crear una nueva publicación, debes eliminar una existente o actualizar tu plan.",
+        restrictedFeature: true,
+        currentTier: effectiveTier
       }, { status: 403 });
     }
 
