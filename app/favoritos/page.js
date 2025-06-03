@@ -3,10 +3,10 @@ import React, { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import Image from 'next/image';
 import styles from './page.module.css';
-import { FaHeart, FaEye, FaMapMarkerAlt, FaTag, FaCalendarAlt, FaUser, FaDollarSign, FaTrash, FaSearch } from 'react-icons/fa';
-import { getCategoryLabel } from '@/lib/categoryOptions';
+import cardStyles from '@/components/PublicationCard.module.css';
+import { FaHeart, FaSearch, FaTrash } from 'react-icons/fa';
+import PublicationCard from '@/components/PublicationCard';
 
 export default function FavoritosPage() {
   const { data: session, status } = useSession();
@@ -44,18 +44,18 @@ export default function FavoritosPage() {
     }
   };
 
-  const handleRemoveFavorite = async (publicacionId) => {
+  const handleRemoveFavorite = async (e, publicacion) => {
     if (removingFavorite) return;
 
-    setRemovingFavorite(publicacionId);
+    setRemovingFavorite(publicacion.id);
     
     try {
-      const res = await fetch(`/api/favorites/${publicacionId}`, {
+      const res = await fetch(`/api/favorites/${publicacion.id}`, {
         method: 'DELETE',
       });
       
       if (res.ok) {
-        setFavorites(favorites.filter(fav => fav.publicacionId !== publicacionId));
+        setFavorites(favorites.filter(fav => fav.publicacionId !== publicacion.id));
         showNotification('Eliminado de favoritos');
       } else {
         const data = await res.json();
@@ -101,21 +101,6 @@ export default function FavoritosPage() {
     }, 2000);
   };
 
-  const formatNumber = (num) => {
-    if (!num) return '0';
-    let [integerPart, decimalPart] = num.toString().split('.');
-    integerPart = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-    return decimalPart ? `${integerPart},${decimalPart}` : integerPart;
-  };
-
-  const formatDate = (dateString) => {
-    const date = new Date(dateString);
-    const day = date.getDate().toString().padStart(2, '0');
-    const month = (date.getMonth() + 1).toString().padStart(2, '0');
-    const year = date.getFullYear();
-    return `${day}/${month}/${year}`;
-  };
-
   if (status === 'loading' || loading) {
     return (
       <div className={styles.container}>
@@ -156,93 +141,22 @@ export default function FavoritosPage() {
           </div>
         ) : (
           <div className={styles.favoritesGrid}>
-            {favorites.map((favorite) => {
-              const publicacion = favorite.publicacion;
-              const images = publicacion.images ? publicacion.images.split(",").filter(img => img.trim()) : [];
-              const mainImage = images.length > 0 ? images[0] : null;
-              
-              return (
-                <div 
-                  key={favorite.id} 
-                  className={styles.busquedaCard}
-                  data-type={publicacion.type}
-                  onClick={() => router.push(`/publicacion/${publicacion.id}`)}
-                  style={{ 
-                    cursor: 'pointer',
-                    '--card-index': 0
-                  }}
-                >
-                  <span className={styles.tipoLabel}>
-                    {publicacion.type === 'producto' ? 'Producto' : 'Servicio'}
-                  </span>
-                  <button
-                    className={styles.removeButton}
-                    onClick={(e) => {
-                      e.stopPropagation(); // Prevent card click
-                      handleRemoveFavorite(publicacion.id);
-                    }}
-                    disabled={removingFavorite === publicacion.id}
-                    title="Eliminar de favoritos"
-                  >
-                    <FaTrash />
-                  </button>
-
-                  {/* Image Section */}
-                  {mainImage ? (
-                    <div className={styles.imageContainer}>
-                      <Image
-                        src={(() => {
-                          if (mainImage.startsWith("/images/") || mainImage.startsWith("http")) return mainImage;
-                          return `/images/${mainImage.replace(/^\/+/, "")}`;
-                        })()}
-                        alt={publicacion.title}
-                        width={300}
-                        height={200}
-                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                      />
-                    </div>
-                  ) : (
-                    <div className={styles.noImage}>Sin imagen</div>
-                  )}
-
-                  {/* Content Section */}
-                  <div className={styles.cardContent}>
-                    {/* Top Meta Section */}
-                    <div className={styles.topMeta}>
-                      <div className={styles.categoria}>
-                        <b>Categoría:</b> {getCategoryLabel(publicacion.category)}
-                      </div>
-                      
-                      {(publicacion.university || publicacion.campus) && (
-                        <div className={styles.universidad}>
-                          <b>Institución:</b> {publicacion.university}
-                          {publicacion.campus && <span> - {publicacion.campus}</span>}
-                        </div>
-                      )}
-                      
-                      <div className={styles.fechaPublicacion}>
-                        <b>Publicado:</b> {formatDate(publicacion.createdAt)}
-                      </div>
-                    </div>
-                    
-                    {/* Main Content */}
-                    <div className={styles.mainContent}>
-                      <div className={styles.contentFlow}>
-                        <h3>{publicacion.title}</h3>
-                        <p className={styles.description}>{publicacion.description}</p>
-                      </div>
-                    </div>
-                    
-                    {/* Price Section */}
-                    {publicacion.price && (
-                      <div className={styles.priceSection}>
-                        <div className={styles.precio}>${formatNumber(publicacion.price)}</div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
+            {favorites.map((favorite, index) => (
+              <PublicationCard
+                key={favorite.id}
+                publication={favorite.publicacion}
+                index={index}
+                onActionClick={handleRemoveFavorite}
+                onClick={(publication) => router.push(`/publicacion/${publication.id}`)}
+                priority={index < 4}
+                actionButton={{
+                  icon: <FaTrash />,
+                  title: "Eliminar de favoritos",
+                  className: cardStyles.removeButtonCard,
+                  disabled: removingFavorite === favorite.publicacion.id
+                }}
+              />
+            ))}
           </div>
         )}
       </div>

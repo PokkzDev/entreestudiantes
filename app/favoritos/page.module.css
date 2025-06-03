@@ -404,8 +404,8 @@
   color: white;
 }
 
-/* Remove button for favorites - positioned like report button */
-.removeButton {
+/* Remove Button for PublicationCard */
+.removeButtonCard {
   position: absolute;
   top: 12px;
   left: 12px;
@@ -417,7 +417,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #dc2626;
+  color: #6b7280;
   font-size: 0.75rem;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -425,23 +425,24 @@
   backdrop-filter: blur(8px);
 }
 
-.removeButton:hover {
+.removeButtonCard:hover {
   background: #fef2f2;
   border-color: #fca5a5;
   color: #dc2626;
   transform: scale(1.1);
 }
 
-.removeButton:disabled {
-  opacity: 0.5;
+.removeButtonCard:disabled {
+  opacity: 0.6;
   cursor: not-allowed;
+  transform: none;
 }
 
-.busquedaCard:hover .tipoLabel {
-  transform: scale(1.05);
-  box-shadow: 
-    0 6px 20px rgba(0, 0, 0, 0.2),
-    0 3px 6px rgba(0, 0, 0, 0.15);
+.removeButtonCard:disabled:hover {
+  background: rgba(255, 255, 255, 0.95);
+  border-color: rgba(0, 0, 0, 0.1);
+  color: #6b7280;
+  transform: none;
 }
 
 /* Author and date info styling */
@@ -594,7 +595,7 @@
     font-size: 0.7rem;
   }
 
-  .removeButton {
+  .removeButtonCard {
     width: 28px;
     height: 28px;
     font-size: 0.7rem;
@@ -702,7 +703,7 @@
     font-size: 1.125rem;
   }
 
-  .removeButton {
+  .removeButtonCard {
     width: 28px;
     height: 28px;
     font-size: 0.7rem;

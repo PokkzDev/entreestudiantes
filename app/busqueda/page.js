@@ -1,9 +1,10 @@
 "use client";
 import { useEffect, useState } from "react";
 import styles from "./page.module.css";
+import cardStyles from "@/components/PublicationCard.module.css";
 import { FaFlag } from "react-icons/fa";
-import Image from "next/image";
 import ReportModal from "@/components/ReportModal";
+import PublicationCard from "@/components/PublicationCard";
 import { getCategoryLabel, getProductCategories, getServiceCategories } from "../../lib/categoryOptions";
 
 export default function Busqueda() {
@@ -25,29 +26,6 @@ export default function Busqueda() {
   // Estados para el modal de reportes
   const [showReportModal, setShowReportModal] = useState(false);
   const [reportingPublication, setReportingPublication] = useState(null);
-  
-  // Función para formatear números con puntos para separar miles y comas para decimales
-  const formatNumber = (num) => {
-    if (!num) return '0';
-    
-    // Separar la parte entera y decimal
-    let [integerPart, decimalPart] = num.toString().split('.');
-    
-    // Formatear la parte entera con puntos como separadores de miles
-    integerPart = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-    
-    // Devolver el número formateado with coma para decimales si existe parte decimal
-    return decimalPart ? `${integerPart},${decimalPart}` : integerPart;
-  };
-
-  // Función para formatear fechas
-  const formatDate = (dateString) => {
-    const date = new Date(dateString);
-    const day = date.getDate().toString().padStart(2, '0');
-    const month = (date.getMonth() + 1).toString().padStart(2, '0');
-    const year = date.getFullYear();
-    return `${day}/${month}/${year}`;
-  };
 
   // Obtener categorías según el tipo seleccionado (manteniendo la estructura de grupos)
   const getCategoriasByTipo = () => {
@@ -265,86 +243,20 @@ export default function Busqueda() {
           {productos.length === 0 ? (
             <p className={styles.busquedaEmpty}>No hay publicaciones disponibles.</p>
           ) : (
-            productos.map((prod, index) => {
-              return (
-                <div 
-                  key={prod.id} 
-                  className={styles.busquedaCard} 
-                  data-type={prod.type} 
-                  onClick={() => window.location.href = `/publicacion/${prod.id}`} 
-                  style={{ 
-                    cursor: 'pointer',
-                    '--card-index': index
-                  }}
-                >
-                  <span className={styles.tipoLabel}>{prod.type === 'producto' ? 'Producto' : 'Servicio'}</span>
-                  <button
-                    className={styles.reportButtonCard}
-                    onClick={(e) => handleReport(e, prod)}
-                    title="Reportar publicación"
-                  >
-                    <FaFlag />
-                  </button>
-                  
-                  {/* Image Section */}
-                  {prod.images && prod.images.length > 0 ? (
-                    <div className={styles.imageContainer}>
-                      <Image
-                        src={(() => {
-                          const img = prod.images.split(",")[0].trim();
-                          if (!img) return "";
-                          if (img.startsWith("/images/") || img.startsWith("http")) return img;
-                          return `/images/${img.replace(/^\/+/, "")}`;
-                        })()}
-                        alt={prod.title}
-                        width={300}
-                        height={200}
-                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                        priority={index < 4}
-                      />
-                    </div>
-                  ) : (
-                    <div className={styles.noImage}>Sin imagen</div>
-                  )}
-                  
-                  {/* Content Section */}
-                  <div className={styles.cardContent}>
-                    {/* Top Meta Section */}
-                    <div className={styles.topMeta}>
-                      <div className={styles.categoria}>
-                        <b>Categoría:</b> {getCategoryLabel(prod.category)}
-                      </div>
-                      
-                      {(prod.university || prod.campus) && (
-                        <div className={styles.universidad}>
-                          <b>Institución:</b> {prod.university}
-                          {prod.campus && <span> - {prod.campus}</span>}
-                        </div>
-                      )}
-                      
-                      <div className={styles.fechaPublicacion}>
-                        <b>Publicado:</b> {formatDate(prod.createdAt)}
-                      </div>
-                    </div>
-                    
-                    {/* Main Content */}
-                    <div className={styles.mainContent}>
-                      <div className={styles.contentFlow}>
-                        <h3>{prod.title}</h3>
-                        <p className={styles.description}>{prod.description}</p>
-                      </div>
-                    </div>
-                    
-                    {/* Price Section */}
-                    {prod.price && (
-                      <div className={styles.priceSection}>
-                        <div className={styles.precio}>${formatNumber(prod.price)}</div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              );
-            })
+            productos.map((prod, index) => (
+              <PublicationCard
+                key={prod.id}
+                publication={prod}
+                index={index}
+                onActionClick={handleReport}
+                priority={index < 4}
+                actionButton={{
+                  icon: <FaFlag />,
+                  title: "Reportar publicación",
+                  className: cardStyles.reportButtonCard
+                }}
+              />
+            ))
           )}
         </div>
       )}

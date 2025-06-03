@@ -16,4 +16,4 @@
 
 - [x] Agregar sistema de sugerencias
 
-- [] Publication cards sizes are not standard, check busquedas and favorites (hegihts)
+- [x] Publication cards sizes are not standard, check busquedas and favorites (hegihts)
