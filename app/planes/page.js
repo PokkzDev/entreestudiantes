@@ -167,7 +167,7 @@ function PlanesContent() {
         text: 'Error al verificar el pago. Por favor, verifica el estado de tu transacción.'
       });
     }
-  }, [fetchAccountInfo]);
+  }, [fetchAccountInfo, setMessageWithTimeout]);
 
   useEffect(() => {
     // Always fetch account tiers
@@ -182,7 +182,7 @@ function PlanesContent() {
       setLoading(false);
     }
     // If status is "loading", don't change the loading state yet
-  }, [status, fetchAccountTiersData]); // Removed fetchAccountInfo and checkPlanPurchasingStatus from dependencies to avoid infinite loops
+  }, [status, fetchAccountTiersData, fetchAccountInfo, checkPlanPurchasingStatus]);
 
   useEffect(() => {
     if (!searchParams) {
@@ -320,7 +320,7 @@ function PlanesContent() {
       console.warn('⚠️ Invalid Flow.cl parameters detected:', { token, flowStatus });
       // Removed URL cleanup for invalid parameters
     }
-  }, [searchParams, session, router, handlePaymentSuccess, fetchAccountInfo]);
+  }, [searchParams, session, router, handlePaymentSuccess, fetchAccountInfo, setMessageWithTimeout]);
 
   const formatPrice = (price) => {
     if (price === 0) return "Gratis";
@@ -431,14 +431,14 @@ function PlanesContent() {
     return icon ? <FontAwesomeIcon icon={icon} /> : null;
   };
 
-  const clearMessageTimeout = () => {
+  const clearMessageTimeout = useCallback(() => {
     if (messageTimeoutId) {
       clearTimeout(messageTimeoutId);
       setMessageTimeoutId(null);
     }
-  };
+  }, [messageTimeoutId]);
 
-  const setMessageWithTimeout = (newMessage) => {
+  const setMessageWithTimeout = useCallback((newMessage) => {
     clearMessageTimeout(); // Clear any existing timeout
     setMessage(newMessage);
     
@@ -450,19 +450,19 @@ function PlanesContent() {
     }, timeoutDuration);
     
     setMessageTimeoutId(timeoutId);
-  };
+  }, [clearMessageTimeout]);
 
-  const dismissMessage = () => {
+  const dismissMessage = useCallback(() => {
     clearMessageTimeout();
     setMessage(null);
-  };
+  }, [clearMessageTimeout]);
 
   // Cleanup timeout on unmount
   useEffect(() => {
     return () => {
       clearMessageTimeout();
     };
-  }, [messageTimeoutId]);
+  }, [clearMessageTimeout]);
 
   return (
     <div className={styles.container}>
