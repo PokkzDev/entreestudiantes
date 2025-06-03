@@ -142,6 +142,30 @@ export async function GET() {
     // Determine effective account tier based on active subscription
     const effectiveAccountTier = currentSubscription ? currentSubscription.planId : 'free';
 
+    // Fetch tier information from database
+    const tierData = await prisma.accountTier.findUnique({
+      where: { tierKey: effectiveAccountTier }
+    });
+
+    if (!tierData) {
+      return NextResponse.json(
+        { success: false, error: `Información del plan ${effectiveAccountTier} no encontrada en la base de datos` },
+        { status: 500 }
+      );
+    }
+
+    // Format tier data
+    const formattedTierData = {
+      tierKey: tierData.tierKey,
+      name: tierData.name,
+      publicationLimit: tierData.publicationLimit,
+      price: tierData.price,
+      features: JSON.parse(tierData.features),
+      icon: tierData.icon,
+      color: tierData.color,
+      bgColor: tierData.bgColor
+    };
+
     return NextResponse.json({
       success: true,
       user: {
@@ -166,7 +190,15 @@ export async function GET() {
         autoRenew: currentSubscription.autoRenew,
         isExpired: new Date() > new Date(currentSubscription.endDate)
       } : null,
-      paymentHistory: enrichedPaymentHistory
+      paymentHistory: enrichedPaymentHistory,
+      tierData: formattedTierData
+    }, {
+      headers: {
+        'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0',
+        'Surrogate-Control': 'no-store'
+      }
     });
 
   } catch (error) {

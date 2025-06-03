@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { requirePostAuth } from "@/lib/authHelpers";
-import { getEffectiveTier, canCreatePublication } from "@/lib/accountTiers";
+import { getEffectiveTier, canCreatePublicationFromTierData } from "@/lib/accountTiers";
 import { getCurrentActiveSubscription } from "@/lib/dbUtils";
 
 export async function POST(req) {
@@ -51,12 +51,36 @@ export async function POST(req) {
     // Check publication limits based on account tier (NEW LOGIC - counts all publications)
     const effectiveTier = getEffectiveTier(userForTierCalculation, currentSubscription);
     const totalPublicationCount = userDetails._count.publicaciones; // All publications
-    const limitInfo = canCreatePublication(effectiveTier, totalPublicationCount);
+    
+    // Fetch tier data from database
+    const tierData = await prisma.accountTier.findUnique({
+      where: { tierKey: effectiveTier }
+    });
+
+    if (!tierData) {
+      return NextResponse.json({ 
+        success: false, 
+        error: `Información del plan ${effectiveTier} no encontrada en la base de datos` 
+      }, { status: 500 });
+    }
+
+    // Transform tier data to expected format
+    const formattedTierData = {
+      name: tierData.name,
+      publicationLimit: tierData.publicationLimit,
+      price: tierData.price,
+      features: JSON.parse(tierData.features),
+      icon: tierData.icon,
+      color: tierData.color,
+      bgColor: tierData.bgColor
+    };
+
+    const limitInfo = canCreatePublicationFromTierData(effectiveTier, totalPublicationCount, formattedTierData);
 
     if (!limitInfo.canCreate) {
       return NextResponse.json({ 
         success: false, 
-        error: `Has alcanzado el límite de publicaciones registradas para tu plan ${effectiveTier === 'free' ? 'Gratuito' : effectiveTier}. ${limitInfo.limit ? `Límite: ${limitInfo.limit} publicaciones registradas.` : ''} ${effectiveTier === 'free' ? 'Para crear una nueva publicación, primero debes eliminar una existente.' : 'Tu suscripción puede haber expirado.'}`,
+        error: `Has alcanzado el límite de publicaciones registradas para tu plan ${formattedTierData.name}. ${limitInfo.limit ? `Límite: ${limitInfo.limit} publicaciones registradas.` : ''} ${effectiveTier === 'free' ? 'Para crear una nueva publicación, primero debes eliminar una existente.' : 'Tu suscripción puede haber expirado.'}`,
         limitReached: true,
         currentTier: effectiveTier,
         currentCount: totalPublicationCount,

@@ -8,218 +8,210 @@ datasource db {
 }
 
 model User {
-  id                  String    @id @default(cuid())
-  username            String?   @unique
-  name                String?
-  email               String    @unique
-  emailVerified       DateTime? // NextAuth field for email verification
-  password            String
-  image               String?
-  bio                 String?   @db.Text
-  rut                 String?   @unique // RUT del usuario para pagos
-  university          String?   // Universidad del usuario
-  campus              String?   // Campus de la universidad
-  createdAt           DateTime  @default(now())
-  updatedAt           DateTime  @updatedAt
-  lastLoginAt         DateTime? // Track last login
-  lastActivityAt      DateTime? // Track last activity
-  verificationToken   String?  // Token para verificar email
-  isVerified          Boolean   @default(false) // Indica si el usuario ya completó el registro
-  publicaciones       Publicacion[]
+  id                       String         @id @default(cuid())
+  username                 String?        @unique
+  name                     String?
+  email                    String         @unique
+  password                 String
+  image                    String?
+  bio                      String?        @db.Text
+  university               String?
+  campus                   String?
+  createdAt                DateTime       @default(now())
+  updatedAt                DateTime       @updatedAt
+  verificationToken        String?
+  isVerified               Boolean        @default(false)
   resetPasswordToken       String?
   resetPasswordTokenExpiry DateTime?
-  nameChangeCount     Int      @default(0)
-  usernameChangeCount Int      @default(0)
-  universityChangeCount Int    @default(0)
-  
-  // Simplified account tier (for backward compatibility, will be derived from active subscription)
-  accountTier         String    @default("free") // "free", "basic", "premium", "elite"
-  
-  // Moderation fields
-  isBanned            Boolean   @default(false)
-  isSuspended         Boolean   @default(false)
-  isRestricted        Boolean   @default(false)
-  isMuted             Boolean   @default(false)
-  isWarned            Boolean   @default(false)
-  isFlagged           Boolean   @default(false)
-  isActive            Boolean   @default(true)
-  suspensionEndsAt    DateTime?
-  suspensionReason    String?   @db.Text
-  banReason           String?   @db.Text
-  bannedAt            DateTime?
-  suspendedAt         DateTime?
-  moderatedBy         String?   // ID of the admin who performed the action
-  suspensionCount     Int       @default(0)
-  
-  // NextAuth required relations (will be auto-created by Prisma adapter but we define for clarity)
-  accounts            Account[]
-  sessions            Session[]
-  reports             Report[]
-  paymentLogs         PaymentLog[]
-  subscriptions       Subscription[]
-  createdRefunds      RefundLog[] @relation("RefundCreator")
-  cancelledRefunds    RefundLog[] @relation("RefundCanceller")
+  nameChangeCount          Int            @default(0)
+  usernameChangeCount      Int            @default(0)
+  universityChangeCount    Int            @default(0)
+  emailVerified            DateTime?
+  isActive                 Boolean        @default(true)
+  isBanned                 Boolean        @default(false)
+  isFlagged                Boolean        @default(false)
+  isMuted                  Boolean        @default(false)
+  isRestricted             Boolean        @default(false)
+  isSuspended              Boolean        @default(false)
+  isWarned                 Boolean        @default(false)
+  lastActivityAt           DateTime?
+  lastLoginAt              DateTime?
+  suspensionEndsAt         DateTime?
+  suspensionReason         String?        @db.Text
+  rut                      String?        @unique
+  banReason                String?        @db.Text
+  bannedAt                 DateTime?
+  moderatedBy              String?
+  suspendedAt              DateTime?
+  suspensionCount          Int            @default(0)
+  accountTier              String         @default("free")
+  accounts                 Account[]
+  feedbacks                Feedback[]
+  paymentLogs              PaymentLog[]
+  publicaciones            Publicacion[]
+  cancelledRefunds         RefundLog[]    @relation("RefundCanceller")
+  createdRefunds           RefundLog[]    @relation("RefundCreator")
+  reports                  Report[]
+  sessions                 Session[]
+  subscriptions            Subscription[]
+  favorites                Favorite[]    @relation("UserFavorites")
 }
 
 model Publicacion {
-  id            String    @id @default(cuid())
-  title         String
-  description   String   @db.Text
-  type          String   // "producto" or "servicio"
-  price         Decimal? @db.Decimal(10, 2)
-  images        String   @db.Text // Comma-separated URLs
-  category      String
-  contactMethod String
-  contactInfo   String
-  status        String   @default("activo")
-  location      String?
-  tags          String   // Comma-separated tags
-  views         Int      @default(0)
-  featured      Boolean  @default(false)
-  university    String?  // Universidad del autor al momento de crear la publicación
-  campus        String?  // Campus del autor al momento de crear la publicación
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-  author        User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
-  authorId      String
-  
-  // Report and moderation fields
-  hiddenByReports Boolean  @default(false)
-  flagged         Boolean  @default(false)
-  reportCount     Int      @default(0)
-  hiddenAt        DateTime?
+  id              String    @id @default(cuid())
+  title           String
+  description     String    @db.Text
+  type            String
+  price           Decimal?  @db.Decimal(10, 2)
+  images          String    @db.Text
+  category        String
+  contactMethod   String
+  contactInfo     String
+  status          String    @default("activo")
+  location        String?
+  tags            String
+  views           Int       @default(0)
+  featured        Boolean   @default(false)
+  university      String?
+  campus          String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  authorId        String
+  flagged         Boolean   @default(false)
   flaggedAt       DateTime?
-  
-  // Relations
+  hiddenAt        DateTime?
+  hiddenByReports Boolean   @default(false)
+  reportCount     Int       @default(0)
+  author          User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
   reports         Report[]
+  favorites       Favorite[] @relation("PublicacionFavorites")
+
+  @@index([authorId], map: "Publicacion_authorId_fkey")
 }
 
 model Subscription {
-  id                  String    @id @default(cuid())
-  userId              String
-  planId              String    // The plan ID (basic, premium, elite)
-  status              String    // "active", "cancelled", "expired", "paused"
-  startDate           DateTime  // When subscription started
-  endDate             DateTime  // When subscription expires
-  autoRenew           Boolean   @default(false) // Whether to auto-renew
-  cancelledAt         DateTime? // When subscription was cancelled
-  cancelReason        String?   // Reason for cancellation
-  amount              Int       // Amount paid in CLP (Chilean pesos)
-  currency            String    @default("CLP")
-  paymentId           String    // Reference to the payment that created this subscription
-  createdAt           DateTime  @default(now())
-  updatedAt           DateTime  @updatedAt
-  
-  // Relations
-  user                User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
-  // Ensure one subscription per user per payment
+  id           String    @id @default(cuid())
+  userId       String
+  planId       String
+  status       String
+  startDate    DateTime
+  endDate      DateTime
+  autoRenew    Boolean   @default(false)
+  cancelledAt  DateTime?
+  cancelReason String?
+  amount       Int
+  currency     String    @default("CLP")
+  paymentId    String
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   @@unique([userId, paymentId])
   @@index([userId, status])
   @@index([endDate, status])
 }
 
 model PaymentLog {
-  id                  String    @id @default(cuid())
-  userId              String
-  planId              String    // The plan that was purchased
-  amount              Int       // Amount in CLP (Chilean pesos)
-  currency            String    @default("CLP")
-  flowToken           String    @unique // Flow.cl token
-  commerceOrder       String    // Commerce order ID
-  flowOrder           String?   // Flow.cl order number
-  status              String    // "pending", "completed", "failed", "cancelled"
-  paymentDate         DateTime  @default(now())
-  createdAt           DateTime  @default(now())
-  updatedAt           DateTime  @updatedAt
-  
-  // Relations
-  user                User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id            String   @id @default(cuid())
+  userId        String
+  planId        String
+  amount        Int
+  currency      String   @default("CLP")
+  flowToken     String   @unique
+  commerceOrder String
+  flowOrder     String?
+  status        String
+  paymentDate   DateTime @default(now())
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId], map: "PaymentLog_userId_fkey")
 }
 
 model RefundLog {
   id                    String    @id @default(cuid())
-  refundCommerceOrder   String    @unique // Refund commerce order ID
-  flowRefundOrder       String?   // Flow.cl refund order number
-  token                 String    @unique // Flow.cl refund token
-  receiverEmail         String    // Email of refund receiver
-  amount                Int       // Refund amount in CLP (Chilean pesos)
-  fee                   Int?      // Flow.cl fee for the refund
-  status                String    // "created", "pending", "accepted", "rejected", "cancelled", "completed", "expired"
-  originalCommerceOrder String?   // Original payment commerce order
-  originalFlowOrder     String?   // Original payment Flow order
-  reason                String?   @db.Text // Reason for refund
-  createdBy             String    // User ID who created the refund
-  cancelledBy           String?   // User ID who cancelled the refund (if applicable)
+  refundCommerceOrder   String    @unique
+  flowRefundOrder       String?
+  token                 String    @unique
+  receiverEmail         String
+  amount                Int
+  fee                   Int?
+  status                String
+  originalCommerceOrder String?
+  originalFlowOrder     String?
+  reason                String?   @db.Text
+  createdBy             String
+  cancelledBy           String?
   createdAt             DateTime  @default(now())
   updatedAt             DateTime  @updatedAt
   cancelledAt           DateTime?
-  
-  // Relations
+  canceller             User?     @relation("RefundCanceller", fields: [cancelledBy], references: [id])
   creator               User      @relation("RefundCreator", fields: [createdBy], references: [id], onDelete: Cascade)
-  canceller             User?     @relation("RefundCanceller", fields: [cancelledBy], references: [id], onDelete: SetNull)
+
+  @@index([cancelledBy], map: "RefundLog_cancelledBy_fkey")
+  @@index([createdBy], map: "RefundLog_createdBy_fkey")
 }
 
 model DeletedAccountLog {
-  id            String    @id @default(cuid())
-  userId        String    // Original user ID
-  username      String?   // Username at time of deletion
-  email         String    // Email at time of deletion
-  name          String?   // Name at time of deletion
-  reason        String?   @db.Text // Optional reason for deletion
-  ipAddress     String?   // IP address at time of deletion
-  userAgent     String?   @db.Text // Browser/device info
-  publicationCount Int    // Number of publications they had
-  accountCreatedAt DateTime // When the account was originally created
-  accountDeletedAt DateTime @default(now()) // When the account was deleted
+  id               String   @id @default(cuid())
+  userId           String
+  username         String?
+  email            String
+  name             String?
+  reason           String?  @db.Text
+  ipAddress        String?
+  userAgent        String?  @db.Text
+  publicationCount Int
+  accountCreatedAt DateTime
+  accountDeletedAt DateTime @default(now())
 }
 
 model DeletedPublicationLog {
-  id            String    @id @default(cuid())
-  publicationId String    // Original publication ID
-  authorId      String    // Original author ID
-  username      String?   // Author username at time of deletion
-  email         String    // Author email at time of deletion
-  title         String    // Publication title
-  description   String    @db.Text // Publication description
-  type          String    // "producto" or "servicio"
-  price         Decimal?  @db.Decimal(10, 2)
-  images        String    @db.Text // Comma-separated URLs
-  category      String
-  contactMethod String
-  contactInfo   String
-  location      String?
-  tags          String    // Comma-separated tags
-  university    String?   // Universidad del autor al momento de crear la publicación
-  campus        String?   // Campus del autor al momento de crear la publicación
-  ipAddress     String?   // IP address that requested deletion
-  userAgent     String?   @db.Text // Browser/device info
-  reason        String?   @db.Text // Reason for deletion (if provided)
-  deletedBy     String    // "user" (self-deletion) or "admin" or "account-deletion"
-  publicationCreatedAt DateTime // When the publication was originally created
-  deletedAt     DateTime @default(now()) // When the publication was deleted
+  id                   String   @id @default(cuid())
+  publicationId        String
+  authorId             String
+  username             String?
+  email                String
+  title                String
+  description          String   @db.Text
+  type                 String
+  price                Decimal? @db.Decimal(10, 2)
+  images               String   @db.Text
+  category             String
+  contactMethod        String
+  contactInfo          String
+  location             String?
+  tags                 String
+  university           String?
+  campus               String?
+  ipAddress            String?
+  userAgent            String?  @db.Text
+  reason               String?  @db.Text
+  deletedBy            String
+  publicationCreatedAt DateTime
+  deletedAt            DateTime @default(now())
 }
 
 model SubscriptionCancellationLog {
-  id                      String    @id @default(cuid())
-  userId                  String    // User who cancelled
-  username                String?   // Username at time of cancellation
-  email                   String    // Email at time of cancellation
-  name                    String?   // Name at time of cancellation
-  university              String?   // University at time of cancellation
-  campus                  String?   // Campus at time of cancellation
-  subscriptionId          String?   // ID of the cancelled subscription
-  planId                  String    // Plan that was cancelled (basic, premium, elite)
-  previousAccountTier     String    // Account tier before cancellation
-  reason                  String?   @db.Text // Reason for cancellation
-  ipAddress               String?   // IP address at time of cancellation
-  userAgent               String?   @db.Text // Browser/device info
-  subscriptionStartDate   DateTime? // When the subscription originally started
-  subscriptionEndDate     DateTime? // When the subscription was supposed to end
-  cancelledAt             DateTime  @default(now()) // When the cancellation occurred
+  id                    String    @id @default(cuid())
+  userId                String
+  username              String?
+  email                 String
+  name                  String?
+  university            String?
+  campus                String?
+  subscriptionId        String?
+  planId                String
+  previousAccountTier   String
+  reason                String?   @db.Text
+  ipAddress             String?
+  userAgent             String?   @db.Text
+  subscriptionStartDate DateTime?
+  subscriptionEndDate   DateTime?
+  cancelledAt           DateTime  @default(now())
 }
 
-// NextAuth.js required models
 model Account {
   id                String  @id @default(cuid())
   userId            String
@@ -233,10 +225,10 @@ model Account {
   scope             String?
   id_token          String? @db.Text
   session_state     String?
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
+  @@index([userId], map: "Account_userId_fkey")
 }
 
 model Session {
@@ -245,6 +237,8 @@ model Session {
   userId       String
   expires      DateTime
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId], map: "Session_userId_fkey")
 }
 
 model VerificationToken {
@@ -256,38 +250,89 @@ model VerificationToken {
 }
 
 model Report {
-  id            String    @id @default(cuid())
+  id            String      @id @default(cuid())
   publicacionId String
-  reporterId    String?   // Optional - allows anonymous reports
+  reporterId    String?
   reason        String
-  description   String?   @db.Text
-  status        String    @default("pending") // "pending", "approved", "rejected"
+  description   String?     @db.Text
+  status        String      @default("pending")
   ipAddress     String?
-  userAgent     String?   @db.Text
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  
-  // Relations
+  userAgent     String?     @db.Text
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
   publicacion   Publicacion @relation(fields: [publicacionId], references: [id], onDelete: Cascade)
-  reporter      User?       @relation(fields: [reporterId], references: [id], onDelete: SetNull)
+  reporter      User?       @relation(fields: [reporterId], references: [id])
+
+  @@index([publicacionId], map: "Report_publicacionId_fkey")
+  @@index([reporterId], map: "Report_reporterId_fkey")
 }
 
 model AppConfig {
-  id          String    @id @default(cuid())
-  key         String    @unique
-  value       String    @db.Text
-  description String?   @db.Text
-  isActive    Boolean   @default(true)
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  id          String   @id @default(cuid())
+  key         String   @unique
+  value       String   @db.Text
+  description String?  @db.Text
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
 
 model AllowedEmailDomain {
-  id          String    @id @default(cuid())
-  domain      String    @unique
-  description String?   @db.Text
-  isActive    Boolean   @default(true)
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  id          String   @id @default(cuid())
+  domain      String   @unique
+  description String?  @db.Text
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
 
+model AccountTier {
+  id               String   @id @default(cuid())
+  tierKey          String   @unique
+  name             String
+  publicationLimit Int?
+  price            Int
+  features         String   @db.Text
+  icon             String
+  color            String
+  bgColor          String
+  isActive         Boolean  @default(true)
+  sortOrder        Int      @default(0)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([isActive, sortOrder])
+}
+
+model Feedback {
+  id        String   @id @default(cuid())
+  type      String
+  subject   String
+  message   String   @db.Text
+  email     String?
+  userId    String?
+  status    String   @default("open")
+  priority  String   @default("medium")
+  ipAddress String?
+  userAgent String?  @db.Text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User?    @relation(fields: [userId], references: [id])
+
+  @@index([type, status])
+  @@index([userId])
+  @@index([createdAt])
+}
+
+model Favorite {
+  id            String      @id @default(cuid())
+  userId        String
+  publicacionId String
+  createdAt     DateTime    @default(now())
+  user          User        @relation("UserFavorites", fields: [userId], references: [id], onDelete: Cascade)
+  publicacion   Publicacion @relation("PublicacionFavorites", fields: [publicacionId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, publicacionId])
+  @@index([userId])
+  @@index([publicacionId])
+}

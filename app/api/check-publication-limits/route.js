@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "../auth/[...nextauth]/route";
-import { getEffectiveTier, canCreatePublication, formatTierName } from "@/lib/accountTiers";
+import { getEffectiveTier, canCreatePublicationFromTierData } from "@/lib/accountTiers";
 import { getCurrentActiveSubscription } from "@/lib/dbUtils";
 
 // GET /api/check-publication-limits - Check if user can create more publications
@@ -51,8 +51,31 @@ export async function GET(req) {
     const effectiveTier = getEffectiveTier(userWithSubscription, currentSubscription);
     const totalPublicationCount = user._count.publicaciones; // All publications
     
+    // Fetch tier data from database
+    const tierData = await prisma.accountTier.findUnique({
+      where: { tierKey: effectiveTier }
+    });
+
+    if (!tierData) {
+      return NextResponse.json({ 
+        success: false, 
+        error: `Información del plan ${effectiveTier} no encontrada en la base de datos` 
+      }, { status: 500 });
+    }
+
+    // Transform tier data to expected format
+    const formattedTierData = {
+      name: tierData.name,
+      publicationLimit: tierData.publicationLimit,
+      price: tierData.price,
+      features: JSON.parse(tierData.features),
+      icon: tierData.icon,
+      color: tierData.color,
+      bgColor: tierData.bgColor
+    };
+    
     // Check if user can create more publications (NEW LOGIC - counts all publications)
-    const limitInfo = canCreatePublication(effectiveTier, totalPublicationCount);
+    const limitInfo = canCreatePublicationFromTierData(effectiveTier, totalPublicationCount, formattedTierData);
     
     // Determine if subscription is active
     const subscriptionActive = currentSubscription ? 
@@ -63,7 +86,7 @@ export async function GET(req) {
       success: true,
       canCreate: limitInfo.canCreate,
       currentTier: effectiveTier,
-      tierName: formatTierName(effectiveTier),
+      tierName: formattedTierData.name,
       currentCount: totalPublicationCount,
       limit: limitInfo.limit,
       remaining: limitInfo.remaining,

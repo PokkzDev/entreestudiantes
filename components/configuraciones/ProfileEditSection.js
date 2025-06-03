@@ -14,6 +14,10 @@ export default function ProfileEditSection({ session, onProfileUpdate }) {
   const [imageUploading, setImageUploading] = useState(false);
   const [imageKey, setImageKey] = useState(Date.now()); // For cache busting
   
+  // Add state to track if RUT has been modified by user
+  const [originalRut, setOriginalRut] = useState(""); // Store original RUT value
+  const [rutModified, setRutModified] = useState(false); // Track if RUT has been modified
+  
   const [formData, setFormData] = useState({
     name: "",
     username: "",
@@ -184,6 +188,9 @@ export default function ProfileEditSection({ session, onProfileUpdate }) {
       ...prev,
       rut: formattedRut
     }));
+    
+    // Check if RUT has been modified from original value
+    setRutModified(formattedRut !== originalRut);
   };
 
   // Fetch user data from the DB (API) and update formData
@@ -194,7 +201,7 @@ export default function ProfileEditSection({ session, onProfileUpdate }) {
       if (!res.ok) throw new Error("No se pudo obtener el perfil");
       const data = await res.json();
       if (data && data.user) {
-        setFormData({
+        const userData = {
           name: data.user.name || "",
           username: data.user.username || "",
           image: data.user.image || "",
@@ -205,7 +212,11 @@ export default function ProfileEditSection({ session, onProfileUpdate }) {
           campus: data.user.campus || "",
           nameChangeCount: data.user.nameChangeCount || 0,
           usernameChangeCount: data.user.usernameChangeCount || 0
-        });
+        };
+        setFormData(userData);
+        // Store original RUT value and reset modification state
+        setOriginalRut(userData.rut);
+        setRutModified(false);
         // Update cache busting key when fetching fresh data
         setImageKey(Date.now());
       }
@@ -320,6 +331,7 @@ export default function ProfileEditSection({ session, onProfileUpdate }) {
     // Reset to fresh data from database instead of session
     fetchUserData();
     setMessage("");
+    // Reset RUT modification state will be handled by fetchUserData
   };
 
   if (dataLoading) {
@@ -441,7 +453,7 @@ export default function ProfileEditSection({ session, onProfileUpdate }) {
               value={formData.rut || ""}
               onChange={handleRutChange}
               className={`${styles.input} ${
-                formData.rut && formData.rut.length >= 9 
+                rutModified && formData.rut && formData.rut.length >= 9 
                   ? (validateRut(formData.rut) ? styles.inputValid : styles.inputInvalid)
                   : ''
               }`}
@@ -449,7 +461,7 @@ export default function ProfileEditSection({ session, onProfileUpdate }) {
               maxLength="12"
             />
             <small className={styles.fieldHint}>
-              {formData.rut && formData.rut.length >= 9 ? (
+              {rutModified && formData.rut && formData.rut.length >= 9 ? (
                 validateRut(formData.rut) ? (
                   <span style={{ color: '#059669' }}>✓ RUT válido</span>
                 ) : (

@@ -2,11 +2,6 @@
 
 - Check busqueda spacing. Make it standard, also ... dots to hide too much text. (ver mas)?
 
-- tokens de recuperacion de claves, on page load check, before user changes pwd, "token expirado" "link no valido"
-
-
-- ME LLEVAS? Transporte entre estudiantes, por un precio acordado entre ellos.
-
 - [x] Cambiar plan basico a "premium"
 
 - [x] Hasta 3 publicaciones registradas.
@@ -17,4 +12,8 @@
 
 - [] Crear funcion para renovar el plan, creando una extension de la fecha por 30 dias "boton renovar"
 
-- [] Agregar publicaciones favoritas, en caso de publicacion eliminada, mostrar "publicacion fue eliminada"
+- [X] Agregar publicaciones favoritas, en caso de publicacion eliminada, mostrar "publicacion fue eliminada"
+
+- [x] Agregar sistema de sugerencias
+
+- [] Publication cards sizes are not standard, check busquedas and favorites (hegihts)

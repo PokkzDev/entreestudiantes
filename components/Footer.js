@@ -34,6 +34,13 @@ export default function Footer() {
             </div>
             
             <div className={styles.linkColumn}>
+              <h4>Ayuda</h4>
+              <nav>
+                <Link href="/sugerencias">Sugerencias y Comentarios</Link>
+              </nav>
+            </div>
+            
+            <div className={styles.linkColumn}>
               <h4>Legal</h4>
               <nav>
                 <button

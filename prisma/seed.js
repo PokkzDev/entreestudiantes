@@ -6,6 +6,78 @@ const prisma = new PrismaClient();
 async function main() {
   console.log('Starting database seeding...');
 
+  console.log('Seeding account tiers...');
+
+  // Define account tiers - simplified to just Free and Premium
+  const accountTiers = [
+    {
+      tierKey: 'free',
+      name: 'Gratuito',
+      publicationLimit: 3,
+      price: 0,
+      features: JSON.stringify([
+        "Hasta 3 publicaciones registradas",
+        "Funciones básicas",
+        "Soporte comunitario"
+      ]),
+      icon: 'hand-holding-heart',
+      color: '#64748b',
+      bgColor: '#f8fafc',
+      isActive: true,
+      sortOrder: 1
+    },
+    {
+      tierKey: 'premium',
+      name: 'Premium',
+      publicationLimit: 10,
+      price: 2990,
+      features: JSON.stringify([
+        "Hasta 10 publicaciones",
+        "Estadísticas Básicas",
+        "Funciones premium",
+        "Soporte via Email",
+
+        
+      ]),
+      icon: 'gem',
+      color: '#7c3aed',
+      bgColor: '#f3e8ff',
+      isActive: true,
+      sortOrder: 2
+    }
+  ];
+
+  // Create account tiers
+  for (const tierData of accountTiers) {
+    const existingTier = await prisma.accountTier.findUnique({
+      where: { tierKey: tierData.tierKey }
+    });
+
+    if (!existingTier) {
+      await prisma.accountTier.create({
+        data: tierData
+      });
+      console.log(`✓ Created account tier: ${tierData.name} (${tierData.tierKey}) - $${tierData.price}`);
+    } else {
+      // Update existing tier to ensure consistency
+      await prisma.accountTier.update({
+        where: { tierKey: tierData.tierKey },
+        data: {
+          name: tierData.name,
+          publicationLimit: tierData.publicationLimit,
+          price: tierData.price,
+          features: tierData.features,
+          icon: tierData.icon,
+          color: tierData.color,
+          bgColor: tierData.bgColor,
+          isActive: tierData.isActive,
+          sortOrder: tierData.sortOrder
+        }
+      });
+      console.log(`✓ Updated account tier: ${tierData.name} (${tierData.tierKey})`);
+    }
+  }
+
   console.log('Seeding allowed email domains...');
 
   // Define allowed email domains
@@ -117,9 +189,6 @@ async function main() {
     }
   }
 
-  console.log('Seeding completed successfully!');
-  console.log('\n📊 Summary:');
-  console.log('- Free tier user (Luis): 3 publications limit');
 }
 
 main()

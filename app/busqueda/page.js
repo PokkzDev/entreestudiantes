@@ -1,10 +1,9 @@
 "use client";
 import { useEffect, useState } from "react";
 import styles from "./page.module.css";
-import { FaWhatsapp, FaEnvelope, FaPhone, FaRegAddressCard, FaFlag } from "react-icons/fa";
+import { FaFlag } from "react-icons/fa";
 import Image from "next/image";
 import ReportModal from "@/components/ReportModal";
-import ModalContactWarning from "@/components/ModalContactWarning";
 import { getCategoryLabel, getProductCategories, getServiceCategories } from "../../lib/categoryOptions";
 
 export default function Busqueda() {
@@ -26,9 +25,6 @@ export default function Busqueda() {
   // Estados para el modal de reportes
   const [showReportModal, setShowReportModal] = useState(false);
   const [reportingPublication, setReportingPublication] = useState(null);
-  // Estados para el modal de advertencia de contacto
-  const [showContactWarning, setShowContactWarning] = useState(false);
-  const [pendingContactInfo, setPendingContactInfo] = useState(null);
   
   // Función para formatear números con puntos para separar miles y comas para decimales
   const formatNumber = (num) => {
@@ -42,6 +38,15 @@ export default function Busqueda() {
     
     // Devolver el número formateado with coma para decimales si existe parte decimal
     return decimalPart ? `${integerPart},${decimalPart}` : integerPart;
+  };
+
+  // Función para formatear fechas
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    const day = date.getDate().toString().padStart(2, '0');
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const year = date.getFullYear();
+    return `${day}/${month}/${year}`;
   };
 
   // Obtener categorías según el tipo seleccionado (manteniendo la estructura de grupos)
@@ -138,29 +143,6 @@ export default function Busqueda() {
   const handleCloseReportModal = () => {
     setShowReportModal(false);
     setReportingPublication(null);
-  };
-
-  // Funciones para manejar el modal de advertencia de contacto
-  const handleContactClick = (e, contactMethod, contactInfo, contactHref) => {
-    e.stopPropagation(); // Evitar que se abra la publicación
-    setPendingContactInfo({
-      method: contactMethod,
-      info: contactInfo,
-      href: contactHref
-    });
-    setShowContactWarning(true);
-  };
-
-  const handleCloseContactWarning = () => {
-    setShowContactWarning(false);
-    setPendingContactInfo(null);
-  };
-
-  const handleConfirmContact = () => {
-    if (pendingContactInfo?.href) {
-      window.open(pendingContactInfo.href, '_blank', 'noopener,noreferrer');
-    }
-    handleCloseContactWarning();
   };
 
   return (
@@ -284,22 +266,6 @@ export default function Busqueda() {
             <p className={styles.busquedaEmpty}>No hay publicaciones disponibles.</p>
           ) : (
             productos.map((prod, index) => {
-              let contactoHref = null;
-              let contactoIcon = null;
-              if (prod.contactMethod === 'whatsapp') {
-                const phone = prod.contactInfo.replace(/[^\d]/g, '');
-                contactoHref = phone ? `https://wa.me/${phone}` : null;
-                contactoIcon = <FaWhatsapp className={styles.contactIcon + ' whatsapp-icon'} style={{ color: '#25D366' }} />;
-              } else if (prod.contactMethod === 'email') {
-                contactoHref = `mailto:${prod.contactInfo}`;
-                contactoIcon = <FaEnvelope className={styles.contactIcon} style={{ color: '#6366f1' }} />;
-              } else if (prod.contactMethod === 'telefono') {
-                const phone = prod.contactInfo.replace(/[^\d]/g, '');
-                contactoHref = phone ? `tel:${phone}` : null;
-                contactoIcon = <FaPhone className={styles.contactIcon} style={{ color: '#10b981' }} />;
-              } else {
-                contactoIcon = <FaRegAddressCard className={styles.contactIcon} style={{ color: '#64748b' }} />;
-              }
               return (
                 <div 
                   key={prod.id} 
@@ -319,15 +285,15 @@ export default function Busqueda() {
                   >
                     <FaFlag />
                   </button>
+                  
+                  {/* Image Section */}
                   {prod.images && prod.images.length > 0 ? (
                     <div className={styles.imageContainer}>
                       <Image
                         src={(() => {
                           const img = prod.images.split(",")[0].trim();
                           if (!img) return "";
-                          // If already starts with /images/ or is a full URL, use as is
                           if (img.startsWith("/images/") || img.startsWith("http")) return img;
-                          // Otherwise, prepend /images/
                           return `/images/${img.replace(/^\/+/, "")}`;
                         })()}
                         alt={prod.title}
@@ -340,29 +306,42 @@ export default function Busqueda() {
                   ) : (
                     <div className={styles.noImage}>Sin imagen</div>
                   )}
-                  <h3>{prod.title}</h3>
-                  <p className={styles.categoria}><b>Categoría:</b> {getCategoryLabel(prod.category)}</p>
-                  {(prod.university || prod.campus) && (
-                    <p className={styles.universidad}>
-                      <b>Institución:</b> {prod.university}
-                      {prod.campus && <span> - {prod.campus}</span>}
-                    </p>
-                  )}
-                  <p>{prod.description}</p>
-                  {prod.price && <p className={styles.precio}><b>Precio:</b> ${formatNumber(prod.price)}</p>}
-                  <p className={styles.contacto}>
-                    {contactoHref ? (
-                      <button
-                        className={styles.contactButton}
-                        onClick={(e) => handleContactClick(e, prod.contactMethod, prod.contactInfo, contactoHref)}
-                        title={`Contactar vía ${prod.contactMethod}`}
-                      >
-                        {contactoIcon}
-                      </button>
-                    ) : (
-                      <span>{contactoIcon}</span>
+                  
+                  {/* Content Section */}
+                  <div className={styles.cardContent}>
+                    {/* Top Meta Section */}
+                    <div className={styles.topMeta}>
+                      <div className={styles.categoria}>
+                        <b>Categoría:</b> {getCategoryLabel(prod.category)}
+                      </div>
+                      
+                      {(prod.university || prod.campus) && (
+                        <div className={styles.universidad}>
+                          <b>Institución:</b> {prod.university}
+                          {prod.campus && <span> - {prod.campus}</span>}
+                        </div>
+                      )}
+                      
+                      <div className={styles.fechaPublicacion}>
+                        <b>Publicado:</b> {formatDate(prod.createdAt)}
+                      </div>
+                    </div>
+                    
+                    {/* Main Content */}
+                    <div className={styles.mainContent}>
+                      <div className={styles.contentFlow}>
+                        <h3>{prod.title}</h3>
+                        <p className={styles.description}>{prod.description}</p>
+                      </div>
+                    </div>
+                    
+                    {/* Price Section */}
+                    {prod.price && (
+                      <div className={styles.priceSection}>
+                        <div className={styles.precio}>${formatNumber(prod.price)}</div>
+                      </div>
                     )}
-                  </p>
+                  </div>
                 </div>
               );
             })
@@ -376,15 +355,6 @@ export default function Busqueda() {
         onClose={handleCloseReportModal}
         publicacionId={reportingPublication?.id}
         publicacionTitle={reportingPublication?.title}
-      />
-      
-      {/* Modal de advertencia de contacto */}
-      <ModalContactWarning
-        open={showContactWarning}
-        onClose={handleCloseContactWarning}
-        onConfirm={handleConfirmContact}
-        contactMethod={pendingContactInfo?.method}
-        contactInfo={pendingContactInfo?.info}
       />
     </div>
   );

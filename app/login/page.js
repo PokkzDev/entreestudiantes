@@ -144,11 +144,13 @@ function LoginForm() {
             </label>
           </div>
           {error && <div className={styles.error}>{error}</div>}
-          <TurnstileWidget
-            onSuccess={handleTurnstileSuccess}
-            onError={handleTurnstileError}
-            onExpire={handleTurnstileExpire}
-          />
+          <div className={styles.turnstileWrapper}>
+            <TurnstileWidget
+              onSuccess={handleTurnstileSuccess}
+              onError={handleTurnstileError}
+              onExpire={handleTurnstileExpire}
+            />
+          </div>
           <button
             type="submit"
             disabled={loading || !turnstileToken}

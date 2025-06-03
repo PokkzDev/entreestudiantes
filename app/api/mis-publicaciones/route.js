@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "../auth/[...nextauth]/route";
-import { getEffectiveTier, canCreatePublication, formatTierName } from "@/lib/accountTiers";
+import { getEffectiveTier, canCreatePublicationFromTierData } from "@/lib/accountTiers";
 import { getCurrentActiveSubscription } from "@/lib/dbUtils";
 
 // GET /api/mis-publicaciones - Obtener publicaciones del usuario autenticado
@@ -50,7 +50,31 @@ export async function GET(req) {
     const effectiveTier = getEffectiveTier(userForTierCalculation, currentSubscription);
     const activePublicationsCount = userWithPublications.publicaciones.filter(p => p.status === 'activo').length;
     const totalPublicationsCount = userWithPublications.publicaciones.length; // All publications
-    const limitInfo = canCreatePublication(effectiveTier, totalPublicationsCount); // Use total for limit check
+    
+    // Fetch tier data from database
+    const tierData = await prisma.accountTier.findUnique({
+      where: { tierKey: effectiveTier }
+    });
+
+    if (!tierData) {
+      return NextResponse.json({ 
+        success: false, 
+        error: `Información del plan ${effectiveTier} no encontrada en la base de datos` 
+      }, { status: 500 });
+    }
+
+    // Transform tier data to expected format
+    const formattedTierData = {
+      name: tierData.name,
+      publicationLimit: tierData.publicationLimit,
+      price: tierData.price,
+      features: JSON.parse(tierData.features),
+      icon: tierData.icon,
+      color: tierData.color,
+      bgColor: tierData.bgColor
+    };
+
+    const limitInfo = canCreatePublicationFromTierData(effectiveTier, totalPublicationsCount, formattedTierData); // Use total for limit check
 
     // Determine if subscription is active
     const subscriptionActive = currentSubscription ? 
@@ -62,7 +86,7 @@ export async function GET(req) {
       publicaciones: userWithPublications.publicaciones,
       accountInfo: {
         currentTier: effectiveTier,
-        tierName: formatTierName(effectiveTier),
+        tierName: formattedTierData.name,
         canCreate: limitInfo.canCreate,
         currentCount: totalPublicationsCount, // Show total registered publications
         activeCount: activePublicationsCount, // Also provide active count for display

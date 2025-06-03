@@ -17,9 +17,9 @@ import {
   faHistory,
   faChartLine
 } from "@fortawesome/free-solid-svg-icons";
-import { ACCOUNT_TIERS, formatTierName, getTierColor, getTierBgColor, getTierIcon } from "@/lib/accountTiers";
 import SubscriptionCancelModal from "../SubscriptionCancelModal";
 import styles from "./PlanDetailsSection.module.css";
+import { formatTierName, getTierColorSync, getTierBgColorSync, getTierIconSync, clearCache } from "@/lib/accountTiersClient";
 
 // Icon mapping for FontAwesome
 const iconMap = {
@@ -39,17 +39,22 @@ export default function PlanDetailsSection() {
   const router = useRouter();
 
   useEffect(() => {
+    // Clear any cached tier data to ensure fresh data
+    clearCache();
     fetchPlanDetails();
   }, []);
 
   const fetchPlanDetails = async () => {
     try {
       setLoading(true);
-      const response = await fetch("/api/configuraciones/plan-details");
+      // Add cache busting parameter to ensure fresh data
+      const response = await fetch(`/api/configuraciones/plan-details?t=${Date.now()}`);
       const data = await response.json();
       
       if (data.success) {
         setPlanData(data);
+        console.log('Plan data loaded:', data); // Debug log
+        console.log('Tier data features:', data.tierData?.features); // Debug log
       } else {
         setMessage(data.error || "Error al cargar información del plan");
         setMessageType("error");
@@ -124,7 +129,7 @@ export default function PlanDetailsSection() {
   };
 
   const getTierIconComponent = (tierKey) => {
-    const iconName = getTierIcon(tierKey);
+    const iconName = getTierIconSync(tierKey);
     const icon = iconMap[iconName];
     return icon ? <FontAwesomeIcon icon={icon} /> : null;
   };
@@ -226,11 +231,21 @@ export default function PlanDetailsSection() {
     );
   }
 
-  const { user, currentSubscription } = planData;
+  const { user, currentSubscription, tierData } = planData;
   // Use effective tier for UI display (considers active subscription)
   const effectiveTier = user.effectiveAccountTier || user.accountTier;
-  const currentTier = ACCOUNT_TIERS[effectiveTier];
   const statusInfo = getStatusText(user, currentSubscription);
+
+  // If tier data is not available, show error
+  if (!tierData) {
+    return (
+      <div className={styles.section}>
+        <div className={styles.errorContainer}>
+          <p>Error: No se pudo cargar la información del plan desde la base de datos</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={styles.section}>
@@ -247,14 +262,14 @@ export default function PlanDetailsSection() {
       {/* Current Plan Card */}
       <div className={styles.currentPlanCard}>
         <div className={styles.currentPlanHeader}>
-          <div className={styles.planIcon} style={{ color: getTierColor(effectiveTier) }}>
+          <div className={styles.planIcon} style={{ color: getTierColorSync(effectiveTier) }}>
             {getTierIconComponent(effectiveTier)}
           </div>
           <div className={styles.planInfo}>
-            <h3 className={styles.planName}>{currentTier.name}</h3>
+            <h3 className={styles.planName}>{tierData?.name}</h3>
             <div className={styles.planPrice}>
-              <span className={styles.price}>{formatPrice(currentTier.price)}</span>
-              {currentTier.price > 0 && <span className={styles.period}>/mes</span>}
+              <span className={styles.price}>{formatPrice(tierData?.price)}</span>
+              {tierData?.price > 0 && <span className={styles.period}>/mes</span>}
             </div>
           </div>
           <div className={styles.planStatus}>
@@ -266,7 +281,7 @@ export default function PlanDetailsSection() {
         <div className={styles.planFeatures}>
           <h4>Características incluidas:</h4>
           <ul className={styles.featuresList}>
-            {currentTier.features.map((feature, index) => (
+            {tierData?.features?.map((feature, index) => (
               <li key={index} className={styles.feature}>
                 <FontAwesomeIcon icon={faCheckCircle} className={styles.featureIcon} />
                 <span>{feature}</span>
@@ -282,16 +297,16 @@ export default function PlanDetailsSection() {
             <div className={styles.statInfo}>
               <span className={styles.statLabel}>Publicaciones</span>
               <span className={styles.statValue}>
-                {planData.publicationCount}/{currentTier.publicationLimit || '∞'}
+                {planData.publicationCount}/{tierData?.publicationLimit || '∞'}
               </span>
             </div>
-            {currentTier.publicationLimit && (
+            {tierData?.publicationLimit && (
               <div className={styles.progressBar}>
                 <div 
                   className={styles.progressFill}
                   style={{ 
-                    width: `${Math.min((planData.publicationCount / currentTier.publicationLimit) * 100, 100)}%`,
-                    backgroundColor: getTierColor(effectiveTier)
+                    width: `${Math.min((planData.publicationCount / tierData.publicationLimit) * 100, 100)}%`,
+                    backgroundColor: getTierColorSync(effectiveTier)
                   }}
                 ></div>
               </div>
@@ -397,7 +412,7 @@ export default function PlanDetailsSection() {
                 <div className={styles.paymentInfo}>
                   <FontAwesomeIcon icon={faCreditCard} className={styles.paymentIcon} />
                   <div className={styles.paymentDetails}>
-                    <span className={styles.paymentPlan}>Plan {formatTierName(payment.planId)}</span>
+                    <span className={styles.paymentPlan}>Plan {formatTierName(payment.planId) || payment.planId}</span>
                     <span className={styles.paymentDate}>
                       Pagado: {formatDateTime(payment.paymentDate || payment.createdAt)}
                     </span>

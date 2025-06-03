@@ -99,7 +99,8 @@ export default withAuth(
           '/reset-contrasena',
           '/busqueda', // Search page should be public
           '/publicacion', // Individual publication pages should be public (will be handled by API)
-          '/planes' // Plans page should be public to allow users to see pricing
+          '/planes', // Plans page should be public to allow users to see pricing
+          '/sugerencias' // Suggestions page should be public for both logged-in and anonymous users
         ];
         
         const isPublicRoute = publicRoutes.some(route => {
@@ -122,6 +123,6 @@ export default withAuth(
 
 export const config = {
   matcher: [
-    "/((?!api/auth|api/register|api/resend-verification|api/complete-registration|api/allowed-domains|api/busqueda|api/publicacion|api/check-session|api/check-verified|api/flow/webhook|api/flow/return|api/verify-turnstile|api/cron|api/update-session|_next/static|_next/image|favicon.ico|pageImages|images).*)"
+    "/((?!api/auth|api/register|api/resend-verification|api/complete-registration|api/allowed-domains|api/busqueda|api/publicacion|api/check-session|api/check-verified|api/flow/webhook|api/flow/return|api/verify-turnstile|api/feedback|api/cron|api/update-session|api/account-tiers|_next/static|_next/image|favicon.ico|pageImages|images).*)"
   ],
 }; 

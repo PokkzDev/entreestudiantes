@@ -167,7 +167,7 @@ export async function POST(request) {
         // This can happen when Flow.cl API is unavailable but we have a token
         planData = {
           userId: session.user.id,
-          planId: 'basic', // Default to basic plan
+          planId: 'premium', // Updated to premium plan
           planName: 'Premium',
           paymentType: 'direct'
         };
@@ -178,7 +178,7 @@ export async function POST(request) {
       // Fallback plan data
       planData = {
         userId: session.user.id,
-        planId: 'basic',
+        planId: 'premium',
         planName: 'Premium',
         paymentType: 'direct'
       };

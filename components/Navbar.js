@@ -177,7 +177,11 @@ export default function Navbar() {
                 <div className={styles.userDropdown}>
                   <Link href="/publicar" className={styles.btnDropdown} onClick={() => setDropdownOpen(false)}>
                     Publicar
-                  </Link>                  <Link href="/mis-publicaciones" className={styles.btnDropdown} onClick={() => setDropdownOpen(false)}>
+                  </Link>
+                  <Link href="/favoritos" className={styles.btnDropdown} onClick={() => setDropdownOpen(false)}>
+                    Favoritos
+                  </Link>
+                  <Link href="/mis-publicaciones" className={styles.btnDropdown} onClick={() => setDropdownOpen(false)}>
                     Mis Publicaciones
                   </Link>
                   <Link href="/configuraciones" className={styles.btnDropdown} onClick={() => setDropdownOpen(false)}>
@@ -230,7 +234,10 @@ export default function Navbar() {
                   <>
                     <Link href="/publicar" className={styles.mobileNavLink} onClick={() => setMobileMenuOpen(false)}>
                       Publicar
-                    </Link>                    <Link href="/mis-publicaciones" className={styles.mobileNavLink} onClick={() => setMobileMenuOpen(false)}>
+                    </Link>                    <Link href="/favoritos" className={styles.mobileNavLink} onClick={() => setMobileMenuOpen(false)}>
+                      Favoritos
+                    </Link>
+                    <Link href="/mis-publicaciones" className={styles.mobileNavLink} onClick={() => setMobileMenuOpen(false)}>
                       Mis Publicaciones
                     </Link>
                     <Link href="/configuraciones" className={styles.mobileNavLink} onClick={() => setMobileMenuOpen(false)}>

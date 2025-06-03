@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '../../auth/[...nextauth]/route';
-import { ACCOUNT_TIERS } from '@/lib/accountTiers';
+import { prisma } from '@/lib/prisma';
 import crypto from 'crypto';
 
 // Flow.cl configuration
@@ -12,6 +12,32 @@ const FLOW_CONFIG = {
   apiUrl: process.env.FLOW_API_URL || 'https://sandbox.flow.cl/api',
   baseUrl: process.env.NEXTAUTH_URL || 'http://localhost:3000'
 };
+
+// Get tier data from database only
+async function getTierData(planId) {
+  try {
+    const tier = await prisma.accountTier.findUnique({
+      where: { tierKey: planId }
+    });
+    
+    if (tier) {
+      return {
+        name: tier.name,
+        publicationLimit: tier.publicationLimit,
+        price: tier.price,
+        features: JSON.parse(tier.features),
+        icon: tier.icon,
+        color: tier.color,
+        bgColor: tier.bgColor
+      };
+    }
+  } catch (error) {
+    console.error('Error fetching tier from database:', error);
+  }
+  
+  // Return null instead of fallback data
+  return null;
+}
 
 // Generate Flow.cl signature according to official documentation
 // https://sandbox.flow.cl/docs/api.html#section/Introduccion/Autenticacion-y-Seguridad
@@ -100,15 +126,16 @@ export async function POST(request) {
 
     const { planId, paymentMethod = 9, timeout } = await request.json();
 
+    // Get tier data from database
+    const tier = await getTierData(planId);
+
     // Validate plan ID
-    if (!planId || !ACCOUNT_TIERS[planId]) {
+    if (!planId || !tier) {
       return NextResponse.json(
         { success: false, error: 'Plan inválido' },
         { status: 400 }
       );
     }
-
-    const tier = ACCOUNT_TIERS[planId];
 
     // Don't process free plan
     if (tier.price === 0) {

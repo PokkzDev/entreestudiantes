@@ -273,42 +273,128 @@
   cursor: pointer;
   transition: all 0.3s ease;
   margin-top: auto;
+  position: relative;
+  overflow: hidden;
+  letter-spacing: 0.5px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.selectButton::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+  transition: left 0.5s;
+}
+
+.selectButton:hover::before {
+  left: 100%;
 }
 
 .upgradeButton {
-  background: #2563eb;
+  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
   color: white;
-  border-color: #2563eb;
-  font-weight: 600;
+  border-color: #3b82f6;
+  font-weight: 700;
+  box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+  animation: buttonPulse 2s ease-in-out infinite;
+}
+
+@keyframes buttonPulse {
+  0%, 100% { 
+    box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+  }
+  50% { 
+    box-shadow: 0 4px 20px rgba(59, 130, 246, 0.5);
+  }
 }
 
 .upgradeButton:hover {
-  background: #1d4ed8;
-  border-color: #1d4ed8;
-  transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(37, 99, 235, 0.4);
+  background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
+  border-color: #2563eb;
+  transform: translateY(-3px);
+  box-shadow: 0 8px 25px rgba(37, 99, 235, 0.4);
+}
+
+.upgradeButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
 }
 
 .downgradeButton {
-  background: white;
-  color: #374151;
-  border-color: #d1d5db;
-  font-weight: 600;
+  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+  color: white;
+  border-color: #8b5cf6;
+  font-weight: 700;
+  box-shadow: 0 4px 15px rgba(139, 92, 246, 0.3);
+  animation: buttonPulsePurple 2s ease-in-out infinite;
+}
+
+@keyframes buttonPulsePurple {
+  0%, 100% { 
+    box-shadow: 0 4px 15px rgba(139, 92, 246, 0.3);
+  }
+  50% { 
+    box-shadow: 0 4px 20px rgba(139, 92, 246, 0.5);
+  }
 }
 
 .downgradeButton:hover {
-  background: #f9fafb;
-  border-color: #9ca3af;
-  color: #111827;
+  background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
+  border-color: #7c3aed;
+  transform: translateY(-3px);
+  box-shadow: 0 8px 25px rgba(124, 58, 237, 0.4);
+}
+
+.downgradeButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
 }
 
 .currentButton {
-  background: #059669;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
   color: white;
-  border-color: #059669;
+  border-color: #10b981;
   cursor: not-allowed;
   opacity: 0.9;
-  font-weight: 600;
+  font-weight: 700;
+  box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+}
+
+.freeButton {
+  background: linear-gradient(135deg, #64748b 0%, #475569 100%);
+  color: white;
+  border-color: #64748b;
+  font-weight: 700;
+  box-shadow: 0 4px 15px rgba(100, 116, 139, 0.3);
+  animation: buttonPulseGrey 2.5s ease-in-out infinite;
+}
+
+@keyframes buttonPulseGrey {
+  0%, 100% { 
+    box-shadow: 0 4px 15px rgba(100, 116, 139, 0.3);
+  }
+  50% { 
+    box-shadow: 0 4px 20px rgba(100, 116, 139, 0.5);
+  }
+}
+
+.freeButton:hover {
+  background: linear-gradient(135deg, #475569 0%, #334155 100%);
+  border-color: #475569;
+  transform: translateY(-3px);
+  box-shadow: 0 8px 25px rgba(71, 85, 105, 0.4);
+}
+
+.freeButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
 }
 
 /* CTA Section */

@@ -4,7 +4,13 @@ import { useSession } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faHandHoldingHeart, faStar, faGem, faCrown, faSpinner } from "@fortawesome/free-solid-svg-icons";
-import { ACCOUNT_TIERS, getTierColor, getTierIcon, getTierBgColor, formatTierName } from "@/lib/accountTiers";
+import { 
+  fetchAccountTiers,
+  getTierColorSync,
+  getTierIconSync,
+  getTierBgColorSync,
+  getTierNameSync
+} from "@/lib/accountTiersClient";
 import styles from "./page.module.css";
 
 // Icon mapping for FontAwesome
@@ -45,14 +51,38 @@ function PlanesLoading() {
 
 function PlanesContent() {
   const [accountInfo, setAccountInfo] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [processing, setProcessing] = useState(null); // Track which plan is being processed
   const [message, setMessage] = useState(null);
   const [messageTimeoutId, setMessageTimeoutId] = useState(null);
   const [planPurchasingEnabled, setPlanPurchasingEnabled] = useState(true);
+  const [accountTiers, setAccountTiers] = useState([]); // Remove fallback data - use only DB values
+  const [tiersLoading, setTiersLoading] = useState(true); // Start with loading true
   const { data: session, status } = useSession();
   const router = useRouter();
   const searchParams = useSearchParams();
+
+  // Fetch account tiers from API
+  const fetchAccountTiersData = useCallback(async () => {
+    console.log('🔍 Fetching account tiers...');
+    setTiersLoading(true);
+    try {
+      const tiers = await fetchAccountTiers();
+      console.log('🔍 Received tiers:', tiers?.length, 'items');
+      if (tiers && tiers.length > 0) {
+        console.log('✅ Updating accountTiers state with API data');
+        setAccountTiers(tiers); // Update with real data when available
+      } else {
+        console.log('❌ No tiers received from database');
+        setAccountTiers([]); // Set empty array if no tiers
+      }
+    } catch (error) {
+      console.error('Error fetching account tiers:', error);
+      setAccountTiers([]); // Set empty array on error
+    } finally {
+      setTiersLoading(false);
+    }
+  }, []);
 
   const fetchAccountInfo = useCallback(async () => {
     if (!session) return;
@@ -140,13 +170,19 @@ function PlanesContent() {
   }, [fetchAccountInfo]);
 
   useEffect(() => {
+    // Always fetch account tiers
+    fetchAccountTiersData();
+    
     if (status === "authenticated") {
+      setLoading(true); // Set loading to true when we start fetching account info
       fetchAccountInfo();
       checkPlanPurchasingStatus();
-    } else if (status !== "loading") {
+    } else if (status === "unauthenticated") {
+      // Ensure loading is false when user is not authenticated
       setLoading(false);
     }
-  }, [status, fetchAccountInfo, checkPlanPurchasingStatus]);
+    // If status is "loading", don't change the loading state yet
+  }, [status, fetchAccountTiersData]); // Removed fetchAccountInfo and checkPlanPurchasingStatus from dependencies to avoid infinite loops
 
   useEffect(() => {
     if (!searchParams) {
@@ -383,12 +419,14 @@ function PlanesContent() {
 
   const isUpgrade = (tierKey) => {
     if (!accountInfo) return false;
-    const tierOrder = { free: 0, basic: 1, premium: 2, elite: 3 };
+    const tierOrder = { free: 0, premium: 1 };
     return tierOrder[tierKey] > tierOrder[accountInfo.currentTier];
   };
 
   const getTierIconComponent = (tierKey) => {
-    const iconName = getTierIcon(tierKey);
+    // Use the legacy synchronous function for immediate rendering
+    // The cache should be populated by now from fetchAccountTiers
+    const iconName = getTierIconSync(tierKey);
     const icon = iconMap[iconName];
     return icon ? <FontAwesomeIcon icon={icon} /> : null;
   };
@@ -481,33 +519,31 @@ function PlanesContent() {
         )}
       </div>
 
-      {loading ? (
+      {loading || tiersLoading ? (
         <div className={styles.loadingContainer}>
           <div className={styles.loadingSpinner}></div>
           <p>Cargando planes disponibles...</p>
         </div>
       ) : (
         <div className={styles.plansGrid}>
-          {Object.entries(ACCOUNT_TIERS)
-            .filter(([tierKey]) => tierKey !== 'elite' && tierKey !== 'premium') // Remove elite and premium tiers
-            .map(([tierKey, tier]) => (
+          {accountTiers.map((tier) => (
             <div 
-              key={tierKey}
-              className={`${styles.planCard} ${isCurrentPlan(tierKey) ? styles.currentPlan : ''}`}
+              key={tier.tierKey}
+              className={`${styles.planCard} ${isCurrentPlan(tier.tierKey) ? styles.currentPlan : ''}`}
               style={{ 
-                borderColor: getTierColor(tierKey),
-                backgroundColor: isCurrentPlan(tierKey) ? getTierBgColor(tierKey) : 'white'
+                borderColor: getTierColorSync(tier.tierKey),
+                backgroundColor: isCurrentPlan(tier.tierKey) ? getTierBgColorSync(tier.tierKey) : 'white'
               }}
             >
-              {isCurrentPlan(tierKey) && (
+              {isCurrentPlan(tier.tierKey) && (
                 <div className={styles.currentBadge}>
                   <span>✓ Plan Actual</span>
                 </div>
               )}
 
               <div className={styles.planHeader}>
-                <div className={styles.planIcon} style={{ color: getTierColor(tierKey) }}>
-                  {getTierIconComponent(tierKey)}
+                <div className={styles.planIcon} style={{ color: getTierColorSync(tier.tierKey) }}>
+                  {getTierIconComponent(tier.tierKey)}
                 </div>
                 <h3 className={styles.planName}>{tier.name}</h3>
                 <div className={styles.planPrice}>
@@ -542,31 +578,36 @@ function PlanesContent() {
               </ul>
 
               <button
-                onClick={() => handleSelectPlan(tierKey)}
-                disabled={isCurrentPlan(tierKey) || processing === tierKey || (!planPurchasingEnabled && tierKey !== 'free')}
-                className={`${styles.selectButton} ${isCurrentPlan(tierKey) ? styles.currentButton : isUpgrade(tierKey) ? styles.upgradeButton : styles.downgradeButton}`}
-                style={!isCurrentPlan(tierKey) ? { 
-                  backgroundColor: getTierColor(tierKey),
-                  borderColor: getTierColor(tierKey),
-                  color: 'white',
-                  opacity: (!planPurchasingEnabled && tierKey !== 'free') ? 0.6 : 1
+                onClick={() => handleSelectPlan(tier.tierKey)}
+                disabled={isCurrentPlan(tier.tierKey) || processing === tier.tierKey || (!planPurchasingEnabled && tier.tierKey !== 'free')}
+                className={`${styles.selectButton} ${
+                  isCurrentPlan(tier.tierKey) 
+                    ? styles.currentButton 
+                    : tier.tierKey === 'free'
+                      ? styles.freeButton
+                      : isUpgrade(tier.tierKey) 
+                        ? styles.upgradeButton 
+                        : styles.downgradeButton
+                }`}
+                style={!isCurrentPlan(tier.tierKey) && (!planPurchasingEnabled && tier.tierKey !== 'free') ? { 
+                  opacity: 0.6
                 } : {}}
               >
-                {processing === tierKey ? (
+                {processing === tier.tierKey ? (
                   <>
                     <FontAwesomeIcon icon={faSpinner} spin />
                     <span style={{ marginLeft: '8px' }}>Procesando...</span>
                   </>
-                ) : isCurrentPlan(tierKey) ? (
-                  'Plan Actual'
-                ) : !planPurchasingEnabled && tierKey !== 'free' ? (
+                ) : isCurrentPlan(tier.tierKey) ? (
+                  '✓ Plan Actual'
+                ) : !planPurchasingEnabled && tier.tierKey !== 'free' ? (
                   'Compras temporalmente deshabilitadas'
-                ) : tierKey === 'free' ? (
-                  'Plan Gratuito'
-                ) : isUpgrade(tierKey) ? (
-                  `Pagar ${formatPrice(tier.price)} por ${tier.name}`
+                ) : tier.tierKey === 'free' ? (
+                  '🚀 Comenzar Gratis'
+                ) : isUpgrade(tier.tierKey) ? (
+                  `💳 Actualizar por ${formatPrice(tier.price)}`
                 ) : (
-                  `Pagar ${formatPrice(tier.price)} por ${tier.name}`
+                  `🎯 Obtener ${tier.name} - ${formatPrice(tier.price)}`
                 )}
               </button>
             </div>

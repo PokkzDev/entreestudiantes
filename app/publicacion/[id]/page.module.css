@@ -46,6 +46,28 @@
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
+/* Favorite button specific styles */
+.actionButton.favorited {
+  background: #fce7f3;
+  border-color: #f9a8d4;
+  color: #e91e63;
+}
+
+.actionButton.favorited:hover {
+  background: #fbcfe8;
+  border-color: #f472b6;
+  color: #be185d;
+}
+
+.actionButton.favoriteLoading {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.actionButton.favoriteLoading:hover {
+  transform: none;
+}
+
 /* Back button */
 .backButton {
   display: inline-flex;
