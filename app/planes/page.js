@@ -127,6 +127,27 @@ function PlanesContent() {
     }
   }, []);
 
+  const clearMessageTimeout = useCallback(() => {
+    if (messageTimeoutId) {
+      clearTimeout(messageTimeoutId);
+      setMessageTimeoutId(null);
+    }
+  }, [messageTimeoutId]);
+
+  const setMessageWithTimeout = useCallback((newMessage) => {
+    clearMessageTimeout(); // Clear any existing timeout
+    setMessage(newMessage);
+    
+    // Set new timeout based on message type
+    const timeoutDuration = newMessage?.type === 'success' ? 10000 : 15000;
+    const timeoutId = setTimeout(() => {
+      setMessage(null);
+      setMessageTimeoutId(null);
+    }, timeoutDuration);
+    
+    setMessageTimeoutId(timeoutId);
+  }, [clearMessageTimeout]);
+
   const handlePaymentSuccess = useCallback(async (token) => {
     try {
       const response = await fetch('/api/flow/verify', {
@@ -430,27 +451,6 @@ function PlanesContent() {
     const icon = iconMap[iconName];
     return icon ? <FontAwesomeIcon icon={icon} /> : null;
   };
-
-  const clearMessageTimeout = useCallback(() => {
-    if (messageTimeoutId) {
-      clearTimeout(messageTimeoutId);
-      setMessageTimeoutId(null);
-    }
-  }, [messageTimeoutId]);
-
-  const setMessageWithTimeout = useCallback((newMessage) => {
-    clearMessageTimeout(); // Clear any existing timeout
-    setMessage(newMessage);
-    
-    // Set new timeout based on message type
-    const timeoutDuration = newMessage?.type === 'success' ? 10000 : 15000;
-    const timeoutId = setTimeout(() => {
-      setMessage(null);
-      setMessageTimeoutId(null);
-    }, timeoutDuration);
-    
-    setMessageTimeoutId(timeoutId);
-  }, [clearMessageTimeout]);
 
   const dismissMessage = useCallback(() => {
     clearMessageTimeout();
