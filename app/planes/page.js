@@ -165,8 +165,14 @@ function PlanesContent() {
           type: 'success',
           text: '¡Pago confirmado! Tu plan ha sido actualizado exitosamente.'
         });
-        // Refresh account info immediately
-        fetchAccountInfo();
+        // Refresh account info with retry mechanism for database consistency
+        setTimeout(() => {
+          fetchAccountInfo();
+          // Add a second fetch after a longer delay to ensure database consistency
+          setTimeout(() => {
+            fetchAccountInfo();
+          }, 2000);
+        }, 1000);
       } else if (data.success === false) {
         // Payment verification failed - this means the payment was not approved
         console.log('❌ Payment verification failed:', data);
@@ -180,6 +186,10 @@ function PlanesContent() {
           type: 'warning',
           text: 'Pago recibido. La actualización del plan puede tomar unos minutos.'
         });
+        // Still refresh account info in case it was updated
+        setTimeout(() => {
+          fetchAccountInfo();
+        }, 2000);
       }
     } catch (error) {
       console.error('Error verifying payment:', error);
@@ -198,6 +208,15 @@ function PlanesContent() {
       setLoading(true); // Set loading to true when we start fetching account info
       fetchAccountInfo();
       checkPlanPurchasingStatus();
+      
+      // Add a delayed refresh to catch any recent subscription updates
+      // This helps with race conditions after payments
+      const refreshTimer = setTimeout(() => {
+        fetchAccountInfo();
+      }, 3000);
+      
+      // Cleanup timer on unmount or dependency change
+      return () => clearTimeout(refreshTimer);
     } else if (status === "unauthenticated") {
       // Ensure loading is false when user is not authenticated
       setLoading(false);
@@ -225,6 +244,11 @@ function PlanesContent() {
       return;
     }
     
+    // If no payment-related parameters, skip processing
+    if (!token && !flowStatus && !errorParam && !messageParam && !flowReturn) {
+      return;
+    }
+    
     // Log for debugging with null safety
     console.log('🔍 URL params detected:', { 
       token: token || 'null', 
@@ -245,6 +269,19 @@ function PlanesContent() {
       console.error('❌ Error getting current URL:', urlError);
       console.log('🌐 Current URL: Error accessing window.location');
     }
+
+    // Function to clean up URL parameters after processing
+    const cleanupUrlParams = () => {
+      if (typeof window !== 'undefined') {
+        const url = new URL(window.location);
+        url.searchParams.delete('token');
+        url.searchParams.delete('status');
+        url.searchParams.delete('error');
+        url.searchParams.delete('message');
+        url.searchParams.delete('flow_return');
+        window.history.replaceState({}, '', url.toString());
+      }
+    };
     
     // Handle general error parameter (from redirect failures, etc.)
     if (errorParam) {
@@ -265,6 +302,8 @@ function PlanesContent() {
         text: errorMessage
       });
       
+      // Clean up URL after processing error
+      cleanupUrlParams();
       return; // Don't process other parameters if there's an error
     }
     
@@ -336,10 +375,14 @@ function PlanesContent() {
           });
       }
       
+      // Clean up URL after processing Flow status
+      cleanupUrlParams();
+      
     } else if (token || flowStatus) {
       // Handle edge cases with invalid parameters
       console.warn('⚠️ Invalid Flow.cl parameters detected:', { token, flowStatus });
-      // Removed URL cleanup for invalid parameters
+      // Clean up URL for invalid parameters too
+      cleanupUrlParams();
     }
   }, [searchParams, session, router, handlePaymentSuccess, fetchAccountInfo, setMessageWithTimeout]);
 

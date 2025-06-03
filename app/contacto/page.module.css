@@ -1,3 +1,4 @@
+/* Contact page styles */
 .page {
   min-height: 100vh;
   display: flex;
@@ -140,6 +141,43 @@
 
 .typeOptionSelected .typeDescription {
   color: #475569;
+}
+
+.contactInfo {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+}
+
+.loggedInInfo {
+  background: #f0f9ff;
+  border: 2px solid #bae6fd;
+  border-radius: 15px;
+  padding: 1.5rem;
+}
+
+.userInfo {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.userIcon {
+  font-size: 2rem;
+  color: #0ea5e9;
+}
+
+.userName {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #0c4a6e;
+  margin: 0;
+}
+
+.userEmail {
+  font-size: 0.95rem;
+  color: #0369a1;
+  margin: 0.25rem 0 0 0;
 }
 
 .inputGroup {
@@ -374,6 +412,11 @@
 
   .typeGrid {
     grid-template-columns: 1fr;
+  }
+
+  .contactInfo {
+    grid-template-columns: 1fr;
+    gap: 1rem;
   }
 
   .successActions {

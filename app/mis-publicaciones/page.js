@@ -4,7 +4,7 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faHandHoldingHeart, faStar, faGem, faCrown, faExclamationTriangle, faClipboard, faLock } from "@fortawesome/free-solid-svg-icons";
+import { faHandHoldingHeart, faStar, faGem, faCrown, faExclamationTriangle, faClipboard } from "@fortawesome/free-solid-svg-icons";
 import { 
   getTierColorSync,
   getTierIconSync,
@@ -222,19 +222,11 @@ export default function MisPublicaciones() {
         // Ocultar mensaje después de 3 segundos
         setTimeout(() => setMessage(null), 3000);
       } else {
-        // Handle restricted feature for free users
-        if (data.restrictedFeature && data.currentTier === 'free') {
-          setMessage({
-            text: data.error,
-            type: "warning"
-          });
-        } else {
-          setMessage({
-            text: data.error || "Error al cambiar el estado de la publicación",
-            type: "error"
-          });
-        }
-        setTimeout(() => setMessage(null), 5000); // Show longer for restriction messages
+        setMessage({
+          text: data.error || "Error al cambiar el estado de la publicación",
+          type: "error"
+        });
+        setTimeout(() => setMessage(null), 3000);
       }
     } catch (error) {
       setMessage({
@@ -488,26 +480,9 @@ export default function MisPublicaciones() {
                 <button 
                   onClick={() => handleToggleStatus(pub.id, pub.status)}
                   className={`${styles.toggleButton} ${pub.status === 'activo' ? styles.pauseButton : styles.activateButton}`}
-                  title={
-                    accountInfo?.currentTier === 'free' 
-                      ? 'Función no disponible en plan Gratuito. Actualiza tu plan para pausar/activar publicaciones.'
-                      : (pub.status === 'activo' ? 'Ocultar temporalmente esta publicación' : 'Hacer visible esta publicación')
-                  }
-                  disabled={accountInfo?.currentTier === 'free'}
-                  style={{
-                    opacity: accountInfo?.currentTier === 'free' ? 0.5 : 1,
-                    cursor: accountInfo?.currentTier === 'free' ? 'not-allowed' : 'pointer'
-                  }}
+                  title={pub.status === 'activo' ? 'Ocultar temporalmente esta publicación' : 'Hacer visible esta publicación'}
                 >
-                  {accountInfo?.currentTier === 'free' 
-                    ? (
-                      <>
-                        <FontAwesomeIcon icon={faLock} style={{ marginRight: '4px' }} />
-                        Premium
-                      </>
-                    )
-                    : (pub.status === 'activo' ? 'Pausar publicación' : 'Activar publicación')
-                  }
+                  {pub.status === 'activo' ? 'Pausar publicación' : 'Activar publicación'}
                 </button>
                 <button 
                   onClick={() => openDeleteModal(pub.id)}

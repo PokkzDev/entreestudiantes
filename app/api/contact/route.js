@@ -5,7 +5,7 @@ import { authOptions } from '../auth/[...nextauth]/route';
 
 export async function POST(request) {
   try {
-    const { type, subject, message, email, turnstileToken } = await request.json();
+    const { type, subject, message, email, name, turnstileToken } = await request.json();
 
     // Verify Turnstile token first
     if (turnstileToken) {
@@ -44,14 +44,11 @@ export async function POST(request) {
       );
     }
 
-    // Validate type - include both feedback and contact types
-    const validTypes = [
-      'feedback', 'bug', 'feature', 'other', // Original feedback types
-      'contact_general', 'contact_support', 'contact_business', 'contact_account' // Contact types
-    ];
+    // Validate contact type
+    const validTypes = ['general', 'support', 'business', 'account'];
     if (!validTypes.includes(type)) {
       return NextResponse.json(
-        { success: false, message: "Tipo de sugerencia inválido." },
+        { success: false, message: "Tipo de consulta inválido." },
         { status: 400 }
       );
     }
@@ -64,14 +61,39 @@ export async function POST(request) {
     const ipAddress = forwarded ? forwarded.split(/, /)[0] : request.headers.get("x-real-ip") || 'unknown';
     const userAgent = request.headers.get("user-agent") || 'unknown';
 
-    // Create feedback record
+    // Create subject with contact prefix and name if provided
+    let finalSubject = subject.trim();
+    if (name && name.trim()) {
+      finalSubject = `[CONTACTO] ${name.trim()}: ${subject.trim()}`;
+    } else if (session?.user?.name) {
+      finalSubject = `[CONTACTO] ${session.user.name}: ${subject.trim()}`;
+    } else {
+      finalSubject = `[CONTACTO] ${subject.trim()}`;
+    }
+
+    // Create message with additional context
+    let finalMessage = message.trim();
+    if (name && name.trim() && !session) {
+      finalMessage = `Nombre: ${name.trim()}\n\n${message.trim()}`;
+    }
+
+    // Map contact types to feedback types for database consistency
+    const feedbackTypeMap = {
+      'general': 'contact_general',
+      'support': 'contact_support', 
+      'business': 'contact_business',
+      'account': 'contact_account'
+    };
+
+    // Create feedback record with contact prefix
     const feedback = await prisma.feedback.create({
       data: {
-        type,
-        subject: subject.trim(),
-        message: message.trim(),
+        type: feedbackTypeMap[type],
+        subject: finalSubject,
+        message: finalMessage,
         email: email ? email.trim().toLowerCase() : null,
         userId: session?.user?.id || null,
+        priority: type === 'business' ? 'high' : type === 'account' ? 'high' : 'medium',
         ipAddress,
         userAgent,
       },
@@ -79,12 +101,12 @@ export async function POST(request) {
 
     return NextResponse.json({
       success: true,
-      message: "Tu sugerencia ha sido enviada exitosamente. ¡Gracias por tu feedback!",
-      feedbackId: feedback.id
+      message: "Tu mensaje ha sido enviado exitosamente. Te responderemos pronto.",
+      contactId: feedback.id
     });
 
   } catch (error) {
-    console.error('Error creating feedback:', error);
+    console.error('Error creating contact message:', error);
     return NextResponse.json(
       { success: false, message: "Error interno del servidor. Por favor, intenta nuevamente." },
       { status: 500 }
