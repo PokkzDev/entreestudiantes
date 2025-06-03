@@ -124,6 +124,6 @@ export default withAuth(
 
 export const config = {
   matcher: [
-    "/((?!api/auth|api/register|api/resend-verification|api/complete-registration|api/allowed-domains|api/busqueda|api/publicacion|api/check-session|api/check-verified|api/flow/webhook|api/flow/return|api/verify-turnstile|api/feedback|api/contact|api/cron|api/update-session|api/account-tiers|_next/static|_next/image|favicon.ico|pageImages|images).*)"
+    "/((?!api/auth|api/register|api/resend-verification|api/complete-registration|api/allowed-domains|api/busqueda|api/publicacion|api/check-session|api/check-verified|api/flow/webhook|api/flow/return|api/flow/refund-webhook|api/verify-turnstile|api/feedback|api/contact|api/cron|api/update-session|api/account-tiers|_next/static|_next/image|favicon.ico|pageImages|images).*)"
   ],
 }; 

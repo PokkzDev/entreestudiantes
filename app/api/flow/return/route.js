@@ -123,6 +123,15 @@ export async function POST(request) {
   console.log('📍 Timestamp:', new Date().toISOString());
   
   try {
+    // Check for Server Actions errors and handle them gracefully
+    const origin = request.headers.get('origin');
+    const forwardedHost = request.headers.get('x-forwarded-host');
+    
+    if (origin && forwardedHost && origin !== `https://${forwardedHost}`) {
+      console.log('🔍 Cross-origin request detected:', { origin, forwardedHost });
+      console.log('🔄 This is normal for Flow.cl integration through Cloudflare tunneling');
+    }
+    
     const url = new URL(request.url);
     const { searchParams } = url;
     let token = searchParams.get('token');
@@ -164,6 +173,15 @@ export async function POST(request) {
       }
     } catch (bodyError) {
       console.error('❌ Error parsing POST body:', bodyError);
+      
+      // Handle specific Server Actions error
+      if (bodyError.message && bodyError.message.includes('Invalid Server Actions request')) {
+        console.log('🔧 Server Actions error detected - likely cross-origin issue');
+        console.log('🔄 Continuing with URL parameters only');
+        // Continue processing with URL parameters only
+      } else {
+        throw bodyError;
+      }
     }
     
     // Combine all parameters for logging
@@ -173,6 +191,27 @@ export async function POST(request) {
     return await processFlowReturn(request, token, status, allParams);
   } catch (error) {
     console.error('❌ POST Error:', error);
+    
+    // Handle Server Actions error specifically
+    if (error.message && error.message.includes('Invalid Server Actions request')) {
+      console.log('🔧 Handling Server Actions cross-origin error gracefully');
+      
+      // Extract token from URL if available as fallback
+      try {
+        const url = new URL(request.url);
+        const token = url.searchParams.get('token');
+        const status = url.searchParams.get('status') || 'unknown';
+        
+        console.log('🔄 Fallback processing with URL params:', { token, status });
+        
+        if (token) {
+          return await processFlowReturn(request, token, status, { token, status });
+        }
+      } catch (fallbackError) {
+        console.error('❌ Fallback processing failed:', fallbackError);
+      }
+    }
+    
     return await handleFlowError(request, error);
   }
 }
