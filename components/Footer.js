@@ -29,7 +29,16 @@ export default function Footer() {
               <nav>
                 <Link href="/">Inicio</Link>
                 <Link href="/busqueda">Búsqueda</Link>
+                <Link href="/planes">Planes</Link>
                 
+              </nav>
+            </div>
+            
+            <div className={styles.linkColumn}>
+              <h4>Ayuda</h4>
+              <nav>
+                <Link href="/contacto">Contacto</Link>
+                <Link href="/sugerencias">Sugerencias y Comentarios</Link>
               </nav>
             </div>
             

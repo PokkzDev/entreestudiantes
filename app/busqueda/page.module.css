@@ -30,61 +30,31 @@
   display: flex;
   flex-wrap: wrap;
   gap: 1rem;
-  margin-bottom: 2rem;
+  margin-bottom: 3rem;
   justify-content: center;
-  background: #f8fafc;
-  padding: 1.25rem;
-  border-radius: 12px;
-  box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+  background: #ffffff;
+  padding: 2rem;
+  border-radius: 16px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
   align-items: center;
-  border: 1.5px solid #e2e8f0;
-  transition: box-shadow 0.2s, border-color 0.2s;
+  border: 1px solid #e5e7eb;
 }
 
 .busquedaFiltros:focus-within {
-  box-shadow: 0 4px 24px rgba(99,102,241,0.10);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
   border-color: #6366f1;
 }
 
-@media (max-width: 1200px) {
-  .busquedaFiltros {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 0.7rem;
-    padding: 1rem 0.5rem;
-  }
-  .busquedaSelect, .busquedaInput {
-    min-width: 100%;
-    width: 100%;
-    box-sizing: border-box;
-  }
-  .busquedaButton, .busquedaResetButton {
-    width: 100%;
-    min-width: unset;
-    margin-left: 0;
-    margin-top: 0.5rem;
-    height: 44px;
-    justify-content: center;
-  }
-  .busquedaFiltros > div {
-    flex-direction: column !important;
-    gap: 0.7rem !important;
-    width: 100%;
-  }
-}
-
 .busquedaSelect {
-  padding: 0.75rem 1.25rem;
+  padding: 0.75rem 1rem;
   border-radius: 8px;
-  border: 1px solid #e2e8f0;
-  font-size: 0.95rem;
-  width: 180px; /* Reduced width to fit more dropdowns */
+  border: 1px solid #d1d5db;
+  font-size: 0.9rem;
+  width: 180px;
   min-width: 180px;
-  max-width: 180px;
   flex-shrink: 0;
   background: white;
-  color: #334155;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.03);
+  color: #374151;
   outline: none;
   transition: all 0.2s;
   cursor: pointer;
@@ -93,344 +63,349 @@
 .busquedaInput {
   flex: 1;
   min-width: 250px;
-  padding: 0.75rem 1.25rem;
+  padding: 0.75rem 1rem;
   border-radius: 8px;
-  border: 1px solid #e2e8f0;
-  font-size: 0.95rem;
+  border: 1px solid #d1d5db;
+  font-size: 0.9rem;
   background: white;
-  color: #334155;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.03);
+  color: #374151;
   outline: none;
   transition: all 0.2s;
 }
 
 .busquedaSelect:hover, .busquedaInput:hover {
-  border-color: #cbd5e1;
+  border-color: #9ca3af;
 }
 
 .busquedaSelect:focus, .busquedaInput:focus {
   border-color: #6366f1;
-  box-shadow: 0 0 0 3px rgba(99,102,241,0.15);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
 }
 
-.busquedaSelect optgroup {
-  font-weight: 600;
-  color: #475569;
-  background: #f8fafc;
+.busquedaButton {
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  border: none;
+  background: #6366f1;
+  color: white;
   font-size: 0.9rem;
-  padding: 0.5rem 0;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.busquedaSelect option {
-  padding: 0.5rem 1rem;
-  color: #334155;
+.busquedaResetButton {
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  border: 1px solid #d1d5db;
   background: white;
+  color: #374151;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 100px;
+}
+
+.busquedaButton:hover {
+  background: #4f46e5;
+  transform: translateY(-1px);
+}
+
+.busquedaResetButton:hover {
+  background: #f9fafb;
+  border-color: #9ca3af;
+  transform: translateY(-1px);
 }
 
 .busquedaEmpty {
   text-align: center;
-  padding: 3rem 0;
-  color: #64748b;
-  font-size: 1.05rem;
-  background: #f8fafc;
-  border-radius: 12px;
-  border: 1px dashed #cbd5e1;
+  padding: 4rem 2rem;
+  color: #6b7280;
+  font-size: 1.1rem;
+  background: #f9fafb;
+  border-radius: 16px;
+  border: 2px dashed #d1d5db;
+  margin: 2rem 0;
 }
 
 .busquedaGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   gap: 1.5rem;
-  margin-top: 1.5rem;
+  margin-top: 2rem;
+  align-items: start;
 }
 
 .busquedaCard {
   position: relative;
   display: flex;
   flex-direction: column;
-  background: linear-gradient(145deg, #ffffff 0%, #fafbfc 100%);
-  border-radius: 20px;
+  background: #ffffff;
+  border-radius: 10px;
   overflow: hidden;
-  box-shadow: 
-    0 10px 40px rgba(0, 0, 0, 0.08),
-    0 4px 12px rgba(0, 0, 0, 0.05),
-    0 1px 3px rgba(0, 0, 0, 0.1);
-  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-  height: 100%;
-  border: 1px solid rgba(255, 255, 255, 0.8);
-  backdrop-filter: blur(10px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+  border: 1px solid #e5e7eb;
   cursor: pointer;
-  transform: translateY(0);
-  will-change: transform, box-shadow;
-  animation: cardEntrance 0.6s ease-out forwards;
-  animation-delay: calc(var(--card-index, 0) * 0.1s);
+  height: fit-content;
+}
+
+.busquedaCard:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.12);
+  border-color: #d1d5db;
 }
 
 .busquedaCard .imageContainer {
   position: relative;
   width: 100%;
-  height: 160px;
+  height: 180px;
   overflow: hidden;
-  background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
-}
-
-.busquedaCard:hover {
-  transform: translateY(-8px) scale(1.02);
-  box-shadow: 
-    0 25px 60px rgba(0, 0, 0, 0.12),
-    0 12px 24px rgba(0, 0, 0, 0.08),
-    0 4px 8px rgba(0, 0, 0, 0.06);
-  border-color: rgba(99, 102, 241, 0.2);
-}
-
-.busquedaCard[data-type="producto"] {
-  --accent-color: #10b981;
-  --accent-light: rgba(16, 185, 129, 0.1);
-  --accent-gradient: linear-gradient(135deg, #10b981 0%, #059669 100%);
-}
-
-.busquedaCard[data-type="producto"] .tipoLabel {
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-}
-
-.busquedaCard[data-type="producto"] .precio {
-  color: #000000 !important;
-}
-
-.busquedaCard[data-type="producto"] .precio::before {
-  background: linear-gradient(135deg, #059669 0%, #10b981 100%);
-}
-
-.busquedaCard[data-type="servicio"] {
-  --accent-color: #6366f1;
-  --accent-light: rgba(99, 102, 241, 0.1);
-  --accent-gradient: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
-}
-
-.busquedaCard[data-type="servicio"] .tipoLabel {
-  background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
-}
-
-.busquedaCard[data-type="servicio"] .precio {
-  color: #000000 !important;
-}
-
-.busquedaCard[data-type="servicio"] .precio::before {
-  background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%);
-}
-
-.busquedaCard::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 4px;
-  background: var(--accent-gradient);
-  z-index: 1;
+  background: #f3f4f6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .busquedaCard .imageContainer img {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  object-position: center;
-  transition: all 0.3s ease;
-  will-change: transform, filter;
-  display: block;
+  transition: transform 0.3s ease;
 }
 
 .busquedaCard:hover .imageContainer img {
-  filter: brightness(1.05) saturate(1.1) contrast(1.02);
-  transform: scale(1.05);
+  transform: scale(1.02);
 }
 
 .busquedaCard .noImage {
   width: 100%;
-  height: 160px;
-  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 50%, #f1f5f9 100%);
-  color: #94a3b8;
+  height: 180px;
+  background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+  color: #9ca3af;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1rem;
+  font-size: 0.875rem;
   font-weight: 500;
-  position: relative;
-  overflow: hidden;
 }
 
-.busquedaCard .noImage::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: repeating-linear-gradient(
-    45deg,
-    transparent,
-    transparent 10px,
-    rgba(148, 163, 184, 0.1) 10px,
-    rgba(148, 163, 184, 0.1) 20px
-  );
+.busquedaCard .cardContent {
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  height: auto;
+  min-height: unset;
+}
+
+.busquedaCard .mainContent {
+  padding: 1.25rem;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: #ffffff;
+}
+
+.busquedaCard .contentFlow {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  flex: 1;
+  text-align: center;
 }
 
 .busquedaCard h3 {
-  font-size: 1.125rem;
-  font-weight: 700;
-  color: #1e293b;
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: #0f172a;
   margin: 0;
-  padding: 1.25rem 1.25rem 0.3rem;
-  line-height: 1.3;
-  letter-spacing: -0.025em;
-  background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  user-select: text;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-height: 3.36rem;
+  text-align: center;
 }
 
-.busquedaCard .precio {
-  color: #000000 !important;
-  font-weight: 900;
-  font-size: 1.375rem;
-  margin: 0.3rem 0 0.5rem 0;
-  padding: 0 1.25rem;
-  letter-spacing: -0.025em;
-  position: relative;
+.busquedaCard .description {
+  color: #64748b;
+  font-size: 0.875rem;
+  line-height: 1.6;
+  margin: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+  text-align: center;
 }
 
-.busquedaCard .precio::before {
-  content: '';
-  position: absolute;
-  left: 1.25rem;
-  bottom: -2px;
-  width: 40px;
-  height: 3px;
-  background: linear-gradient(135deg, #059669 0%, #10b981 100%);
-  border-radius: 1.5px;
+/* Remove old separate sections */
+.busquedaCard .titleSection,
+.busquedaCard .descriptionSection {
+  display: contents;
+}
+
+/* Top Meta Section */
+.busquedaCard .topMeta {
+  padding: 1rem 1.25rem 0.75rem;
+  background: #fafbfc;
+  border-bottom: 1px solid #e1e5e9;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.busquedaCard .categoria,
+.busquedaCard .universidad {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 0.25rem 0.6rem;
+  border-radius: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+  line-height: 1.2;
 }
 
 .busquedaCard .categoria {
-  color: #6366f1;
-  font-size: 0.8rem;
-  font-weight: 600;
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
-  gap: 0.4rem;
-  margin-bottom: 0.3rem;
-  background: rgba(99, 102, 241, 0.05);
-  margin-left: 1.25rem;
-  margin-right: 1.25rem;
-  border-radius: 6px;
-  padding: 0.4rem 0.6rem;
-  border: 1px solid rgba(99, 102, 241, 0.1);
-  transition: all 0.3s ease;
-  position: relative;
-  overflow: hidden;
-}
-
-.busquedaCard .categoria b {
-  color: #475569;
-  font-weight: 700;
-}
-
-.busquedaCard .categoria::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, transparent 50%);
-  opacity: 0;
-  transition: opacity 0.3s ease;
-}
-
-.busquedaCard:hover .categoria::before {
-  opacity: 1;
+  background: #dbeafe;
+  color: #1e40af;
+  border: 1px solid #bfdbfe;
 }
 
 .busquedaCard .universidad {
-  color: #6366f1;
-  font-size: 0.8rem;
-  font-weight: 600;
-  display: flex;
+  background: #d1fae5;
+  color: #065f46;
+  border: 1px solid #a7f3d0;
+}
+
+.busquedaCard .fechaPublicacion {
+  display: inline-flex;
   align-items: center;
-  justify-content: flex-start;
-  gap: 0.4rem;
-  margin-bottom: 0.3rem;
-  background: rgba(99, 102, 241, 0.05);
-  margin-left: 1.25rem;
-  margin-right: 1.25rem;
-  border-radius: 6px;
-  padding: 0.4rem 0.6rem;
-  border: 1px solid rgba(99, 102, 241, 0.1);
-  transition: all 0.3s ease;
+  gap: 0.25rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 0.25rem 0.6rem;
+  border-radius: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+  line-height: 1.2;
+  background: #fef3c7;
+  color: #92400e;
+  border: 1px solid #fde68a;
+}
+
+/* Bottom Price Section */
+.busquedaCard .priceSection {
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  border-top: 1px solid #e2e8f0;
+  padding: 0.75rem 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   position: relative;
   overflow: hidden;
+  margin-top: auto;
 }
 
-.busquedaCard .universidad b {
-  color: #475569;
-  font-weight: 700;
-}
-
-.busquedaCard .universidad::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, transparent 50%);
-  opacity: 0;
-  transition: opacity 0.3s ease;
-}
-
-.busquedaCard:hover .universidad::before {
-  opacity: 1;
-}
-
-.busquedaCard p {
-  padding: 0 1.25rem;
-  margin: 0.3rem 0;
+.busquedaCard .priceSection::before {
+  content: 'Precio';
+  font-size: 0.7rem;
+  font-weight: 600;
   color: #64748b;
-  font-size: 0.9rem;
-  line-height: 1.4;
-  font-weight: 400;
-  user-select: text;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  position: absolute;
+  left: 1rem;
+  top: 0.375rem;
+}
+
+.busquedaCard .precio {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: #059669;
+  margin: 0;
+  line-height: 1;
+  position: relative;
+  z-index: 1;
+  margin-left: auto;
+  padding-top: 0.25rem;
+}
+
+.busquedaCard[data-type="servicio"] .priceSection {
+  background: linear-gradient(135deg, #f0f4ff 0%, #e0e7ff 100%);
+  border-top-color: #c7d2fe;
+}
+
+.busquedaCard[data-type="servicio"] .precio {
+  color: #4338ca;
+}
+
+.busquedaCard .priceSection:hover {
+  background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+}
+
+.busquedaCard[data-type="servicio"] .priceSection:hover {
+  background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%);
+}
+
+/* Remove old styling */
+.busquedaCard .metaInfo {
+  display: none;
+}
+
+.busquedaCard .priceContainer {
+  display: none;
 }
 
 .busquedaCard .tipoLabel {
   position: absolute;
-  top: 16px;
-  right: 16px;
-  background: var(--accent-gradient);
-  color: white;
-  font-weight: 700;
+  top: 12px;
+  right: 12px;
+  padding: 0.375rem 0.75rem;
+  border-radius: 6px;
   font-size: 0.75rem;
-  padding: 0.5rem 1rem;
-  border-radius: 25px;
-  z-index: 10;
-  box-shadow: 
-    0 4px 12px rgba(0, 0, 0, 0.15),
-    0 2px 4px rgba(0, 0, 0, 0.1);
-  letter-spacing: 0.5px;
+  font-weight: 700;
   text-transform: uppercase;
-  backdrop-filter: blur(10px);
+  letter-spacing: 0.025em;
+  z-index: 10;
+  backdrop-filter: blur(8px);
   border: 1px solid rgba(255, 255, 255, 0.2);
-  transition: all 0.3s ease;
+}
+
+.busquedaCard[data-type="producto"] .tipoLabel {
+  background: rgba(5, 150, 105, 0.95);
+  color: white;
+}
+
+.busquedaCard[data-type="servicio"] .tipoLabel {
+  background: rgba(37, 99, 235, 0.95);
+  color: white;
 }
 
 .reportButtonCard {
   position: absolute;
-  top: 16px;
-  left: 16px;
-  background: rgba(255, 255, 255, 0.9);
-  border: 1px solid #e5e7eb;
-  border-radius: 50%;
+  top: 12px;
+  left: 12px;
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 6px;
   width: 32px;
   height: 32px;
   display: flex;
@@ -441,235 +416,167 @@
   cursor: pointer;
   transition: all 0.2s ease;
   z-index: 10;
-  backdrop-filter: blur(10px);
+  backdrop-filter: blur(8px);
 }
 
 .reportButtonCard:hover {
   background: #fef2f2;
   border-color: #fca5a5;
   color: #dc2626;
-  transform: scale(1.05);
-  box-shadow: 0 2px 8px rgba(220, 38, 38, 0.15);
+  transform: scale(1.1);
 }
 
-.busquedaCard:hover .tipoLabel {
-  transform: scale(1.05);
-  box-shadow: 
-    0 6px 20px rgba(0, 0, 0, 0.2),
-    0 3px 6px rgba(0, 0, 0, 0.15);
+/* Remove any leftover complex styling */
+.busquedaCard .categoria::before,
+.busquedaCard .universidad::before,
+.busquedaCard .precio::before {
+  display: none;
 }
 
-.busquedaCard .contacto {
-  margin-top: auto;
-  padding: 1rem;
-  background: #f8fafc;
-  border-top: 1px solid #e2e8f0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-/* Simple contact button */
-.busquedaCard .contacto a,
-.busquedaCard .contacto span {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 40px;
-  border-radius: 8px;
-  background: #ffffff;
-  border: 1px solid #d1d5db;
-  text-decoration: none;
-  transition: all 0.2s ease;
-  color: #6b7280;
-}
-
-/* Contact button styles */
-.contactButton {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 40px;
-  border-radius: 8px;
-  background: #ffffff;
-  border: 1px solid #d1d5db;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  color: #6b7280;
-  padding: 0;
-}
-
-.contactButton:hover {
-  background: #f3f4f6;
-  border-color: #9ca3af;
-  transform: translateY(-1px);
-}
-
-.contactButton:hover .contactIcon {
-  animation: pulseGlow 1.5s infinite;
-}
-
-.busquedaCard .contacto a:hover {
-  background: #f3f4f6;
-  border-color: #9ca3af;
-  transform: translateY(-1px);
-}
-
-.contactIcon {
-  font-size: 1.1rem;
-  color: inherit;
-}
-
-/* Removed specific whatsapp icon styling - using simple approach */
-
-/* Removed complex hover animations for simplicity */
-
-/* Removed old visited styling - handled by specific contact type styles */
-
-/* Descripción truncada para mostrar solo 2 líneas */
-.busquedaCard p:nth-of-type(2) {
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  margin-bottom: 0.5rem;
-  min-height: 2.5rem;
-}
-
-/* Responsive ajustes */
+/* Responsive Design */
 @media (max-width: 768px) {
-  .busquedaGrid {
-    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-    gap: 1.25rem;
+  .busquedaContainer {
+    padding: 1rem;
   }
+  
+  .busquedaFiltros {
+    flex-direction: column;
+    gap: 1rem;
+    align-items: stretch;
+    padding: 1.5rem;
+  }
+  
+  .busquedaFiltros > div:first-child {
+    flex-direction: column !important;
+    gap: 1rem !important;
+    width: 100%;
+  }
+  
   .busquedaSelect, .busquedaInput {
+    width: 100%;
     min-width: 100%;
   }
-  .busquedaCard {
-    border-radius: 16px;
-    padding: 0;
+  
+  .busquedaButton, .busquedaResetButton {
+    width: 100%;
+    justify-content: center;
   }
+  
+  .busquedaGrid {
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1.5rem;
+  }
+  
+  .busquedaCard .topMeta {
+    padding: 0.75rem 1rem 0.5rem;
+  }
+  
+  .busquedaCard .categoria,
+  .busquedaCard .universidad {
+    font-size: 0.65rem;
+    padding: 0.2rem 0.5rem;
+    border-radius: 8px;
+  }
+  
+  .busquedaCard .fechaPublicacion {
+    font-size: 0.65rem;
+    padding: 0.2rem 0.5rem;
+    border-radius: 8px;
+  }
+  
+  .busquedaCard .mainContent {
+    padding: 1rem;
+  }
+  
+  .busquedaCard .contentFlow {
+    gap: 0.375rem;
+  }
+  
   .busquedaCard h3 {
     font-size: 1rem;
-    padding: 1rem 1rem 0.4rem;
+    min-height: 2.8rem;
   }
+  
+  .busquedaCard .description {
+    font-size: 0.8rem;
+    line-height: 1.5;
+    -webkit-line-clamp: 3;
+  }
+  
+  .busquedaCard .priceSection {
+    padding: 0.75rem 1rem;
+  }
+  
   .busquedaCard .precio {
-    font-size: 1.25rem;
-    padding: 0 1rem;
-  }
-  .busquedaCard .categoria, .busquedaCard .universidad {
-    margin-left: 1rem;
-    margin-right: 1rem;
-    padding: 0.35rem 0.5rem;
-    font-size: 0.75rem;
-  }
-  .busquedaCard p {
-    padding-left: 1rem;
-    padding-right: 1rem;
-    font-size: 0.85rem;
-  }
-  .busquedaCard .contacto {
-    padding: 0.8rem;
-  }
-  
-  .busquedaCard .contacto a,
-  .busquedaCard .contacto span {
-    width: 36px;
-    height: 36px;
-  }
-  
-  .contactButton {
-    width: 36px;
-    height: 36px;
+    font-size: 1.5rem;
   }
   
   .reportButtonCard {
     width: 28px;
     height: 28px;
     font-size: 0.7rem;
-    top: 12px;
-    left: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .busquedaGrid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
   }
   
-  .contactIcon {
-    font-size: 1rem;
+  .busquedaCard .topMeta {
+    padding: 0.625rem 0.875rem 0.375rem;
   }
-  .busquedaCard .imageContainer, .busquedaCard .noImage {
-    height: 140px;
+  
+  .busquedaCard .categoria,
+  .busquedaCard .universidad {
+    font-size: 0.6rem;
+    padding: 0.15rem 0.4rem;
+    border-radius: 6px;
   }
-  .busquedaFiltros {
-    flex-direction: column;
-    gap: 0.7rem;
-    align-items: stretch;
+  
+  .busquedaCard .fechaPublicacion {
+    font-size: 0.6rem;
+    padding: 0.15rem 0.4rem;
+    border-radius: 6px;
   }
-  .busquedaButton, .busquedaResetButton {
-    width: 100%;
-    min-width: unset;
-    margin-left: 0;
-    margin-top: 0.5rem;
-    height: 44px;
-    justify-content: center;
+  
+  .busquedaCard .mainContent {
+    padding: 0.875rem;
   }
-}
-
-.busquedaButton {
-  padding: 0.75rem 1.5rem;
-  border-radius: 8px;
-  border: none;
-  background: #6366f1;
-  color: #fff;
-  font-size: 1rem;
-  font-weight: 600;
-  box-shadow: 0 2px 6px rgba(99,102,241,0.08);
-  cursor: pointer;
-  transition: background 0.2s, box-shadow 0.2s, transform 0.2s;
-  margin-left: 0.5rem;
-  margin-top: 0.1rem;
-  height: 48px;
-  display: flex;
-  align-items: center;
-}
-
-.busquedaResetButton {
-  padding: 0.75rem 1.5rem;
-  border-radius: 8px;
-  border: none;
-  background: #e2e8f0;
-  color: #334155;
-  font-size: 1rem;
-  font-weight: 500;
-  box-shadow: 0 2px 6px rgba(99,102,241,0.04);
-  cursor: pointer;
-  transition: background 0.2s, box-shadow 0.2s, transform 0.2s;
-  margin-left: 0.5rem;
-  margin-top: 0.1rem;
-  height: 48px;
-  display: flex;
-  align-items: center;
-  min-width: 120px;
-}
-
-.busquedaButton, .busquedaResetButton {
-  order: 2;
-}
-
-.busquedaButton:hover, .busquedaButton:focus {
-  background: #4f46e5;
-  box-shadow: 0 4px 16px rgba(99,102,241,0.13);
-  transform: translateY(-2px) scale(1.03);
-  outline: none;
-}
-
-.busquedaResetButton:hover, .busquedaResetButton:focus {
-  background: #cbd5e1;
-  color: #1e293b;
-  box-shadow: 0 4px 16px rgba(99,102,241,0.08);
-  transform: translateY(-2px) scale(1.03);
-  outline: none;
+  
+  .busquedaCard .contentFlow {
+    gap: 0.25rem;
+  }
+  
+  .busquedaCard h3 {
+    font-size: 0.95rem;
+    min-height: 2.4rem;
+  }
+  
+  .busquedaCard .description {
+    font-size: 0.75rem;
+  }
+  
+  .busquedaCard .priceSection {
+    padding: 0.625rem 0.875rem;
+  }
+  
+  .busquedaCard .priceSection::before {
+    left: 0.875rem;
+    top: 0.25rem;
+    font-size: 0.65rem;
+  }
+  
+  .busquedaCard .precio {
+    font-size: 1.125rem;
+  }
+  
+  .reportButtonCard {
+    width: 28px;
+    height: 28px;
+    font-size: 0.7rem;
+  }
 }
 
 .busquedaInfo {
@@ -699,97 +606,22 @@
   font-weight: 600;
 }
 
-/* Add subtle animations and improvements */
-@keyframes cardEntrance {
-  from {
-    opacity: 0;
-    transform: translateY(20px) scale(0.95);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
+.busquedaSelect optgroup {
+  font-weight: 600;
+  color: #475569;
+  background: #f8fafc;
+  font-size: 0.9rem;
+  padding: 0.5rem 0;
 }
 
-@keyframes pulseGlow {
-  0%, 100% {
-    box-shadow: 0 0 0 0 rgba(37, 211, 102, 0.4);
-  }
-  50% {
-    box-shadow: 0 0 0 8px rgba(37, 211, 102, 0);
-  }
+.busquedaSelect option {
+  padding: 0.5rem 1rem;
+  color: #374151;
+  background: white;
 }
 
-/* Removed old complex animations for cleaner design */
-
-/* Improved focus states for accessibility */
+/* Focus states for accessibility */
 .busquedaCard:focus-visible {
   outline: 3px solid rgba(99, 102, 241, 0.5);
   outline-offset: 2px;
 }
-
-.busquedaCard .contacto a:focus-visible {
-  outline: 2px solid rgba(37, 211, 102, 0.6);
-  outline-offset: 2px;
-}
-
-/* Enhanced loading state */
-.busquedaCard.loading {
-  opacity: 0.7;
-  pointer-events: none;
-}
-
-.busquedaCard.loading::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
-  animation: shimmer 1.5s infinite;
-}
-
-@keyframes shimmer {
-  0% {
-    transform: translateX(-100%);
-  }
-  100% {
-    transform: translateX(100%);
-  }
-}
-
-/* Improved text selection */
-.busquedaCard h3,
-.busquedaCard .precio,
-.busquedaCard p {
-  user-select: text;
-}
-
-/* Enhanced category and university badges */
-.busquedaCard .categoria,
-.busquedaCard .universidad {
-  transition: all 0.3s ease;
-  position: relative;
-  overflow: hidden;
-}
-
-.busquedaCard .categoria::before,
-.busquedaCard .universidad::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, transparent 50%);
-  opacity: 0;
-  transition: opacity 0.3s ease;
-}
-
-.busquedaCard:hover .categoria::before,
-.busquedaCard:hover .universidad::before {
-  opacity: 1;
-}
-
-/* Removed conflicting price styling that was making text transparent */

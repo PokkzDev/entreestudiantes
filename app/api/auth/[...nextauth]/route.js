@@ -105,9 +105,7 @@ export const authOptions = {
       if (user) {
         token.id = user.id;
         token.isVerified = user.isVerified;
-        token.nombre = user.nombre;
-        token.apellidos = user.apellidos;
-        token.name = user.nombre && user.apellidos ? `${user.nombre} ${user.apellidos}` : user.nombre || user.apellidos || user.username;
+        token.name = user.name || user.username;
         token.username = user.username;
         token.email = user.email;
         token.createdAt = user.createdAt;
@@ -128,6 +126,8 @@ export const authOptions = {
         token.isActive = user.isActive;
         token.suspensionEndsAt = user.suspensionEndsAt;
         token.suspensionReason = user.suspensionReason;
+        // Add initial subscription data from user object
+        token.accountTier = user.accountTier;
         if (user.remember !== undefined) token.remember = user.remember;
       }
 
@@ -166,8 +166,7 @@ export const authOptions = {
             where: { id: token.id },
             select: {
               id: true,
-              nombre: true,
-              apellidos: true,
+              name: true,
               username: true,
               email: true,
               image: true,
@@ -186,15 +185,34 @@ export const authOptions = {
               isFlagged: true,
               isActive: true,
               suspensionEndsAt: true,
-              suspensionReason: true
+              suspensionReason: true,
+              accountTier: true,
+              subscriptions: {
+                where: {
+                  status: 'active',
+                  endDate: {
+                    gte: new Date()
+                  }
+                },
+                orderBy: {
+                  endDate: 'desc'
+                },
+                take: 1,
+                select: {
+                  id: true,
+                  planId: true,
+                  status: true,
+                  startDate: true,
+                  endDate: true,
+                  autoRenew: true
+                }
+              }
             }
           });
           
           if (dbUser) {
             // Update token with fresh data from database
-            token.nombre = dbUser.nombre;
-            token.apellidos = dbUser.apellidos;
-            token.name = dbUser.nombre && dbUser.apellidos ? `${dbUser.nombre} ${dbUser.apellidos}` : dbUser.nombre || dbUser.apellidos || dbUser.username;
+            token.name = dbUser.name;
             token.username = dbUser.username;
             token.email = dbUser.email;
             token.image = dbUser.image;
@@ -215,10 +233,81 @@ export const authOptions = {
             token.isActive = dbUser.isActive;
             token.suspensionEndsAt = dbUser.suspensionEndsAt;
             token.suspensionReason = dbUser.suspensionReason;
+            
+            // Add subscription data
+            token.accountTier = dbUser.accountTier;
+            token.currentSubscription = dbUser.subscriptions?.[0] || null;
+            
+            // Calculate effective account tier
+            if (token.currentSubscription && token.currentSubscription.status === 'active') {
+              token.effectiveAccountTier = token.currentSubscription.planId;
+              token.subscriptionStatus = 'active';
+              token.subscriptionEndDate = token.currentSubscription.endDate;
+            } else {
+              token.effectiveAccountTier = 'free';
+              token.subscriptionStatus = 'inactive';
+              token.subscriptionEndDate = null;
+            }
           }
         } catch (error) {
           console.error("Error fetching fresh user data:", error);
           // Continue with existing token data if database fetch fails
+        }
+      }
+
+      // If this is the initial login, also fetch subscription data
+      if (user && token.id) {
+        try {
+          const userWithSubscription = await prisma.user.findUnique({
+            where: { id: token.id },
+            select: {
+              accountTier: true,
+              subscriptions: {
+                where: {
+                  status: 'active',
+                  endDate: {
+                    gte: new Date()
+                  }
+                },
+                orderBy: {
+                  endDate: 'desc'
+                },
+                take: 1,
+                select: {
+                  id: true,
+                  planId: true,
+                  status: true,
+                  startDate: true,
+                  endDate: true,
+                  autoRenew: true
+                }
+              }
+            }
+          });
+
+          if (userWithSubscription) {
+            token.accountTier = userWithSubscription.accountTier;
+            token.currentSubscription = userWithSubscription.subscriptions?.[0] || null;
+            
+            // Calculate effective account tier
+            if (token.currentSubscription && token.currentSubscription.status === 'active') {
+              token.effectiveAccountTier = token.currentSubscription.planId;
+              token.subscriptionStatus = 'active';
+              token.subscriptionEndDate = token.currentSubscription.endDate;
+            } else {
+              token.effectiveAccountTier = 'free';
+              token.subscriptionStatus = 'inactive';
+              token.subscriptionEndDate = null;
+            }
+          }
+        } catch (error) {
+          console.error("Error fetching subscription data on login:", error);
+          // Set defaults if fetch fails
+          token.accountTier = user.accountTier || 'free';
+          token.effectiveAccountTier = 'free';
+          token.subscriptionStatus = 'inactive';
+          token.subscriptionEndDate = null;
+          token.currentSubscription = null;
         }
       }
 
@@ -228,8 +317,6 @@ export const authOptions = {
       if (token) {
         session.user.id = token.id;
         session.user.isVerified = token.isVerified;
-        session.user.nombre = token.nombre;
-        session.user.apellidos = token.apellidos;
         session.user.name = token.name;
         session.user.username = token.username;
         session.user.email = token.email;
@@ -251,6 +338,13 @@ export const authOptions = {
         session.user.isActive = token.isActive;
         session.user.suspensionEndsAt = token.suspensionEndsAt;
         session.user.suspensionReason = token.suspensionReason;
+        
+        // Add subscription data to session
+        session.user.accountTier = token.accountTier;
+        session.user.effectiveAccountTier = token.effectiveAccountTier;
+        session.user.subscriptionStatus = token.subscriptionStatus;
+        session.user.subscriptionEndDate = token.subscriptionEndDate;
+        session.user.currentSubscription = token.currentSubscription;
       }
       return session;
     }

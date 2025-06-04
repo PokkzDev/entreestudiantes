@@ -1,7 +1,7 @@
 import React from 'react';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faHandHoldingHeart, faStar, faGem, faCrown } from "@fortawesome/free-solid-svg-icons";
-import { getTierIcon, getTierColor, getTierBgColor, formatTierName } from '@/lib/accountTiers';
+import { getTierIconSync, getTierColorSync, getTierBgColorSync, getTierNameSync } from '@/lib/accountTiersClient';
 import styles from './AccountTierBadge.module.css';
 
 // Icon mapping for FontAwesome
@@ -13,11 +13,11 @@ const iconMap = {
 };
 
 const AccountTierBadge = ({ tier, size = 'medium', showText = true }) => {
-  const tierColor = getTierColor(tier);
-  const tierBgColor = getTierBgColor(tier);
-  const tierName = formatTierName(tier);
-  const iconName = getTierIcon(tier);
-  const icon = iconMap[iconName];
+  const tierColor = getTierColorSync(tier) || '#64748b'; // Fallback color
+  const tierBgColor = getTierBgColorSync(tier) || '#f8fafc'; // Fallback bg color
+  const tierName = getTierNameSync(tier) || tier; // Use tier key as fallback
+  const iconName = getTierIconSync(tier);
+  const icon = iconName ? iconMap[iconName] : iconMap["hand-holding-heart"]; // Default icon
 
   const sizeClasses = {
     small: {

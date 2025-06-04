@@ -1,5 +1,19 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Allow cross-origin Server Actions for Flow.cl integration
+  experimental: {
+    serverActions: {
+      allowedOrigins: [
+        'sandbox.flow.cl',
+        'www.flow.cl',
+        'flow.cl',
+        'entreestudiantes.online',
+        'localhost:3000',
+        'localhost:3001'
+      ],
+      bodySizeLimit: '2mb'
+    }
+  },
   images: {
     remotePatterns: [
       {
@@ -9,8 +23,6 @@ const nextConfig = {
       },
     ],
   },
-  // External packages configuration for server components
-  serverExternalPackages: ['@prisma/client'],
   // Security headers
   async headers() {
     return [
@@ -58,6 +70,24 @@ const nextConfig = {
           {
             key: 'Access-Control-Allow-Headers',
             value: 'Content-Type, Authorization, x-signature, x-request-id'
+          }
+        ]
+      },
+      // Special headers for Flow.cl integration endpoints
+      {
+        source: '/api/flow/:path*',
+        headers: [
+          {
+            key: 'Access-Control-Allow-Origin',
+            value: 'https://sandbox.flow.cl'
+          },
+          {
+            key: 'Access-Control-Allow-Methods',
+            value: 'GET, POST, OPTIONS'
+          },
+          {
+            key: 'Access-Control-Allow-Headers',
+            value: 'Content-Type, x-forwarded-for, x-forwarded-host, x-forwarded-proto'
           }
         ]
       }

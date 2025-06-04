@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { requirePostAuth } from "@/lib/authHelpers";
-import { getEffectiveTier, canCreatePublication } from "@/lib/accountTiers";
+import { getEffectiveTier, canCreatePublicationFromTierData } from "@/lib/accountTiers";
+import { getCurrentActiveSubscription } from "@/lib/dbUtils";
 
 export async function POST(req) {
   try {
@@ -16,23 +17,16 @@ export async function POST(req) {
     
     const { user } = authResult;
 
-    // Get user's current university, campus, and tier information
+    // Get user's current university, campus, and basic account information
     const userDetails = await prisma.user.findUnique({
       where: { id: user.id },
       select: {
         university: true,
         campus: true,
         accountTier: true,
-        tierStartDate: true,
-        tierEndDate: true,
-        subscriptionStatus: true,
         _count: {
           select: {
-            publicaciones: {
-              where: {
-                status: "activo" // Only count active publications
-              }
-            }
+            publicaciones: true // Count ALL publications regardless of status
           }
         }
       },
@@ -45,18 +39,51 @@ export async function POST(req) {
       }, { status: 404 });
     }
 
-    // Check publication limits based on account tier
-    const effectiveTier = getEffectiveTier(userDetails);
-    const currentPublicationCount = userDetails._count.publicaciones;
-    const limitInfo = canCreatePublication(effectiveTier, currentPublicationCount);
+    // Get current active subscription
+    const currentSubscription = await getCurrentActiveSubscription(user.id);
+
+    // Create user object compatible with getEffectiveTier function
+    const userForTierCalculation = {
+      accountTier: userDetails.accountTier,
+      currentSubscription
+    };
+
+    // Check publication limits based on account tier (NEW LOGIC - counts all publications)
+    const effectiveTier = getEffectiveTier(userForTierCalculation, currentSubscription);
+    const totalPublicationCount = userDetails._count.publicaciones; // All publications
+    
+    // Fetch tier data from database
+    const tierData = await prisma.accountTier.findUnique({
+      where: { tierKey: effectiveTier }
+    });
+
+    if (!tierData) {
+      return NextResponse.json({ 
+        success: false, 
+        error: `Información del plan ${effectiveTier} no encontrada en la base de datos` 
+      }, { status: 500 });
+    }
+
+    // Transform tier data to expected format
+    const formattedTierData = {
+      name: tierData.name,
+      publicationLimit: tierData.publicationLimit,
+      price: tierData.price,
+      features: JSON.parse(tierData.features),
+      icon: tierData.icon,
+      color: tierData.color,
+      bgColor: tierData.bgColor
+    };
+
+    const limitInfo = canCreatePublicationFromTierData(effectiveTier, totalPublicationCount, formattedTierData);
 
     if (!limitInfo.canCreate) {
       return NextResponse.json({ 
         success: false, 
-        error: `Has alcanzado el límite de publicaciones para tu plan ${effectiveTier === 'free' ? 'Gratuito' : effectiveTier}. ${limitInfo.limit ? `Límite: ${limitInfo.limit} publicaciones.` : ''} ${effectiveTier === 'free' ? 'Considera upgrading tu cuenta para crear más publicaciones.' : 'Tu suscripción puede haber expirado.'}`,
+        error: `Has alcanzado el límite de publicaciones registradas para tu plan ${formattedTierData.name}. ${limitInfo.limit ? `Límite: ${limitInfo.limit} publicaciones registradas.` : ''} ${effectiveTier === 'free' ? 'Para crear una nueva publicación, primero debes eliminar una existente.' : 'Tu suscripción puede haber expirado.'}`,
         limitReached: true,
         currentTier: effectiveTier,
-        currentCount: currentPublicationCount,
+        currentCount: totalPublicationCount,
         limit: limitInfo.limit
       }, { status: 403 });
     }

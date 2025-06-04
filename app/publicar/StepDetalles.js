@@ -33,29 +33,8 @@ export default function StepDetalles({ form, handleChange, setForm, styles, minP
       {(form.type === "producto" || form.type === "servicio") && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
           <div style={{ display: 'flex', gap: 8, alignItems: 'center', width: '100%' }}>
-            <label style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 13, color: '#475569', fontWeight: 500, cursor: 'pointer' }}>
-              <input
-                type="radio"
-                name="priceType"
-                checked={!form.priceRange}
-                onChange={() => setForm(f => ({ ...f, priceRange: false, priceMax: '', priceMin: '' }))}
-                style={{ accentColor: '#6366f1', marginRight: 2 }}
-                disabled={form.type === 'servicio'}
-              />
-              Precio fijo
-            </label>
-            {form.type === 'producto' && (
-              <label style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 13, color: '#475569', fontWeight: 500, cursor: 'pointer' }}>
-                <input
-                  type="radio"
-                  name="priceType"
-                  checked={!!form.priceRange}
-                  onChange={() => setForm(f => ({ ...f, priceRange: true, priceMax: '', priceMin: '' }))}
-                  style={{ accentColor: '#6366f1', marginRight: 2 }}
-                />
-                Rango de precios
-              </label>
-            )}
+            
+            
           </div>
           {!form.priceRange || form.type === 'servicio' ? (
             <input
@@ -120,11 +99,7 @@ export default function StepDetalles({ form, handleChange, setForm, styles, minP
               />
             </div>
           )}
-          <span style={{ fontSize: 12, color: '#64748b', marginTop: 2 }}>
-            {form.type === 'servicio'
-              ? 'Puedes definir un precio base para tu servicio.'
-              : 'Puedes definir un rango de precios si tu producto lo requiere.'}
-          </span>
+          
         </div>
       )}
     </>

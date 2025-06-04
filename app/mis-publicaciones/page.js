@@ -3,8 +3,23 @@ import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faHandHoldingHeart, faStar, faGem, faCrown, faExclamationTriangle, faClipboard } from "@fortawesome/free-solid-svg-icons";
+import { 
+  getTierColorSync,
+  getTierIconSync,
+  getTierNameSync
+} from "@/lib/accountTiersClient";
 import styles from "./page.module.css";
 import RestrictionModal from "../../components/RestrictionModal";
+
+// Icon mapping for FontAwesome
+const iconMap = {
+  "hand-holding-heart": faHandHoldingHeart,
+  "star": faStar,
+  "gem": faGem,
+  "crown": faCrown
+};
 
 export default function MisPublicaciones() {
   const [publicaciones, setPublicaciones] = useState([]);
@@ -169,24 +184,16 @@ export default function MisPublicaciones() {
     setShowLimitModal(false);
   };
 
-  const getTierEmoji = (tier) => {
-    const emojis = {
-      free: '🆓',
-      basic: '⭐',
-      premium: '💎',
-      elite: '👑'
-    };
-    return emojis[tier] || emojis.free;
+  const getTierIconComponent = (tierKey) => {
+    // Use the synchronous function for immediate rendering
+    const iconName = getTierIconSync(tierKey);
+    const icon = iconMap[iconName];
+    return icon ? <FontAwesomeIcon icon={icon} /> : null;
   };
 
   const getTierColor = (tier) => {
-    const colors = {
-      free: '#6b7280',
-      basic: '#3b82f6',
-      premium: '#8b5cf6',
-      elite: '#f59e0b'
-    };
-    return colors[tier] || colors.free;
+    // Use the synchronous function to get color from database
+    return getTierColorSync(tier) || '#6b7280'; // fallback to gray
   };
 
   // Función para cambiar el estado (activo/inactivo)
@@ -208,6 +215,9 @@ export default function MisPublicaciones() {
           text: data.message || `La publicación ha sido ${data.publicacion.status === "activo" ? "activada" : "pausada"} correctamente`,
           type: "success"
         });
+        
+        // Refresh account info to update counts
+        fetchAccountInfo();
         
         // Ocultar mensaje después de 3 segundos
         setTimeout(() => setMessage(null), 3000);
@@ -259,7 +269,9 @@ export default function MisPublicaciones() {
         <div className={styles.modalOverlay}>
           <div className={styles.modalContent}>
             <button className={styles.modalClose} onClick={closeDeleteModal} title="Cerrar">×</button>
-            <div className={styles.modalIconWarning}>⚠️</div>
+            <div className={styles.modalIconWarning}>
+              <FontAwesomeIcon icon={faExclamationTriangle} style={{ color: '#f59e0b' }} />
+            </div>
             <h2 className={styles.modalTitle}>¿Eliminar publicación?</h2>
             <p className={styles.modalText}>¿Estás seguro de que quieres eliminar esta publicación? <b>Esta acción no se puede deshacer.</b></p>
             <div className={styles.modalActions}>
@@ -276,21 +288,21 @@ export default function MisPublicaciones() {
           <div className={styles.modalContent}>
             <button className={styles.modalClose} onClick={handleLimitModalClose} title="Cerrar">×</button>
             <div className={styles.modalIcon} style={{ fontSize: '48px' }}>
-              {getTierEmoji(limitData.currentTier)}
+              {getTierIconComponent(limitData.currentTier)}
             </div>
-            <h2 className={styles.modalTitle}>Límite de publicaciones alcanzado</h2>
+            <h2 className={styles.modalTitle}>Límite de publicaciones registradas alcanzado</h2>
             <p className={styles.modalText}>
-              Has alcanzado el límite de publicaciones para tu plan <strong>{limitData.tierName}</strong>.
+              Has alcanzado el límite de publicaciones registradas para tu plan <strong>{limitData.tierName}</strong>.
             </p>
             <div className={styles.limitInfo}>
               <div className={styles.limitStat}>
-                <span>Publicaciones actuales:</span>
+                <span>Publicaciones registradas:</span>
                 <strong>{limitData.currentCount} / {limitData.limit || '∞'}</strong>
               </div>
             </div>
             <p className={styles.modalText}>
               {limitData.currentTier === 'free' 
-                ? 'Considera upgrading tu cuenta para crear más publicaciones y acceder a funciones premium.'
+                ? 'Para crear una nueva publicación, debes eliminar una existente o actualizar tu plan para acceder a más publicaciones y funciones premium.'
                 : 'Tu suscripción puede haber expirado o necesitas un plan superior.'
               }
             </p>
@@ -324,12 +336,12 @@ export default function MisPublicaciones() {
       {accountInfo && (
         <div className={styles.accountTierInfo}>
           <div className={styles.tierBadge} style={{ color: getTierColor(accountInfo.currentTier) }}>
-            <span className={styles.tierEmoji}>{getTierEmoji(accountInfo.currentTier)}</span>
+            <span className={styles.tierEmoji}>{getTierIconComponent(accountInfo.currentTier)}</span>
             <span className={styles.tierName}>Plan {accountInfo.tierName}</span>
           </div>
           <div className={styles.publicationStats}>
             <span className={styles.statText}>
-              Publicaciones: <strong>{accountInfo.currentCount}</strong>
+              Publicaciones registradas: <strong>{accountInfo.currentCount}</strong>
               {accountInfo.isUnlimited ? (
                 <span className={styles.unlimitedBadge}> / ∞</span>
               ) : (
@@ -341,6 +353,11 @@ export default function MisPublicaciones() {
                 </>
               )}
             </span>
+            {accountInfo.activeCount !== undefined && accountInfo.currentTier === 'free' && (
+              <span className={styles.activeStatText}>
+                (Activas: <strong>{accountInfo.activeCount}</strong>)
+              </span>
+            )}
             {!accountInfo.isUnlimited && (
               <div className={styles.progressBar}>
                 <div 
@@ -353,15 +370,28 @@ export default function MisPublicaciones() {
               </div>
             )}
           </div>
-          {accountInfo.currentTier === 'free' && accountInfo.remaining <= 1 && (
-            <div className={styles.upgradePrompt}>
-              <span>¿Necesitas más publicaciones?</span>
-              <button 
-                onClick={() => router.push('/planes')}
-                className={styles.upgradeLink}
-              >
-                Ver planes premium
-              </button>
+          {accountInfo.currentTier === 'free' && (
+            <div className={styles.freeUserNotice}>
+              <p className={styles.noticeText}>
+                <FontAwesomeIcon icon={faClipboard} style={{ marginRight: '8px', color: '#6b7280' }} />
+                En el plan Gratuito puedes tener hasta <strong>{accountInfo.limit} publicaciones registradas</strong>. 
+                {accountInfo.remaining > 0 ? (
+                  <span> Puedes crear <strong>{accountInfo.remaining}</strong> más.</span>
+                ) : (
+                  <span> <strong>Para crear una nueva, debes eliminar una existente.</strong></span>
+                )}
+              </p>
+              {accountInfo.remaining <= 1 && (
+                <div className={styles.upgradePrompt}>
+                  <span>¿Necesitas más publicaciones?</span>
+                  <button 
+                    onClick={() => router.push('/planes')}
+                    className={styles.upgradeLink}
+                  >
+                    Ver planes premium
+                  </button>
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -425,7 +455,9 @@ export default function MisPublicaciones() {
                 
                 {pub.hiddenByReports && (
                   <div className={styles.hiddenWarning}>
-                    <span className={styles.warningIcon}>⚠️</span>
+                    <span className={styles.warningIcon}>
+                      <FontAwesomeIcon icon={faExclamationTriangle} style={{ color: '#f59e0b' }} />
+                    </span>
                     <span>Esta publicación está oculta debido a múltiples reportes y está siendo revisada por nuestro equipo.</span>
                   </div>
                 )}

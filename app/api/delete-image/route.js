@@ -47,13 +47,15 @@ export async function DELETE(request) {
       data: { image: null },
       select: {
         id: true,
-        nombre: true,
-        apellidos: true,
         username: true,
+        name: true,
         email: true,
         image: true,
+        university: true,
+        campus: true,
         nameChangeCount: true,
-        usernameChangeCount: true
+        usernameChangeCount: true,
+        universityChangeCount: true,
       }
     });
 

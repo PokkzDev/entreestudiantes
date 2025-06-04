@@ -4,22 +4,95 @@ const bcrypt = require('bcryptjs');
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log('Seeding allowed email domains...');
+  console.log('Starting database seeding...');
 
-  // Create initial allowed email domains
-  const allowedDomains = [
+  console.log('Seeding account tiers...');
+
+  // Define account tiers - simplified to just Free and Premium
+  const accountTiers = [
     {
-      domain: 'inacapmail.cl',
-      description: 'Correos institucionales de estudiantes INACAP',
-      isActive: true
+      tierKey: 'free',
+      name: 'Gratuito',
+      publicationLimit: 3,
+      price: 0,
+      features: JSON.stringify([
+        "Hasta 3 publicaciones registradas",
+        "Funciones básicas",
+        "Soporte comunitario"
+      ]),
+      icon: 'hand-holding-heart',
+      color: '#64748b',
+      bgColor: '#f8fafc',
+      isActive: true,
+      sortOrder: 1
     },
     {
-      domain: 'inacap.cl',
-      description: 'Correos institucionales de INACAP',
-      isActive: true
+      tierKey: 'premium',
+      name: 'Premium',
+      publicationLimit: 10,
+      price: 2990,
+      features: JSON.stringify([
+        "Hasta 10 publicaciones",
+        "Estadísticas Básicas",
+        "Funciones premium",
+        "Soporte via Email",
+
+        
+      ]),
+      icon: 'gem',
+      color: '#7c3aed',
+      bgColor: '#f3e8ff',
+      isActive: true,
+      sortOrder: 2
     }
   ];
 
+  // Create account tiers
+  for (const tierData of accountTiers) {
+    const existingTier = await prisma.accountTier.findUnique({
+      where: { tierKey: tierData.tierKey }
+    });
+
+    if (!existingTier) {
+      await prisma.accountTier.create({
+        data: tierData
+      });
+      console.log(`✓ Created account tier: ${tierData.name} (${tierData.tierKey}) - $${tierData.price}`);
+    } else {
+      // Update existing tier to ensure consistency
+      await prisma.accountTier.update({
+        where: { tierKey: tierData.tierKey },
+        data: {
+          name: tierData.name,
+          publicationLimit: tierData.publicationLimit,
+          price: tierData.price,
+          features: tierData.features,
+          icon: tierData.icon,
+          color: tierData.color,
+          bgColor: tierData.bgColor,
+          isActive: tierData.isActive,
+          sortOrder: tierData.sortOrder
+        }
+      });
+      console.log(`✓ Updated account tier: ${tierData.name} (${tierData.tierKey})`);
+    }
+  }
+
+  console.log('Seeding allowed email domains...');
+
+  // Define allowed email domains
+  const allowedDomains = [
+    {
+      domain: 'inacapmail.cl',
+      description: 'INACAP institutional email domain'
+    },
+    {
+      domain: 'inacap.cl',
+      description: 'INACAP institutional email domain (alternative)'
+    }
+  ];
+
+  // Create allowed email domains
   for (const domainData of allowedDomains) {
     const existingDomain = await prisma.allowedEmailDomain.findUnique({
       where: { domain: domainData.domain }
@@ -29,160 +102,93 @@ async function main() {
       await prisma.allowedEmailDomain.create({
         data: domainData
       });
-      console.log(`✓ Created allowed domain: ${domainData.domain}`);
+      console.log(`✓ Created allowed email domain: ${domainData.domain}`);
     } else {
-      console.log(`- Domain already exists: ${domainData.domain}`);
+      console.log(`- Email domain already exists: ${domainData.domain}`);
     }
   }
 
-  console.log('Seeding app configurations...');
+  console.log('Seeding user accounts...');
 
-  // Create initial app configurations
-  const appConfigs = [
+  // Create the specific user account as requested: Luis Contreras
+  const luisContrerasUser = {
+    username: 'PokkzDev',
+    email: 'admin@entreestudiantes.cl',
+    password: '!*Colademono12',
+    name: 'Luis Contreras',
+    rut: '18808398-6',
+    university: 'INACAP',
+    campus: 'Sede Chillán',
+    isVerified: true,
+    isActive: true,
+    // Set account tier to free (using the simplified model)
+    accountTier: 'free'
+  };
+
+  const existingLuisUser = await prisma.user.findUnique({
+    where: { email: luisContrerasUser.email }
+  });
+
+  let luisUserId;
+
+  if (!existingLuisUser) {
+    const hashedPassword = await bcrypt.hash(luisContrerasUser.password, 10);
+    
+    const createdUser = await prisma.user.create({
+      data: {
+        ...luisContrerasUser,
+        password: hashedPassword
+      }
+    });
+    luisUserId = createdUser.id;
+    console.log(`✓ Created user: ${luisContrerasUser.email} (${luisContrerasUser.name}) - RUT: ${luisContrerasUser.rut}`);
+    console.log(`✓ Account set to FREE tier with 3 publication limit`);
+  } else {
+    // Update existing user to ensure they have the correct account tier
+    await prisma.user.update({
+      where: { email: luisContrerasUser.email },
+      data: {
+        accountTier: 'free'
+      }
+    });
+    luisUserId = existingLuisUser.id;
+    console.log(`- User already exists: ${luisContrerasUser.email}`);
+    console.log(`✓ Updated user account tier to FREE`);
+  }
+
+  console.log('Seeding app configuration...');
+
+  // Seed app configuration for plan purchasing
+  const configItems = [
     {
-      key: 'institutional_email_strict_mode',
+      key: 'plan_purchasing_enabled',
       value: 'true',
-      description: 'When enabled, only emails from allowed institutional domains can register. When disabled, all emails are allowed.',
-      isActive: true
-    },
-    {
-      key: 'institutional_email_enabled',
-      value: 'true',
-      description: 'Enable or disable institutional email checking entirely.',
-      isActive: true
-    },
-    {
-      key: 'registration_enabled',
-      value: 'true',
-      description: 'Enable or disable user registration.',
+      description: 'Enable or disable plan purchasing functionality',
       isActive: true
     },
     {
       key: 'maintenance_mode',
       value: 'false',
-      description: 'Enable maintenance mode to restrict access to the application.',
-      isActive: true
-    },
-    {
-      key: 'plan_purchasing_enabled',
-      value: 'true',
-      description: 'Enable or disable plan purchasing functionality. When disabled, users cannot purchase new plans.',
+      description: 'Enable maintenance mode to disable certain features',
       isActive: true
     }
   ];
 
-  for (const configData of appConfigs) {
+  for (const config of configItems) {
     const existingConfig = await prisma.appConfig.findUnique({
-      where: { key: configData.key }
+      where: { key: config.key }
     });
 
     if (!existingConfig) {
       await prisma.appConfig.create({
-        data: configData
+        data: config
       });
-      console.log(`✓ Created app config: ${configData.key} = ${configData.value}`);
+      console.log(`✓ Created app config: ${config.key} = ${config.value}`);
     } else {
-      console.log(`- App config already exists: ${configData.key}`);
+      console.log(`- App config already exists: ${config.key}`);
     }
   }
 
-  // Ensure the plan_purchasing_enabled config exists with a direct check
-  const planPurchasingConfig = await prisma.appConfig.findUnique({
-    where: { key: 'plan_purchasing_enabled' }
-  });
-
-  if (!planPurchasingConfig) {
-    await prisma.appConfig.create({
-      data: {
-        key: 'plan_purchasing_enabled',
-        value: 'true',
-        description: 'Enable or disable plan purchasing functionality. When disabled, users cannot purchase new plans.',
-        isActive: true
-      }
-    });
-    console.log('✓ Created plan_purchasing_enabled config');
-  } else {
-    console.log(`- Plan purchasing config exists: ${planPurchasingConfig.value}`);
-  }
-
-  console.log('Seeding admin account...');
-
-  // Create admin account
-  const adminEmail = 'admin@entreestudiantes.cl';
-  const adminPassword = '!*Colademono12';
-  
-  const existingAdmin = await prisma.admin.findUnique({
-    where: { email: adminEmail }
-  });
-
-  if (!existingAdmin) {
-    const hashedPassword = await bcrypt.hash(adminPassword, 10);
-    
-    await prisma.admin.create({
-      data: {
-        username: 'admin',
-        email: adminEmail,
-        password: hashedPassword,
-        isActive: true,
-        isSuper: true
-      }
-    });
-    console.log(`✓ Created admin account: ${adminEmail}`);
-  } else {
-    console.log(`- Admin account already exists: ${adminEmail}`);
-  }
-
-  console.log('Seeding test users with different account tiers...');
-
-  // Create test users with different tiers for demonstration
-  const now = new Date();
-  const basicTierEnd = new Date();
-  basicTierEnd.setDate(now.getDate() + 30); // 30 days from now
-
-  const testUsers = [
-    {
-      username: 'usuario_free',
-      email: 'free@inacapmail.cl',
-      password: 'password123',
-      name: 'Usuario Free',
-      accountTier: 'free',
-      isVerified: true
-      // Free tier doesn't need tierStartDate/tierEndDate (null for lifetime/free)
-    },
-    {
-      username: 'usuario_basic',
-      email: 'basic@inacapmail.cl',
-      password: 'password123',
-      name: 'Usuario Basic',
-      accountTier: 'basic',
-      tierStartDate: now,
-      tierEndDate: basicTierEnd,
-      subscriptionStatus: 'active',
-      isVerified: true
-    }
-  ];
-
-  for (const userData of testUsers) {
-    const existingUser = await prisma.user.findUnique({
-      where: { email: userData.email }
-    });
-
-    if (!existingUser) {
-      const hashedPassword = await bcrypt.hash(userData.password, 10);
-      
-      await prisma.user.create({
-        data: {
-          ...userData,
-          password: hashedPassword
-        }
-      });
-      console.log(`✓ Created test user: ${userData.email} (${userData.accountTier})`);
-    } else {
-      console.log(`- Test user already exists: ${userData.email}`);
-    }
-  }
-
-  console.log('Seeding completed!');
 }
 
 main()
@@ -192,4 +198,4 @@ main()
   })
   .finally(async () => {
     await prisma.$disconnect();
-  }); 
+  });

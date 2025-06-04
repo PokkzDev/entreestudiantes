@@ -13,19 +13,22 @@ export async function POST(request) {
     }
 
     const body = await request.json();
-    const { nombre, apellidos, username, image, rut } = body;
+    const { name, username, image, rut, bio } = body;
 
     // Validate input
-    if (!nombre || nombre.trim().length === 0) {
+    if (!name || name.trim().length === 0) {
       return NextResponse.json({ error: "El nombre no puede estar vacío" }, { status: 400 });
-    }
-
-    if (!apellidos || apellidos.trim().length === 0) {
-      return NextResponse.json({ error: "Los apellidos no pueden estar vacíos" }, { status: 400 });
     }
 
     if (!username || username.trim().length < 4) {
       return NextResponse.json({ error: "El nombre de usuario debe tener al menos 4 caracteres" }, { status: 400 });
+    }
+
+    // Validate bio length if provided
+    if (bio && bio.trim().length > 500) {
+      return NextResponse.json({ 
+        error: "La biografía no puede exceder los 500 caracteres" 
+      }, { status: 400 });
     }
 
     // Validate RUT format if provided
@@ -62,7 +65,7 @@ export async function POST(request) {
     // Get current user data to check for changes
     const currentUser = await prisma.user.findUnique({
       where: { id: session.user.id },
-      select: { nombre: true, apellidos: true, username: true, nameChangeCount: true, usernameChangeCount: true }
+      select: { name: true, username: true, nameChangeCount: true, usernameChangeCount: true }
     });
 
     if (!currentUser) {
@@ -70,7 +73,7 @@ export async function POST(request) {
     }
 
     // Check if name is being changed and validate change limit
-    const nameChanged = currentUser.nombre !== nombre.trim() || currentUser.apellidos !== apellidos.trim();
+    const nameChanged = currentUser.name !== name.trim();
     if (nameChanged && currentUser.nameChangeCount >= 3) {
       return NextResponse.json({ 
         error: "Has alcanzado el límite máximo de 3 cambios de nombre" 
@@ -87,10 +90,14 @@ export async function POST(request) {
 
     // Prepare update data
     const updateData = {
-      nombre: nombre.trim(),
-      apellidos: apellidos.trim(),
+      name: name.trim(),
       username: username.trim()
     };
+
+    // Add bio if provided
+    if (bio !== undefined) {
+      updateData.bio = bio && bio.trim() ? bio.trim() : null;
+    }
 
     // Add RUT if provided
     if (rut !== undefined) {
@@ -117,12 +124,14 @@ export async function POST(request) {
       data: updateData,
       select: {
         id: true,
-        nombre: true,
-        apellidos: true,
+        name: true,
         username: true,
         email: true,
         image: true,
         rut: true,
+        bio: true,
+        university: true,
+        campus: true,
         nameChangeCount: true,
         usernameChangeCount: true
       }
@@ -151,12 +160,14 @@ export async function GET(request) {
       where: { id: session.user.id },
       select: {
         id: true,
-        nombre: true,
-        apellidos: true,
+        name: true,
         username: true,
         email: true,
         image: true,
         rut: true,
+        bio: true,
+        university: true,
+        campus: true,
         nameChangeCount: true,
         usernameChangeCount: true
       }

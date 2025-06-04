@@ -14,13 +14,19 @@ export default function ProfileEditSection({ session, onProfileUpdate }) {
   const [imageUploading, setImageUploading] = useState(false);
   const [imageKey, setImageKey] = useState(Date.now()); // For cache busting
   
+  // Add state to track if RUT has been modified by user
+  const [originalRut, setOriginalRut] = useState(""); // Store original RUT value
+  const [rutModified, setRutModified] = useState(false); // Track if RUT has been modified
+  
   const [formData, setFormData] = useState({
-    nombre: "",
-    apellidos: "",
+    name: "",
     username: "",
     image: "",
     email: "", // Add email to formData instead of using session
-    rut: "", // RUT del usuario para pagos de MercadoPago
+    rut: "", // RUT del usuario para pagos de Flow.cl
+    bio: "", // User biography
+    university: "", // User university (read-only in this section)
+    campus: "", // User campus (read-only in this section)
     nameChangeCount: 0,
     usernameChangeCount: 0
   });
@@ -139,8 +145,7 @@ export default function ProfileEditSection({ session, onProfileUpdate }) {
         
         // Update session with the new user data
         await update({
-          nombre: result.user.nombre,
-          apellidos: result.user.apellidos,
+          name: result.user.name,
           username: result.user.username,
           email: result.user.email,
           image: result.user.image,
@@ -183,6 +188,9 @@ export default function ProfileEditSection({ session, onProfileUpdate }) {
       ...prev,
       rut: formattedRut
     }));
+    
+    // Check if RUT has been modified from original value
+    setRutModified(formattedRut !== originalRut);
   };
 
   // Fetch user data from the DB (API) and update formData
@@ -193,16 +201,22 @@ export default function ProfileEditSection({ session, onProfileUpdate }) {
       if (!res.ok) throw new Error("No se pudo obtener el perfil");
       const data = await res.json();
       if (data && data.user) {
-        setFormData({
-          nombre: data.user.nombre || "",
-          apellidos: data.user.apellidos || "",
+        const userData = {
+          name: data.user.name || "",
           username: data.user.username || "",
           image: data.user.image || "",
           email: data.user.email || "",
           rut: data.user.rut || "",
+          bio: data.user.bio || "",
+          university: data.user.university || "",
+          campus: data.user.campus || "",
           nameChangeCount: data.user.nameChangeCount || 0,
           usernameChangeCount: data.user.usernameChangeCount || 0
-        });
+        };
+        setFormData(userData);
+        // Store original RUT value and reset modification state
+        setOriginalRut(userData.rut);
+        setRutModified(false);
         // Update cache busting key when fetching fresh data
         setImageKey(Date.now());
       }
@@ -224,7 +238,7 @@ export default function ProfileEditSection({ session, onProfileUpdate }) {
     setMessage("");
 
     // Check if user has reached change limits before attempting to save
-    const nameChanged = formData.nombre !== session?.user?.nombre || formData.apellidos !== session?.user?.apellidos;
+    const nameChanged = formData.name !== session?.user?.name || formData.nameChangeCount >= 3;
     const usernameChanged = formData.username !== session?.user?.username;
     
     if (nameChanged && formData.nameChangeCount >= 3) {
@@ -243,10 +257,10 @@ export default function ProfileEditSection({ session, onProfileUpdate }) {
 
     // Only send the image if it was changed (uploaded or removed)
     const payload = {
-      nombre: formData.nombre,
-      apellidos: formData.apellidos,
+      name: formData.name,
       username: formData.username,
-      rut: formData.rut
+      rut: formData.rut,
+      bio: formData.bio
     };
     if (formData.image !== session?.user?.image) {
       payload.image = formData.image;
@@ -269,8 +283,7 @@ export default function ProfileEditSection({ session, onProfileUpdate }) {
         
         // Update the session with new data
         await update({
-          nombre: result.user.nombre,
-          apellidos: result.user.apellidos,
+          name: result.user.name,
           username: result.user.username,
           email: result.user.email,
           image: result.user.image,
@@ -318,6 +331,7 @@ export default function ProfileEditSection({ session, onProfileUpdate }) {
     // Reset to fresh data from database instead of session
     fetchUserData();
     setMessage("");
+    // Reset RUT modification state will be handled by fetchUserData
   };
 
   if (dataLoading) {
@@ -405,31 +419,15 @@ export default function ProfileEditSection({ session, onProfileUpdate }) {
           <div className={styles.formRow}>
             <div className={styles.formColumn}>
               <div className={styles.formGroup}>
-                <label htmlFor="nombre" className={styles.label}>Nombre</label>
+                <label htmlFor="name" className={styles.label}>Nombre</label>
                 <input
                   type="text"
-                  id="nombre"
-                  name="nombre"
-                  value={formData.nombre}
+                  id="name"
+                  name="name"
+                  value={formData.name}
                   onChange={handleInputChange}
                   className={`${styles.input} ${formData.nameChangeCount >= 3 ? styles.inputDisabled : ''}`}
                   placeholder="Tu nombre"
-                  required
-                  disabled={formData.nameChangeCount >= 3}
-                />
-              </div>
-            </div>
-            <div className={styles.formColumn}>
-              <div className={styles.formGroup}>
-                <label htmlFor="apellidos" className={styles.label}>Apellidos</label>
-                <input
-                  type="text"
-                  id="apellidos"
-                  name="apellidos"
-                  value={formData.apellidos}
-                  onChange={handleInputChange}
-                  className={`${styles.input} ${formData.nameChangeCount >= 3 ? styles.inputDisabled : ''}`}
-                  placeholder="Tu apellido"
                   required
                   disabled={formData.nameChangeCount >= 3}
                 />
@@ -455,7 +453,7 @@ export default function ProfileEditSection({ session, onProfileUpdate }) {
               value={formData.rut || ""}
               onChange={handleRutChange}
               className={`${styles.input} ${
-                formData.rut && formData.rut.length >= 9 
+                rutModified && formData.rut && formData.rut.length >= 9 
                   ? (validateRut(formData.rut) ? styles.inputValid : styles.inputInvalid)
                   : ''
               }`}
@@ -463,7 +461,7 @@ export default function ProfileEditSection({ session, onProfileUpdate }) {
               maxLength="12"
             />
             <small className={styles.fieldHint}>
-              {formData.rut && formData.rut.length >= 9 ? (
+              {rutModified && formData.rut && formData.rut.length >= 9 ? (
                 validateRut(formData.rut) ? (
                   <span style={{ color: '#059669' }}>✓ RUT válido</span>
                 ) : (
@@ -472,6 +470,23 @@ export default function ProfileEditSection({ session, onProfileUpdate }) {
               ) : (
                 "Formato: 12345678-9 (sin puntos, con guión)"
               )}
+            </small>
+          </div>
+          
+          <div className={styles.formGroup}>
+            <label htmlFor="bio" className={styles.label}>Biografía</label>
+            <textarea
+              id="bio"
+              name="bio"
+              value={formData.bio || ""}
+              onChange={handleInputChange}
+              className={styles.textarea}
+              placeholder="Cuéntanos un poco sobre ti..."
+              maxLength="500"
+              rows="4"
+            />
+            <small className={styles.fieldHint}>
+              {formData.bio ? `${formData.bio.length}/500 caracteres` : "Máximo 500 caracteres"}
             </small>
           </div>
         </div>
@@ -533,7 +548,7 @@ export default function ProfileEditSection({ session, onProfileUpdate }) {
             onClick={handleSave}
             disabled={loading || (
               // Disable if trying to change name but reached limit
-              (formData.nombre !== session?.user?.nombre && formData.nameChangeCount >= 3) ||
+              (formData.name !== session?.user?.name && formData.nameChangeCount >= 3) ||
               // Or if trying to change username but reached limit
               (formData.username !== session?.user?.username && formData.usernameChangeCount >= 3)
             )}

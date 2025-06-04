@@ -1,5 +1,3 @@
-"use server";
-
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "../auth/[...nextauth]/route";
@@ -48,7 +46,7 @@ export async function DELETE(request) {
         userId: user.id,
         username: user.username,
         email: user.email,
-        name: user.nombre && user.apellidos ? `${user.nombre} ${user.apellidos}` : user.nombre || user.apellidos || null,
+        name: user.name || null,
         reason,
         ipAddress,
         userAgent,

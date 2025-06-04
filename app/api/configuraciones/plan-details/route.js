@@ -16,25 +16,19 @@ export async function GET() {
       );
     }
 
-    // Get user with subscription and publication data
+    // Get user with publication data only
     const user = await prisma.user.findUnique({
       where: { email: session.user.email },
       select: {
         id: true,
         email: true,
-        nombre: true,
-        apellidos: true,
+        name: true,
         username: true,
         accountTier: true,
-        subscriptionStatus: true,
-        tierStartDate: true,
-        tierEndDate: true,
         publicaciones: {
-          where: {
-            status: "activo" // Only count active publications
-          },
           select: {
-            id: true
+            id: true,
+            status: true // Get all publications with their status
           }
         }
       }
@@ -47,10 +41,17 @@ export async function GET() {
       );
     }
 
-    // Get payment history (subscriptions) - handle the unique constraint issue
-    const paymentHistory = await prisma.subscription.findMany({
+    // Get current active subscription
+    const currentSubscription = await prisma.subscription.findFirst({
       where: {
-        userId: user.id
+        userId: user.id,
+        status: 'active',
+        endDate: {
+          gte: new Date() // Must not be expired
+        }
+      },
+      orderBy: {
+        endDate: 'desc' // Get the latest expiring active subscription
       },
       select: {
         id: true,
@@ -61,69 +62,143 @@ export async function GET() {
         amount: true,
         currency: true,
         paymentId: true,
+        autoRenew: true,
+        createdAt: true
+      }
+    });
+
+    // Get unified payment history combining PaymentLog and Subscription data
+    // This provides complete payment information with subscription context
+    const unifiedPaymentHistory = await prisma.paymentLog.findMany({
+      where: {
+        userId: user.id
+      },
+      select: {
+        id: true,
+        planId: true,
+        status: true,
+        paymentDate: true,
+        amount: true,
+        currency: true,
+        flowOrder: true,
+        commerceOrder: true,
+        flowToken: true,
         createdAt: true
       },
       orderBy: {
-        createdAt: 'desc'
+        paymentDate: 'desc'
       },
       take: 10 // Limit to last 10 payments
     });
 
-    // Get current active subscription details if not free tier
-    let currentSubscription = null;
-    if (user.accountTier !== 'free') {
-      currentSubscription = await prisma.subscription.findFirst({
-        where: {
-          userId: user.id,
-          status: 'active'
-        },
-        orderBy: {
-          createdAt: 'desc'
-        },
-        select: {
-          id: true,
-          planId: true,
-          status: true,
-          startDate: true,
-          endDate: true,
-          amount: true,
-          currency: true,
-          paymentId: true,
-          autoRenew: true
-        }
-      });
+    // For each payment, try to find the corresponding subscription for additional context
+    const enrichedPaymentHistory = await Promise.all(
+      unifiedPaymentHistory.map(async (payment) => {
+        // Find subscription that matches this payment
+        const relatedSubscription = await prisma.subscription.findFirst({
+          where: {
+            paymentId: payment.flowOrder || payment.commerceOrder,
+            userId: user.id
+          },
+          select: {
+            id: true,
+            startDate: true,
+            endDate: true,
+            status: true,
+            cancelledAt: true,
+            cancelReason: true
+          }
+        });
+
+        return {
+          // Payment information (primary)
+          id: payment.id,
+          planId: payment.planId,
+          status: payment.status,
+          paymentDate: payment.paymentDate,
+          amount: payment.amount, // Keep as integer (cents) for now, convert in frontend
+          currency: payment.currency,
+          paymentId: payment.flowOrder || payment.commerceOrder,
+          flowToken: payment.flowToken,
+          createdAt: payment.createdAt,
+          // Subscription context (secondary)
+          subscription: relatedSubscription ? {
+            id: relatedSubscription.id,
+            startDate: relatedSubscription.startDate,
+            endDate: relatedSubscription.endDate,
+            subscriptionStatus: relatedSubscription.status,
+            cancelledAt: relatedSubscription.cancelledAt,
+            cancelReason: relatedSubscription.cancelReason,
+            isExpired: new Date() > new Date(relatedSubscription.endDate)
+          } : null
+        };
+      })
+    );
+
+    // Calculate publication count (total registered publications)
+    const publicationCount = user.publicaciones.length; // All publications
+    const activePublicationCount = user.publicaciones.filter(p => p.status === 'activo').length; // Active publications for display
+
+    // Determine effective account tier based on active subscription
+    const effectiveAccountTier = currentSubscription ? currentSubscription.planId : 'free';
+
+    // Fetch tier information from database
+    const tierData = await prisma.accountTier.findUnique({
+      where: { tierKey: effectiveAccountTier }
+    });
+
+    if (!tierData) {
+      return NextResponse.json(
+        { success: false, error: `Información del plan ${effectiveAccountTier} no encontrada en la base de datos` },
+        { status: 500 }
+      );
     }
 
-    // Calculate publication count
-    const publicationCount = user.publicaciones.length;
+    // Format tier data
+    const formattedTierData = {
+      tierKey: tierData.tierKey,
+      name: tierData.name,
+      publicationLimit: tierData.publicationLimit,
+      price: tierData.price,
+      features: JSON.parse(tierData.features),
+      icon: tierData.icon,
+      color: tierData.color,
+      bgColor: tierData.bgColor
+    };
 
     return NextResponse.json({
       success: true,
       user: {
         id: user.id,
         email: user.email,
-        name: user.nombre && user.apellidos ? `${user.nombre} ${user.apellidos}` : user.nombre || user.apellidos || user.username,
-        accountTier: user.accountTier,
-        subscriptionStatus: user.subscriptionStatus,
-        tierStartDate: user.tierStartDate,
-        tierEndDate: user.tierEndDate
+        name: user.name || user.username,
+        accountTier: user.accountTier, // Original tier for reference
+        effectiveAccountTier: effectiveAccountTier, // Current effective tier
+        subscriptionStatus: currentSubscription ? 'active' : 'inactive'
       },
       publicationCount,
-      paymentHistory: paymentHistory.map(payment => ({
-        id: payment.id,
-        planId: payment.planId,
-        status: payment.status,
-        startDate: payment.startDate,
-        endDate: payment.endDate,
-        amount: parseFloat(payment.amount),
-        currency: payment.currency,
-        paymentId: payment.paymentId,
-        createdAt: payment.createdAt
-      })),
+      activePublicationCount,
       currentSubscription: currentSubscription ? {
-        ...currentSubscription,
-        amount: parseFloat(currentSubscription.amount)
-      } : null
+        id: currentSubscription.id,
+        planId: currentSubscription.planId,
+        status: currentSubscription.status,
+        startDate: currentSubscription.startDate,
+        endDate: currentSubscription.endDate,
+        amount: currentSubscription.amount, // Amount is already in CLP, not cents
+        currency: currentSubscription.currency,
+        paymentId: currentSubscription.paymentId,
+        autoRenew: currentSubscription.autoRenew,
+        isExpired: new Date() > new Date(currentSubscription.endDate)
+      } : null,
+      paymentHistory: enrichedPaymentHistory,
+      tierData: formattedTierData
+    }, {
+      headers: {
+        'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0',
+        'Surrogate-Control': 'no-store'
+      }
     });
 
   } catch (error) {

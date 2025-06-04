@@ -15,8 +15,7 @@ export default function CompletarRegistroWrapper() {
 }
 
 function CompletarRegistro() {
-  const [nombre, setNombre] = useState("");
-  const [apellidos, setApellidos] = useState("");
+  const [name, setName] = useState("");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -80,12 +79,8 @@ function CompletarRegistro() {
       setError("El nombre de usuario debe tener al menos 4 caracteres.");
       return;
     }
-    if (!nombre || nombre.trim().length === 0) {
+    if (!name || name.trim().length === 0) {
       setError("El nombre no puede estar vacío.");
-      return;
-    }
-    if (!apellidos || apellidos.trim().length === 0) {
-      setError("Los apellidos no pueden estar vacíos.");
       return;
     }
     if (!university) {
@@ -116,7 +111,7 @@ function CompletarRegistro() {
       const res = await fetch("/api/complete-registration", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, token, username, nombre, apellidos, password, university, campus }),
+        body: JSON.stringify({ email, token, username, name, password, university, campus }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || "Error al completar el registro");
@@ -186,37 +181,18 @@ function CompletarRegistro() {
               className={styles.input}
             />
           </div>
-          <div className={styles.formRow}>
-            <div className={styles.formColumn}>
-              <div className={styles.formGroup}>
-                <label htmlFor="nombre" className={styles.label}>Nombre</label>
-                <input
-                  id="nombre"
-                  name="nombre"
-                  type="text"
-                  required
-                  value={nombre}
-                  autoComplete="off"
-                  onChange={(e) => setNombre(e.target.value)}
-                  className={styles.input}
-                />
-              </div>
-            </div>
-            <div className={styles.formColumn}>
-              <div className={styles.formGroup}>
-                <label htmlFor="apellidos" className={styles.label}>Apellido</label>
-                <input
-                  id="apellidos"
-                  name="apellidos"
-                  type="text"
-                  required
-                  value={apellidos}
-                  autoComplete="off"
-                  onChange={(e) => setApellidos(e.target.value)}
-                  className={styles.input}
-                />
-              </div>
-            </div>
+          <div className={styles.formGroup}>
+            <label htmlFor="name" className={styles.label}>Nombre completo</label>
+            <input
+              id="name"
+              name="name"
+              type="text"
+              className={styles.input}
+              value={name}
+              required
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Tu nombre completo"
+            />
           </div>
           <div className={styles.formRow}>
             <div className={styles.formColumn}>

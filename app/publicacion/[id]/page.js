@@ -2,6 +2,7 @@
 import React from "react";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import styles from "./page.module.css";
 import { FaWhatsapp, FaEnvelope, FaPhone, FaRegAddressCard, FaMapMarkerAlt, FaTag, FaTags, FaCalendarAlt, FaIdCard, FaDollarSign, FaChevronLeft, FaChevronRight, FaTimes, FaArrowLeft, FaUniversity, FaFlag, FaUser, FaEye, FaInfo, FaHeart, FaShare } from "react-icons/fa";
 import Image from 'next/image';
@@ -10,10 +11,20 @@ import ReportModal from "@/components/ReportModal";
 import ModalContactWarning from "@/components/ModalContactWarning";
 
 export default function PublicacionDetalle(props) {
-  // Next.js 14+: params es una promesa, usar React.use() para obtener el valor
-  const params = React.use(props.params);
+  // Handle params properly - React.use() should not be in try/catch
+  let params;
+  
+  // If props.params is a promise, use React.use() to resolve it
+  if (props.params && typeof props.params.then === 'function') {
+    params = React.use(props.params);
+  } else {
+    // If props.params is already an object, use it directly
+    params = props.params || {};
+  }
+  
   const id = params?.id;
   const router = useRouter();
+  const { data: session } = useSession();
   const [publicacion, setPublicacion] = useState(null);
   const [loading, setLoading] = useState(true);
   const [selectedImage, setSelectedImage] = useState(0);
@@ -22,6 +33,9 @@ export default function PublicacionDetalle(props) {
   // Estados para el modal de advertencia de contacto
   const [showContactWarning, setShowContactWarning] = useState(false);
   const [pendingContactInfo, setPendingContactInfo] = useState(null);
+  // Estados para favoritos
+  const [isFavorited, setIsFavorited] = useState(false);
+  const [favoriteLoading, setFavoriteLoading] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -39,6 +53,23 @@ export default function PublicacionDetalle(props) {
     }
     fetchPublicacion();
   }, [id]);
+
+  // Check if publication is favorited
+  useEffect(() => {
+    if (!id || !session?.user?.id) return;
+    
+    async function checkFavoriteStatus() {
+      try {
+        const res = await fetch(`/api/favorites/${id}`);
+        const data = await res.json();
+        setIsFavorited(data.isFavorited);
+      } catch (error) {
+        console.error('Error checking favorite status:', error);
+      }
+    }
+    
+    checkFavoriteStatus();
+  }, [id, session?.user?.id]);
 
   // Función para formatear números
   const formatNumber = (num) => {
@@ -87,6 +118,90 @@ export default function PublicacionDetalle(props) {
       window.open(pendingContactInfo.href, '_blank', 'noopener,noreferrer');
     }
     handleCloseContactWarning();
+  };
+
+  // Favorite functionality
+  const handleFavorite = async () => {
+    if (!session?.user?.id) {
+      router.push('/login');
+      return;
+    }
+
+    if (favoriteLoading) return;
+
+    setFavoriteLoading(true);
+    
+    try {
+      if (isFavorited) {
+        // Remove from favorites
+        const res = await fetch(`/api/favorites/${id}`, {
+          method: 'DELETE',
+        });
+        
+        if (res.ok) {
+          setIsFavorited(false);
+          showFavoriteNotification('Eliminado de favoritos');
+        } else {
+          const data = await res.json();
+          console.error('Error removing favorite:', data.error);
+        }
+      } else {
+        // Add to favorites
+        const res = await fetch('/api/favorites', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ publicacionId: id }),
+        });
+        
+        if (res.ok) {
+          setIsFavorited(true);
+          showFavoriteNotification('Agregado a favoritos');
+        } else {
+          const data = await res.json();
+          console.error('Error adding favorite:', data.error);
+        }
+      }
+    } catch (error) {
+      console.error('Error handling favorite:', error);
+    } finally {
+      setFavoriteLoading(false);
+    }
+  };
+
+  // Helper function to show favorite notification
+  const showFavoriteNotification = (message) => {
+    const notification = document.createElement('div');
+    notification.textContent = message;
+    notification.style.cssText = `
+      position: fixed;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #e91e63;
+      color: white;
+      padding: 12px 24px;
+      border-radius: 8px;
+      z-index: 10000;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      font-size: 14px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      max-width: 90vw;
+      text-align: center;
+      animation: slideInDown 0.3s ease-out;
+    `;
+    
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+      notification.style.animation = 'slideOutUp 0.3s ease-in forwards';
+      setTimeout(() => {
+        if (notification.parentNode) {
+          notification.parentNode.removeChild(notification);
+        }
+      }, 300);
+    }, 2000);
   };
 
   // Share functionality
@@ -186,6 +301,16 @@ export default function PublicacionDetalle(props) {
             opacity: 1;
           }
         }
+        @keyframes slideOutUp {
+          from {
+            transform: translate(-50%, 0);
+            opacity: 1;
+          }
+          to {
+            transform: translate(-50%, -100%);
+            opacity: 0;
+          }
+        }
       `;
       document.head.appendChild(style);
     }
@@ -193,15 +318,13 @@ export default function PublicacionDetalle(props) {
     document.body.appendChild(notification);
     
     setTimeout(() => {
-      if (document.body.contains(notification)) {
-        notification.style.animation = 'slideInDown 0.3s ease-out reverse';
-        setTimeout(() => {
-          if (document.body.contains(notification)) {
-            document.body.removeChild(notification);
-          }
-        }, 300);
-      }
-    }, 3000);
+      notification.style.animation = 'slideOutUp 0.3s ease-in forwards';
+      setTimeout(() => {
+        if (notification.parentNode) {
+          notification.parentNode.removeChild(notification);
+        }
+      }, 300);
+    }, 2000);
   };
 
   if (loading) {
@@ -270,9 +393,14 @@ export default function PublicacionDetalle(props) {
           <button className={styles.actionButton} title="Compartir" onClick={handleShare}>
             <FaShare />
           </button>
-          {/* <button className={styles.actionButton} title="Guardar">
+          <button
+            className={`${styles.actionButton} ${isFavorited ? styles.favorited : ''} ${favoriteLoading ? styles.favoriteLoading : ''}`}
+            onClick={handleFavorite}
+            title={isFavorited ? "Eliminar de favoritos" : "Agregar a favoritos"}
+            disabled={favoriteLoading}
+          >
             <FaHeart />
-          </button> */}
+          </button>
           <button
             className={styles.actionButton}
             onClick={handleReport}
@@ -454,7 +582,7 @@ export default function PublicacionDetalle(props) {
                         {publicacion.author.image ? (
                           <Image
                             src={publicacion.author.image}
-                            alt={publicacion.author.nombre && publicacion.author.apellidos ? `${publicacion.author.nombre} ${publicacion.author.apellidos}` : publicacion.author.nombre || publicacion.author.apellidos || publicacion.author.username}
+                            alt={publicacion.author.name || publicacion.author.username}
                             width={32}
                             height={32}
                             className={styles.avatarImageMini}

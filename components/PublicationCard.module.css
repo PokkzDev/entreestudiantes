@@ -1,0 +1,512 @@
+/* Publication Card Styles */
+.publicationCard {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  background: #ffffff;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+  border: 1px solid #e5e7eb;
+  cursor: pointer;
+  height: 440px; /* Reduced from 520px */
+}
+
+.publicationCard:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.12);
+  border-color: #d1d5db;
+}
+
+.publicationCard .imageContainer {
+  position: relative;
+  width: 100%;
+  height: 150px; /* Reduced from 180px */
+  overflow: hidden;
+  background: #f3f4f6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0; /* Prevent image section from shrinking */
+}
+
+.publicationCard .imageContainer img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.publicationCard:hover .imageContainer img {
+  transform: scale(1.02);
+}
+
+.publicationCard .noImage {
+  width: 100%;
+  height: 150px; /* Reduced from 180px */
+  background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+  color: #9ca3af;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.875rem;
+  font-weight: 500;
+  flex-shrink: 0; /* Prevent no-image section from shrinking */
+}
+
+.publicationCard .cardContent {
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  flex: 1; /* Take remaining space */
+  min-height: 0; /* Allow flex items to shrink below content size */
+}
+
+.publicationCard .topMeta {
+  padding: 0.75rem 1rem 0.5rem; /* Reduced padding */
+  background: #fafbfc;
+  border-bottom: 1px solid #e1e5e9;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem; /* Reduced gap */
+  align-items: center;
+  flex-shrink: 0; /* Prevent meta section from shrinking */
+}
+
+.publicationCard .mainContent {
+  padding: 1rem; /* Reduced from 1.25rem */
+  flex: 1; /* Take remaining space */
+  display: flex;
+  flex-direction: column;
+  background: #ffffff;
+  min-height: 0; /* Allow flex items to shrink below content size */
+}
+
+.publicationCard .contentFlow {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem; /* Reduced from 0.75rem */
+  flex: 1; /* Take remaining space */
+  text-align: center;
+  min-height: 0; /* Allow flex items to shrink below content size */
+}
+
+.publicationCard h3 {
+  font-size: 1.05rem; /* Slightly reduced from 1.1rem */
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0;
+  line-height: 1.25; /* Reduced from 1.3 */
+  display: -webkit-box;
+  -webkit-line-clamp: 2; /* Limit to 2 lines */
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  height: 2.625rem; /* Reduced height (1.05rem * 1.25 * 2) */
+  text-align: center;
+  flex-shrink: 0; /* Prevent title from shrinking */
+}
+
+.publicationCard .description {
+  color: #64748b;
+  font-size: 0.8rem; /* Reduced from 0.875rem */
+  line-height: 1.4; /* Reduced from 1.5 */
+  margin: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 3; /* Limit to 3 lines */
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  height: 3.36rem; /* Reduced height (0.8rem * 1.4 * 3) */
+  text-align: center;
+  flex-shrink: 0; /* Prevent description from shrinking */
+}
+
+/* Remove old separate sections */
+.publicationCard .titleSection,
+.publicationCard .descriptionSection {
+  display: contents;
+}
+
+.publicationCard .categoria,
+.publicationCard .universidad {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.65rem; /* Slightly reduced */
+  font-weight: 600;
+  padding: 0.2rem 0.5rem; /* Reduced padding */
+  border-radius: 10px; /* Slightly reduced */
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+  line-height: 1.2;
+}
+
+.publicationCard .categoria {
+  background: #dbeafe;
+  color: #1e40af;
+  border: 1px solid #bfdbfe;
+}
+
+.publicationCard .universidad {
+  background: #d1fae5;
+  color: #065f46;
+  border: 1px solid #a7f3d0;
+}
+
+.publicationCard .fechaPublicacion {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.65rem; /* Slightly reduced */
+  font-weight: 600;
+  padding: 0.2rem 0.5rem; /* Reduced padding */
+  border-radius: 10px; /* Slightly reduced */
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+  line-height: 1.2;
+  background: #fef3c7;
+  color: #92400e;
+  border: 1px solid #fde68a;
+}
+
+/* Bottom Price Section */
+.publicationCard .priceSection {
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  border-top: 1px solid #e2e8f0;
+  padding: 0.625rem 0.875rem; /* Reduced padding */
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: relative;
+  overflow: hidden;
+  margin-top: auto; /* Push to bottom */
+  flex-shrink: 0; /* Prevent price section from shrinking */
+  height: 3rem; /* Reduced from 3.5rem */
+}
+
+.publicationCard .priceSection::before {
+  content: 'Precio';
+  font-size: 0.65rem; /* Slightly reduced */
+  font-weight: 600;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  position: absolute;
+  left: 0.875rem;
+  top: 0.3rem; /* Adjusted for smaller height */
+}
+
+.publicationCard .precio {
+  font-size: 1.1rem; /* Reduced from 1.25rem */
+  font-weight: 800;
+  color: #059669;
+  margin: 0;
+  line-height: 1;
+  position: relative;
+  z-index: 1;
+  margin-left: auto;
+  padding-top: 0.2rem; /* Reduced */
+}
+
+.publicationCard[data-type="servicio"] .priceSection {
+  background: linear-gradient(135deg, #f0f4ff 0%, #e0e7ff 100%);
+  border-top-color: #c7d2fe;
+}
+
+.publicationCard[data-type="servicio"] .precio {
+  color: #4338ca;
+}
+
+.publicationCard .priceSection:hover {
+  background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+}
+
+.publicationCard[data-type="servicio"] .priceSection:hover {
+  background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%);
+}
+
+/* Remove old styling */
+.publicationCard .metaInfo {
+  display: none;
+}
+
+.publicationCard .priceContainer {
+  display: none;
+}
+
+.publicationCard .tipoLabel {
+  position: absolute;
+  top: 10px; /* Reduced from 12px */
+  right: 10px; /* Reduced from 12px */
+  padding: 0.3rem 0.6rem; /* Reduced padding */
+  border-radius: 5px; /* Slightly reduced */
+  font-size: 0.7rem; /* Slightly reduced */
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+  z-index: 10;
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.publicationCard[data-type="producto"] .tipoLabel {
+  background: rgba(5, 150, 105, 0.95);
+  color: white;
+}
+
+.publicationCard[data-type="servicio"] .tipoLabel {
+  background: rgba(37, 99, 235, 0.95);
+  color: white;
+}
+
+/* Generic Action Button Styles */
+.actionButtonCard {
+  position: absolute;
+  top: 10px; /* Reduced from 12px */
+  left: 10px; /* Reduced from 12px */
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 5px; /* Slightly reduced */
+  width: 30px; /* Reduced from 32px */
+  height: 30px; /* Reduced from 32px */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #6b7280;
+  font-size: 0.7rem; /* Slightly reduced */
+  cursor: pointer;
+  transition: all 0.2s ease;
+  z-index: 10;
+  backdrop-filter: blur(8px);
+}
+
+.actionButtonCard:hover {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+  color: #475569;
+  transform: scale(1.1);
+}
+
+/* Report Button (legacy support) */
+.reportButtonCard {
+  position: absolute;
+  top: 10px; /* Reduced from 12px */
+  left: 10px; /* Reduced from 12px */
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 5px; /* Slightly reduced */
+  width: 30px; /* Reduced from 32px */
+  height: 30px; /* Reduced from 32px */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #6b7280;
+  font-size: 0.7rem; /* Slightly reduced */
+  cursor: pointer;
+  transition: all 0.2s ease;
+  z-index: 10;
+  backdrop-filter: blur(8px);
+}
+
+.reportButtonCard:hover {
+  background: #fef2f2;
+  border-color: #fca5a5;
+  color: #dc2626;
+  transform: scale(1.1);
+}
+
+/* Remove Button Styles */
+.removeButtonCard {
+  position: absolute;
+  top: 10px; /* Reduced from 12px */
+  left: 10px; /* Reduced from 12px */
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 5px; /* Slightly reduced */
+  width: 30px; /* Reduced from 32px */
+  height: 30px; /* Reduced from 32px */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #6b7280;
+  font-size: 0.7rem; /* Slightly reduced */
+  cursor: pointer;
+  transition: all 0.2s ease;
+  z-index: 10;
+  backdrop-filter: blur(8px);
+}
+
+.removeButtonCard:hover {
+  background: #fef2f2;
+  border-color: #fca5a5;
+  color: #dc2626;
+  transform: scale(1.1);
+}
+
+.removeButtonCard:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.removeButtonCard:disabled:hover {
+  background: rgba(255, 255, 255, 0.95);
+  border-color: rgba(0, 0, 0, 0.1);
+  color: #6b7280;
+  transform: none;
+}
+
+/* Remove any leftover complex styling */
+.publicationCard .categoria::before,
+.publicationCard .universidad::before,
+.publicationCard .precio::before {
+  display: none;
+}
+
+/* Focus states for accessibility */
+.publicationCard:focus-visible {
+  outline: 3px solid rgba(99, 102, 241, 0.5);
+  outline-offset: 2px;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .publicationCard {
+    height: 380px; /* Reduced from 460px */
+  }
+
+  .publicationCard .imageContainer,
+  .publicationCard .noImage {
+    height: 120px; /* Reduced from 150px */
+  }
+
+  .publicationCard .topMeta {
+    padding: 0.625rem 0.875rem 0.375rem; /* Reduced padding */
+    gap: 0.3rem; /* Reduced gap */
+  }
+  
+  .publicationCard .categoria,
+  .publicationCard .universidad {
+    font-size: 0.6rem; /* Further reduced */
+    padding: 0.15rem 0.4rem; /* Reduced padding */
+    border-radius: 8px;
+  }
+  
+  .publicationCard .fechaPublicacion {
+    font-size: 0.6rem; /* Further reduced */
+    padding: 0.15rem 0.4rem; /* Reduced padding */
+    border-radius: 8px;
+  }
+  
+  .publicationCard .mainContent {
+    padding: 0.875rem; /* Reduced from 1rem */
+  }
+  
+  .publicationCard .contentFlow {
+    gap: 0.4rem; /* Reduced gap */
+  }
+  
+  .publicationCard h3 {
+    font-size: 0.95rem; /* Further reduced */
+    height: 2.375rem; /* Adjusted for smaller font (0.95rem * 1.25 * 2) */
+  }
+  
+  .publicationCard .description {
+    font-size: 0.75rem; /* Reduced from 0.8rem */
+    line-height: 1.3; /* Reduced line height */
+    -webkit-line-clamp: 3;
+    height: 2.925rem; /* Adjusted for smaller font (0.75rem * 1.3 * 3) */
+  }
+  
+  .publicationCard .priceSection {
+    padding: 0.5rem 0.75rem; /* Reduced padding */
+    height: 2.75rem; /* Reduced from 3.25rem */
+  }
+  
+  .publicationCard .precio {
+    font-size: 1rem; /* Reduced from 1.1rem */
+  }
+  
+  .actionButtonCard,
+  .reportButtonCard,
+  .removeButtonCard {
+    width: 26px; /* Reduced from 28px */
+    height: 26px; /* Reduced from 28px */
+    font-size: 0.65rem; /* Reduced */
+  }
+}
+
+@media (max-width: 480px) {
+  .publicationCard {
+    height: 340px; /* Reduced from 420px */
+  }
+
+  .publicationCard .imageContainer,
+  .publicationCard .noImage {
+    height: 100px; /* Reduced from 130px */
+  }
+
+  .publicationCard .topMeta {
+    padding: 0.5rem 0.75rem 0.25rem; /* Further reduced padding */
+    gap: 0.25rem; /* Reduced gap */
+  }
+  
+  .publicationCard .categoria,
+  .publicationCard .universidad {
+    font-size: 0.55rem; /* Further reduced */
+    padding: 0.125rem 0.35rem; /* Reduced padding */
+    border-radius: 6px;
+  }
+  
+  .publicationCard .fechaPublicacion {
+    font-size: 0.55rem; /* Further reduced */
+    padding: 0.125rem 0.35rem; /* Reduced padding */
+    border-radius: 6px;
+  }
+  
+  .publicationCard .mainContent {
+    padding: 0.75rem; /* Reduced from 0.875rem */
+  }
+  
+  .publicationCard .contentFlow {
+    gap: 0.35rem; /* Reduced gap */
+  }
+  
+  .publicationCard h3 {
+    font-size: 0.9rem; /* Further reduced */
+    height: 2.25rem; /* Adjusted for smaller font (0.9rem * 1.25 * 2) */
+    line-height: 1.25;
+  }
+  
+  .publicationCard .description {
+    font-size: 0.7rem; /* Further reduced */
+    line-height: 1.25; /* Reduced line height */
+    -webkit-line-clamp: 3;
+    height: 2.625rem; /* Adjusted for smaller font (0.7rem * 1.25 * 3) */
+  }
+  
+  .publicationCard .priceSection {
+    padding: 0.45rem 0.65rem; /* Further reduced padding */
+    height: 2.5rem; /* Reduced from 3rem */
+  }
+  
+  .publicationCard .priceSection::before {
+    left: 0.65rem; /* Adjusted */
+    top: 0.2rem; /* Adjusted */
+    font-size: 0.6rem; /* Further reduced */
+  }
+  
+  .publicationCard .precio {
+    font-size: 0.9rem; /* Further reduced */
+  }
+  
+  .actionButtonCard,
+  .reportButtonCard,
+  .removeButtonCard {
+    width: 24px; /* Reduced from 28px */
+    height: 24px; /* Reduced from 28px */
+    font-size: 0.6rem; /* Further reduced */
+  }
+} 

@@ -1,10 +1,10 @@
 "use client";
 import { useEffect, useState } from "react";
 import styles from "./page.module.css";
-import { FaWhatsapp, FaEnvelope, FaPhone, FaRegAddressCard, FaFlag } from "react-icons/fa";
-import Image from "next/image";
+import cardStyles from "@/components/PublicationCard.module.css";
+import { FaFlag } from "react-icons/fa";
 import ReportModal from "@/components/ReportModal";
-import ModalContactWarning from "@/components/ModalContactWarning";
+import PublicationCard from "@/components/PublicationCard";
 import { getCategoryLabel, getProductCategories, getServiceCategories } from "../../lib/categoryOptions";
 
 export default function Busqueda() {
@@ -26,23 +26,6 @@ export default function Busqueda() {
   // Estados para el modal de reportes
   const [showReportModal, setShowReportModal] = useState(false);
   const [reportingPublication, setReportingPublication] = useState(null);
-  // Estados para el modal de advertencia de contacto
-  const [showContactWarning, setShowContactWarning] = useState(false);
-  const [pendingContactInfo, setPendingContactInfo] = useState(null);
-  
-  // Función para formatear números con puntos para separar miles y comas para decimales
-  const formatNumber = (num) => {
-    if (!num) return '0';
-    
-    // Separar la parte entera y decimal
-    let [integerPart, decimalPart] = num.toString().split('.');
-    
-    // Formatear la parte entera con puntos como separadores de miles
-    integerPart = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-    
-    // Devolver el número formateado with coma para decimales si existe parte decimal
-    return decimalPart ? `${integerPart},${decimalPart}` : integerPart;
-  };
 
   // Obtener categorías según el tipo seleccionado (manteniendo la estructura de grupos)
   const getCategoriasByTipo = () => {
@@ -138,29 +121,6 @@ export default function Busqueda() {
   const handleCloseReportModal = () => {
     setShowReportModal(false);
     setReportingPublication(null);
-  };
-
-  // Funciones para manejar el modal de advertencia de contacto
-  const handleContactClick = (e, contactMethod, contactInfo, contactHref) => {
-    e.stopPropagation(); // Evitar que se abra la publicación
-    setPendingContactInfo({
-      method: contactMethod,
-      info: contactInfo,
-      href: contactHref
-    });
-    setShowContactWarning(true);
-  };
-
-  const handleCloseContactWarning = () => {
-    setShowContactWarning(false);
-    setPendingContactInfo(null);
-  };
-
-  const handleConfirmContact = () => {
-    if (pendingContactInfo?.href) {
-      window.open(pendingContactInfo.href, '_blank', 'noopener,noreferrer');
-    }
-    handleCloseContactWarning();
   };
 
   return (
@@ -283,89 +243,20 @@ export default function Busqueda() {
           {productos.length === 0 ? (
             <p className={styles.busquedaEmpty}>No hay publicaciones disponibles.</p>
           ) : (
-            productos.map((prod, index) => {
-              let contactoHref = null;
-              let contactoIcon = null;
-              if (prod.contactMethod === 'whatsapp') {
-                const phone = prod.contactInfo.replace(/[^\d]/g, '');
-                contactoHref = phone ? `https://wa.me/${phone}` : null;
-                contactoIcon = <FaWhatsapp className={styles.contactIcon + ' whatsapp-icon'} style={{ color: '#25D366' }} />;
-              } else if (prod.contactMethod === 'email') {
-                contactoHref = `mailto:${prod.contactInfo}`;
-                contactoIcon = <FaEnvelope className={styles.contactIcon} style={{ color: '#6366f1' }} />;
-              } else if (prod.contactMethod === 'telefono') {
-                const phone = prod.contactInfo.replace(/[^\d]/g, '');
-                contactoHref = phone ? `tel:${phone}` : null;
-                contactoIcon = <FaPhone className={styles.contactIcon} style={{ color: '#10b981' }} />;
-              } else {
-                contactoIcon = <FaRegAddressCard className={styles.contactIcon} style={{ color: '#64748b' }} />;
-              }
-              return (
-                <div 
-                  key={prod.id} 
-                  className={styles.busquedaCard} 
-                  data-type={prod.type} 
-                  onClick={() => window.location.href = `/publicacion/${prod.id}`} 
-                  style={{ 
-                    cursor: 'pointer',
-                    '--card-index': index
-                  }}
-                >
-                  <span className={styles.tipoLabel}>{prod.type === 'producto' ? 'Producto' : 'Servicio'}</span>
-                  <button
-                    className={styles.reportButtonCard}
-                    onClick={(e) => handleReport(e, prod)}
-                    title="Reportar publicación"
-                  >
-                    <FaFlag />
-                  </button>
-                  {prod.images && prod.images.length > 0 ? (
-                    <div className={styles.imageContainer}>
-                      <Image
-                        src={(() => {
-                          const img = prod.images.split(",")[0].trim();
-                          if (!img) return "";
-                          // If already starts with /images/ or is a full URL, use as is
-                          if (img.startsWith("/images/") || img.startsWith("http")) return img;
-                          // Otherwise, prepend /images/
-                          return `/images/${img.replace(/^\/+/, "")}`;
-                        })()}
-                        alt={prod.title}
-                        width={300}
-                        height={200}
-                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                        priority={index < 4}
-                      />
-                    </div>
-                  ) : (
-                    <div className={styles.noImage}>Sin imagen</div>
-                  )}
-                  <h3>{prod.title}</h3>
-                  <p className={styles.categoria}><b>Categoría:</b> {getCategoryLabel(prod.category)}</p>
-                  {(prod.university || prod.campus) && (
-                    <p className={styles.universidad}>
-                      <b>Institución:</b> {prod.university}
-                      {prod.campus && <span> - {prod.campus}</span>}
-                    </p>
-                  )}
-                  <p>{prod.description}</p>
-                  {prod.price && <p className={styles.precio}><b>Precio:</b> ${formatNumber(prod.price)}</p>}
-                  <p className={styles.contacto}>
-                    {contactoHref ? (
-                      <button
-                        className={styles.contactButton}
-                        onClick={(e) => handleContactClick(e, prod.contactMethod, prod.contactInfo, contactoHref)}
-                        title={`Contactar vía ${prod.contactMethod}`}
-                      >
-                        {contactoIcon}
-                      </button>
-                    ) : (
-                      <span>{contactoIcon}</span>
-                    )}
-                  </p>
-                </div>
-              );
-            })
+            productos.map((prod, index) => (
+              <PublicationCard
+                key={prod.id}
+                publication={prod}
+                index={index}
+                onActionClick={handleReport}
+                priority={index < 4}
+                actionButton={{
+                  icon: <FaFlag />,
+                  title: "Reportar publicación",
+                  className: cardStyles.reportButtonCard
+                }}
+              />
+            ))
           )}
         </div>
       )}
@@ -376,15 +267,6 @@ export default function Busqueda() {
         onClose={handleCloseReportModal}
         publicacionId={reportingPublication?.id}
         publicacionTitle={reportingPublication?.title}
-      />
-      
-      {/* Modal de advertencia de contacto */}
-      <ModalContactWarning
-        open={showContactWarning}
-        onClose={handleCloseContactWarning}
-        onConfirm={handleConfirmContact}
-        contactMethod={pendingContactInfo?.method}
-        contactInfo={pendingContactInfo?.info}
       />
     </div>
   );

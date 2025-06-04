@@ -13,16 +13,26 @@ export async function GET(req, context) {
       select: {
         id: true,
         username: true,
-        nombre: true,
-        apellidos: true,
+        name: true,
+        email: true,
         image: true,
+        bio: true,
         university: true,
         campus: true,
         createdAt: true,
         isBanned: true,
         isSuspended: true,
         isActive: true,
-        suspensionEndsAt: true
+        suspensionEndsAt: true,
+        _count: {
+          select: {
+            publicaciones: {
+              where: {
+                status: "activo"
+              }
+            }
+          }
+        }
       }
     });
 
