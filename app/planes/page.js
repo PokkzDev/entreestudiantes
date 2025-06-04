@@ -35,8 +35,8 @@ function PlanesLoading() {
         <div className={styles.paymentNotice}>
           <div className={styles.noticeIcon}>ℹ️</div>
           <div className={styles.noticeContent}>
-            <strong>Información sobre los planes:</strong> Los planes tienen una duración de 30 días. 
-            Al finalizar este período, podrás renovar fácilmente tu plan para continuar disfrutando de los beneficios.
+            <strong>Información sobre los planes:</strong> Los planes otorgan acceso premium por 30 días. 
+            Al finalizar este período, podrás renovar fácilmente para continuar disfrutando de los beneficios.
           </div>
         </div>
       </div>
@@ -386,8 +386,8 @@ function PlanesContent() {
     }
   }, [searchParams, session, router, handlePaymentSuccess, fetchAccountInfo, setMessageWithTimeout]);
 
-  const formatPrice = (price) => {
-    if (price === 0) return "Gratis";
+  const formatPrice = (price, tierName = null) => {
+    if (price === 0) return tierName || "Gratis";
     return new Intl.NumberFormat('es-CL', {
       style: 'currency',
       currency: 'CLP',
@@ -519,8 +519,8 @@ function PlanesContent() {
         <div className={styles.paymentNotice}>
           <div className={styles.noticeIcon}>ℹ️</div>
           <div className={styles.noticeContent}>
-            <strong>Información sobre los planes:</strong> Los planes tienen una duración de 30 días. 
-            Al finalizar este período, podrás renovar fácilmente tu plan para continuar disfrutando de los beneficios.
+            <strong>Información sobre los planes:</strong> Los planes otorgan acceso premium por 30 días. 
+            Al finalizar este período, podrás renovar fácilmente para continuar disfrutando de los beneficios.
           </div>
         </div>
         
@@ -590,11 +590,11 @@ function PlanesContent() {
                 </div>
                 <h3 className={styles.planName}>{tier.name}</h3>
                 <div className={styles.planPrice}>
-                  <span className={styles.price}>{formatPrice(tier.price)}</span>
+                  <span className={styles.price}>{formatPrice(tier.price, tier.name)}</span>
                   {tier.price > 0 && (
                     <div className={styles.priceDetails}>
-                      <span className={styles.period}>pago único mensual</span>
-                      <span className={styles.renewalNote}>Renovable cada 30 días</span>
+                      <span className={styles.period}>acceso por 30 días</span>
+                      <span className={styles.renewalNote}>Sin renovación automática</span>
                     </div>
                   )}
                 </div>
@@ -646,11 +646,11 @@ function PlanesContent() {
                 ) : !planPurchasingEnabled && tier.tierKey !== 'free' ? (
                   'Compras temporalmente deshabilitadas'
                 ) : tier.tierKey === 'free' ? (
-                  '🚀 Comenzar Gratis'
+                  `🚀 Comenzar ${tier.name}`
                 ) : isUpgrade(tier.tierKey) ? (
-                  `💳 Actualizar por ${formatPrice(tier.price)}`
+                  `💳 Actualizar por ${formatPrice(tier.price, tier.name)}`
                 ) : (
-                  `🎯 Obtener ${tier.name} - ${formatPrice(tier.price)}`
+                  `🎯 Obtener ${tier.name} - ${formatPrice(tier.price, tier.name)}`
                 )}
               </button>
             </div>
