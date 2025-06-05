@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from 'next/link';
 import styles from './page.module.css';
@@ -18,7 +18,33 @@ export default function Register() {
   const [acceptedTerminos, setAcceptedTerminos] = useState(false);
   const [acceptedPrivacidad, setAcceptedPrivacidad] = useState(false);
   const [turnstileToken, setTurnstileToken] = useState("");
+  const [registrationEnabled, setRegistrationEnabled] = useState(true);
+  const [registrationStatusLoading, setRegistrationStatusLoading] = useState(true);
+  const [registrationDisabledMessage, setRegistrationDisabledMessage] = useState("");
   const router = useRouter();
+
+  // Check registration status on component mount
+  useEffect(() => {
+    const checkRegistrationStatus = async () => {
+      try {
+        const response = await fetch('/api/registration-status');
+        const data = await response.json();
+        
+        setRegistrationEnabled(data.enabled);
+        if (!data.enabled) {
+          setRegistrationDisabledMessage(data.message);
+        }
+      } catch (error) {
+        console.error('Error checking registration status:', error);
+        // On error, assume registration is enabled to avoid blocking users unnecessarily
+        setRegistrationEnabled(true);
+      } finally {
+        setRegistrationStatusLoading(false);
+      }
+    };
+
+    checkRegistrationStatus();
+  }, []);
 
   const handleTurnstileSuccess = (token) => {
     setTurnstileToken(token);
@@ -112,6 +138,42 @@ export default function Register() {
             <Link href="/login" className={styles.emailSentBackLink}>
               Volver al inicio de sesión
             </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Show loading while checking registration status
+  if (registrationStatusLoading) {
+    return (
+      <div className={styles.page}>
+        <div className={styles.card}>
+          <h1 className={styles.title}>Crear cuenta</h1>
+          <p className={styles.subtitle}>Verificando disponibilidad...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show registration disabled message
+  if (!registrationEnabled) {
+    return (
+      <div className={styles.page}>
+        <div className={styles.card}>
+          <h1 className={styles.title}>Registro no disponible</h1>
+          <div className={styles.registrationDisabled}>
+            <p className={styles.registrationDisabledText}>
+              {registrationDisabledMessage}
+            </p>
+            <p className={styles.registrationDisabledSubtext}>
+              Por favor, intenta más tarde o contacta con el soporte si necesitas ayuda.
+            </p>
+            <div className={styles.backToLogin}>
+              <Link href="/login" className={styles.loginLink}>
+                ← Volver al inicio de sesión
+              </Link>
+            </div>
           </div>
         </div>
       </div>

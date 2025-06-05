@@ -59,7 +59,8 @@ export async function GET(req, context) {
       where: { 
         authorId: user.id,
         status: "activo",
-        hiddenByReports: false
+        hiddenByReports: false,
+        hiddenByAdmin: false
       },
       orderBy: { createdAt: 'desc' },
       select: {

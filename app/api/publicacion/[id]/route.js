@@ -45,8 +45,8 @@ export async function GET(req, context) {
       }, { status: 404 });
     }
 
-    // Hide publications that have been hidden due to reports
-    if (publicacion.hiddenByReports) {
+    // Hide publications that have been hidden due to reports or by admin
+    if (publicacion.hiddenByReports || publicacion.hiddenByAdmin) {
       return NextResponse.json({ 
         success: false, 
         error: "Esta publicación no está disponible" 

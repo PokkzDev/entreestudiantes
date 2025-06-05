@@ -171,6 +171,18 @@ async function main() {
       value: 'false',
       description: 'Enable maintenance mode to disable certain features',
       isActive: true
+    },
+    {
+      key: 'user_registration_enabled',
+      value: 'true',
+      description: 'Enable or disable user registration functionality',
+      isActive: true
+    },
+    {
+      key: 'email_domain_bypass_enabled',
+      value: 'false',
+      description: 'Enable to bypass email domain validation for registration',
+      isActive: true
     }
   ];
 

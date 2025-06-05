@@ -6,6 +6,18 @@ import { validateEmailDomain } from '@/lib/emailValidation';
 
 export async function POST(request) {
   try {
+    // Check if user registration is enabled
+    const registrationConfig = await prisma.appConfig.findUnique({
+      where: { key: 'user_registration_enabled' }
+    });
+
+    if (!registrationConfig || registrationConfig.value !== 'true') {
+      return NextResponse.json(
+        { message: 'El registro de usuarios está temporalmente deshabilitado.' },
+        { status: 403 }
+      );
+    }
+
     const { email, turnstileToken } = await request.json();
 
     // Verify Turnstile token first
