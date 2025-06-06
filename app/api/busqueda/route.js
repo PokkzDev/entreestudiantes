@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "../auth/[...nextauth]/route";
 
-// GET /api/busqueda?categoria=...&q=...&tipo=...&universidad=...&campus=...
+// GET /api/busqueda?categoria=...&q=...&tipo=...&universidad=...&campus=...&page=...&limit=...
 export async function GET(req) {
   const { searchParams } = new URL(req.url);
   const categoria = searchParams.get("categoria");
@@ -11,6 +11,40 @@ export async function GET(req) {
   const tipo = searchParams.get("tipo"); // "producto", "servicio" o vacío
   const universidad = searchParams.get("universidad");
   const campus = searchParams.get("campus");
+  const showAll = searchParams.get("showAll"); // Parameter to override user filtering
+  const page = parseInt(searchParams.get("page")) || 1;
+  const limit = parseInt(searchParams.get("limit")) || 25;
+
+  // Obtener información del usuario si está autenticado
+  let userUniversity = null;
+  let userCampus = null;
+  try {
+    const session = await getServerSession(authOptions);
+    if (session?.user?.id) {
+      const user = await prisma.user.findUnique({
+        where: { id: session.user.id },
+        select: { university: true, campus: true }
+      });
+      userUniversity = user?.university || null;
+      userCampus = user?.campus || null;
+    }
+  } catch (error) {
+    // Si hay error obteniendo la sesión, continuar sin datos de usuario
+    console.log("Error getting user session:", error);
+  }
+
+  // Determine which universidad and campus to use for filtering
+  let filterUniversidad = universidad;
+  let filterCampus = campus;
+
+  // If user is logged in and no explicit filters are provided, and showAll is not set,
+  // use user's university and campus as default filters
+  if (userUniversity && !universidad && !showAll) {
+    filterUniversidad = userUniversity;
+  }
+  if (userCampus && !campus && !showAll) {
+    filterCampus = userCampus;
+  }
 
   const where = {
     status: "activo",
@@ -33,8 +67,8 @@ export async function GET(req) {
     },
     ...(tipo ? { type: tipo } : {}),
     ...(categoria ? { category: categoria } : {}),
-    ...(universidad ? { university: universidad } : {}),
-    ...(campus ? { campus: campus } : {}),
+    ...(filterUniversidad ? { university: filterUniversidad } : {}),
+    ...(filterCampus ? { campus: filterCampus } : {}),
     ...(q
       ? {
           OR: [
@@ -46,9 +80,18 @@ export async function GET(req) {
       : {}),
   };
 
+  // Get total count for pagination
+  const totalCount = await prisma.publicacion.count({ where });
+  
+  // Calculate pagination values
+  const skip = (page - 1) * limit;
+  const totalPages = Math.ceil(totalCount / limit);
+
   const publicaciones = await prisma.publicacion.findMany({
     where,
     orderBy: { createdAt: "desc" },
+    skip,
+    take: limit,
     include: {
       author: {
         select: {
@@ -169,24 +212,6 @@ export async function GET(req) {
     distinct: ["campus"],
   });
 
-  // Obtener información del usuario si está autenticado
-  let userUniversity = null;
-  let userCampus = null;
-  try {
-    const session = await getServerSession(authOptions);
-    if (session?.user?.id) {
-      const user = await prisma.user.findUnique({
-        where: { id: session.user.id },
-        select: { university: true, campus: true }
-      });
-      userUniversity = user?.university || null;
-      userCampus = user?.campus || null;
-    }
-  } catch (error) {
-    // Si hay error obteniendo la sesión, continuar sin datos de usuario
-    console.log("Error getting user session:", error);
-  }
-
   return NextResponse.json({ 
     publicaciones, 
     categorias: categorias.map(c => c.category), 
@@ -194,6 +219,18 @@ export async function GET(req) {
     universidades: universidades.map(u => u.university).filter(Boolean),
     campuses: campuses.map(c => c.campus).filter(Boolean),
     userUniversity,
-    userCampus
+    userCampus,
+    appliedFilters: {
+      universidad: filterUniversidad,
+      campus: filterCampus
+    },
+    pagination: {
+      currentPage: page,
+      totalPages,
+      totalCount,
+      limit,
+      hasNextPage: page < totalPages,
+      hasPrevPage: page > 1
+    }
   });
 }
