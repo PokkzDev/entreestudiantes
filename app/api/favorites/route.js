@@ -16,7 +16,26 @@ export async function GET(request) {
 
     const favorites = await prisma.favorite.findMany({
       where: {
-        userId: session.user.id
+        userId: session.user.id,
+        publicacion: {
+          status: "activo",
+          hiddenByReports: false,
+          hiddenByAdmin: false,
+          author: {
+            isBanned: false,
+            isActive: true,
+            OR: [
+              { isSuspended: false },
+              {
+                AND: [
+                  { isSuspended: true },
+                  { suspensionEndsAt: { not: null } },
+                  { suspensionEndsAt: { lt: new Date() } }
+                ]
+              }
+            ]
+          }
+        }
       },
       include: {
         publicacion: {

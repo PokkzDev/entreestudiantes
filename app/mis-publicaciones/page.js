@@ -121,6 +121,16 @@ export default function MisPublicaciones() {
   }
 
   function openDeleteModal(id) {
+    // Check if publication is flagged
+    const publication = publicaciones.find(p => p.id === id);
+    if (publication?.flagged) {
+      setMessage({
+        text: "No se puede eliminar una publicación marcada para revisión",
+        type: "error"
+      });
+      setTimeout(() => setMessage(null), 3000);
+      return;
+    }
     setToDeleteId(id);
     setShowDeleteModal(true);
   }
@@ -198,6 +208,17 @@ export default function MisPublicaciones() {
 
   // Función para cambiar el estado (activo/inactivo)
   async function handleToggleStatus(id, currentStatus) {
+    // Check if publication is flagged
+    const publication = publicaciones.find(p => p.id === id);
+    if (publication?.flagged) {
+      setMessage({
+        text: "No se puede cambiar el estado de una publicación marcada para revisión",
+        type: "error"
+      });
+      setTimeout(() => setMessage(null), 3000);
+      return;
+    }
+
     try {
       const res = await fetch(`/api/publicacion/${id}/toggle-status`, {
         method: "PATCH",
@@ -239,6 +260,16 @@ export default function MisPublicaciones() {
 
   // Función para editar (navega a una página de edición)
   function handleEdit(id) {
+    // Check if publication is flagged
+    const publication = publicaciones.find(p => p.id === id);
+    if (publication?.flagged) {
+      setMessage({
+        text: "No se puede editar una publicación marcada para revisión",
+        type: "error"
+      });
+      setTimeout(() => setMessage(null), 3000);
+      return;
+    }
     router.push(`/editar-publicacion/${id}`);
   }
 
@@ -461,6 +492,24 @@ export default function MisPublicaciones() {
                     <span>Esta publicación está oculta debido a múltiples reportes y está siendo revisada por nuestro equipo.</span>
                   </div>
                 )}
+                
+                {pub.hiddenByAdmin && (
+                  <div className={styles.hiddenWarning}>
+                    <span className={styles.warningIcon}>
+                      <FontAwesomeIcon icon={faExclamationTriangle} style={{ color: '#dc2626' }} />
+                    </span>
+                    <span>Esta publicación ha sido ocultada por un administrador.</span>
+                  </div>
+                )}
+                
+                {pub.flagged && (
+                  <div className={styles.hiddenWarning}>
+                    <span className={styles.warningIcon}>
+                      <FontAwesomeIcon icon={faExclamationTriangle} style={{ color: '#ef4444' }} />
+                    </span>
+                    <span>Esta publicación ha sido marcada para revisión y no puede ser editada hasta que sea revisada por nuestro equipo.</span>
+                  </div>
+                )}
               </div>
               
               <div className={styles.publicacionActions}>
@@ -474,19 +523,27 @@ export default function MisPublicaciones() {
                 <button 
                   onClick={() => handleEdit(pub.id)}
                   className={styles.editButton}
+                  disabled={pub.flagged}
+                  title={pub.flagged ? 'No se puede editar una publicación marcada para revisión' : 'Editar publicación'}
                 >
                   Editar
                 </button>
                 <button 
                   onClick={() => handleToggleStatus(pub.id, pub.status)}
                   className={`${styles.toggleButton} ${pub.status === 'activo' ? styles.pauseButton : styles.activateButton}`}
-                  title={pub.status === 'activo' ? 'Ocultar temporalmente esta publicación' : 'Hacer visible esta publicación'}
+                  disabled={pub.flagged}
+                  title={pub.flagged 
+                    ? 'No se puede cambiar el estado de una publicación marcada para revisión'
+                    : (pub.status === 'activo' ? 'Ocultar temporalmente esta publicación' : 'Hacer visible esta publicación')
+                  }
                 >
                   {pub.status === 'activo' ? 'Pausar publicación' : 'Activar publicación'}
                 </button>
                 <button 
                   onClick={() => openDeleteModal(pub.id)}
                   className={styles.deleteButton}
+                  disabled={pub.flagged}
+                  title={pub.flagged ? 'No se puede eliminar una publicación marcada para revisión' : 'Eliminar publicación'}
                 >
                   Eliminar
                 </button>

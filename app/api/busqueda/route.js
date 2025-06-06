@@ -15,6 +15,7 @@ export async function GET(req) {
   const where = {
     status: "activo",
     hiddenByReports: false, // Exclude publications hidden due to reports
+    hiddenByAdmin: false, // Exclude publications hidden by admin
     // Filter out publications from banned, suspended, or inactive users
     author: {
       isBanned: false,
@@ -70,6 +71,8 @@ export async function GET(req) {
   const categorias = await prisma.publicacion.findMany({
     where: { 
       status: "activo",
+      hiddenByReports: false,
+      hiddenByAdmin: false,
       author: {
         isBanned: false,
         isActive: true,
@@ -93,6 +96,8 @@ export async function GET(req) {
   const tipos = await prisma.publicacion.findMany({
     where: { 
       status: "activo",
+      hiddenByReports: false,
+      hiddenByAdmin: false,
       author: {
         isBanned: false,
         isActive: true,
@@ -117,6 +122,8 @@ export async function GET(req) {
     where: { 
       status: "activo",
       university: { not: null },
+      hiddenByReports: false,
+      hiddenByAdmin: false,
       author: {
         isBanned: false,
         isActive: true,
@@ -141,6 +148,8 @@ export async function GET(req) {
     where: { 
       status: "activo",
       campus: { not: null },
+      hiddenByReports: false,
+      hiddenByAdmin: false,
       author: {
         isBanned: false,
         isActive: true,

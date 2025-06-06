@@ -46,6 +46,7 @@ model User {
   suspensionCount          Int            @default(0)
   accountTier              String         @default("free")
   accounts                 Account[]
+  favorites                Favorite[]     @relation("UserFavorites")
   feedbacks                Feedback[]
   paymentLogs              PaymentLog[]
   publicaciones            Publicacion[]
@@ -54,37 +55,37 @@ model User {
   reports                  Report[]
   sessions                 Session[]
   subscriptions            Subscription[]
-  favorites                Favorite[]    @relation("UserFavorites")
 }
 
 model Publicacion {
-  id              String    @id @default(cuid())
+  id              String     @id @default(cuid())
   title           String
-  description     String    @db.Text
+  description     String     @db.Text
   type            String
-  price           Decimal?  @db.Decimal(10, 2)
-  images          String    @db.Text
+  price           Decimal?   @db.Decimal(10, 2)
+  images          String     @db.Text
   category        String
   contactMethod   String
   contactInfo     String
-  status          String    @default("activo")
+  status          String     @default("activo")
   location        String?
   tags            String
-  views           Int       @default(0)
-  featured        Boolean   @default(false)
+  views           Int        @default(0)
+  featured        Boolean    @default(false)
   university      String?
   campus          String?
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
   authorId        String
-  flagged         Boolean   @default(false)
+  flagged         Boolean    @default(false)
   flaggedAt       DateTime?
   hiddenAt        DateTime?
-  hiddenByReports Boolean   @default(false)
-  reportCount     Int       @default(0)
-  author          User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
-  reports         Report[]
+  hiddenByReports Boolean    @default(false)
+  reportCount     Int        @default(0)
+  hiddenByAdmin   Boolean    @default(false)
   favorites       Favorite[] @relation("PublicacionFavorites")
+  author          User       @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  reports         Report[]
 
   @@index([authorId], map: "Publicacion_authorId_fkey")
 }
@@ -329,10 +330,36 @@ model Favorite {
   userId        String
   publicacionId String
   createdAt     DateTime    @default(now())
-  user          User        @relation("UserFavorites", fields: [userId], references: [id], onDelete: Cascade)
   publicacion   Publicacion @relation("PublicacionFavorites", fields: [publicacionId], references: [id], onDelete: Cascade)
+  user          User        @relation("UserFavorites", fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, publicacionId])
   @@index([userId])
   @@index([publicacionId])
+}
+
+model Admin {
+  id                   String    @id @default(cuid())
+  username             String    @unique
+  email                String    @unique
+  password             String
+  name                 String?
+  role                 String    @default("admin")
+  permissions          String    @db.Text
+  isActive             Boolean   @default(true)
+  lastLoginAt          DateTime?
+  lastActivityAt       DateTime?
+  twoFactorEnabled     Boolean   @default(false)
+  twoFactorSecret      String?
+  loginAttempts        Int       @default(0)
+  lockedUntil          DateTime?
+  passwordResetToken   String?
+  passwordResetExpires DateTime?
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+
+  @@index([email])
+  @@index([username])
+  @@index([isActive])
+  @@index([role])
 }
