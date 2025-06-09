@@ -327,6 +327,55 @@
 
 .noImage svg {
   font-size: 2rem;
+  opacity: 0.5;
+}
+
+/* Security Warning */
+.securityWarning {
+  background: #fef9e7;
+  border: 1px solid #f3e8ab;
+  border-radius: 8px;
+  padding: 0.5rem 0.75rem;
+  margin-top: 0.5rem;
+  display: flex;
+  gap: 0.5rem;
+  align-items: flex-start;
+  font-size: 0.75rem;
+  line-height: 1.3;
+}
+
+.securityWarningIcon {
+  color: #ca8a04;
+  font-size: 0.9rem;
+  margin-top: 0.1rem;
+  flex-shrink: 0;
+}
+
+.securityWarningContent {
+  flex: 1;
+}
+
+.securityWarningTitle {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #a16207;
+  margin: 0 0 0.25rem 0;
+  line-height: 1.2;
+}
+
+.securityWarningText {
+  font-size: 0.7rem;
+  color: #a16207;
+  margin: 0 0 0.25rem 0;
+  line-height: 1.3;
+}
+
+.securityWarningSubtext {
+  font-size: 0.65rem;
+  color: #92400e;
+  margin: 0;
+  line-height: 1.2;
+  opacity: 0.9;
 }
 
 /* Content Sections */
@@ -871,6 +920,23 @@
   .carouselNext {
     right: 10px;
   }
+
+  .securityWarning {
+    padding: 0.45rem 0.65rem;
+    gap: 0.45rem;
+  }
+
+  .securityWarningTitle {
+    font-size: 0.7rem;
+  }
+
+  .securityWarningText {
+    font-size: 0.65rem;
+  }
+
+  .securityWarningSubtext {
+    font-size: 0.6rem;
+  }
 }
 
 @media (max-width: 480px) {
@@ -943,5 +1009,27 @@
 
   .carouselNext {
     right: 5px;
+  }
+
+  .securityWarning {
+    padding: 0.4rem 0.6rem;
+    gap: 0.4rem;
+    margin-top: 0.4rem;
+  }
+
+  .securityWarningIcon {
+    font-size: 0.85rem;
+  }
+
+  .securityWarningTitle {
+    font-size: 0.65rem;
+  }
+
+  .securityWarningText {
+    font-size: 0.6rem;
+  }
+
+  .securityWarningSubtext {
+    font-size: 0.55rem;
   }
 }

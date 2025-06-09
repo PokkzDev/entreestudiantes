@@ -1,0 +1,55 @@
+.container {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  padding: 2rem 1rem;
+}
+
+.breadcrumb {
+  max-width: 800px;
+  margin: 0 auto 2rem auto;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  color: #64748b;
+}
+
+.breadcrumbLink {
+  color: #3b82f6;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.breadcrumbLink:hover {
+  color: #2563eb;
+  text-decoration: underline;
+}
+
+.breadcrumbSeparator {
+  color: #94a3b8;
+  font-weight: bold;
+}
+
+.breadcrumbCurrent {
+  color: #1e293b;
+  font-weight: 500;
+}
+
+.main {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+/* Back button styles moved to BackToTopButton component */
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .container {
+    padding: 1rem 0.5rem;
+  }
+  
+  .breadcrumb {
+    font-size: 0.85rem;
+    margin-bottom: 1.5rem;
+  }
+} 

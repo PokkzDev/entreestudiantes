@@ -31,9 +31,12 @@ function CompletarRegistro() {
     number: false,
     symbol: false,
   });
+  const [passwordsMatch, setPasswordsMatch] = useState(true); // Start as true to avoid showing error on empty fields
+  const [usernameValid, setUsernameValid] = useState(true); // Start as true to avoid showing error on empty fields
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [checking, setChecking] = useState(true);
+  const [tokenValidation, setTokenValidation] = useState({ valid: null, message: '' });
 
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -46,20 +49,27 @@ function CompletarRegistro() {
       router.push('/registro');
       return;
     }
-    // Check if user is already verified
-    const checkVerified = async () => {
+    
+    // Validate token immediately
+    const validateToken = async () => {
       try {
-        const res = await fetch(`/api/check-verified?email=${encodeURIComponent(email)}`);
-        if (res.ok) {
-          const data = await res.json();
-          if (data.isVerified) {
-            router.replace('/login');
-          }
+        const res = await fetch(`/api/validate-registration-token?email=${encodeURIComponent(email)}&token=${encodeURIComponent(token)}`);
+        const data = await res.json();
+        
+        if (data.valid) {
+          setTokenValidation({ valid: true, message: data.message });
+        } else {
+          setTokenValidation({ valid: false, message: data.message });
         }
-      } catch {}
-      setChecking(false);
+      } catch (error) {
+        console.error('Error validating token:', error);
+        setTokenValidation({ valid: false, message: 'Error al validar el enlace de registro. Inténtalo más tarde.' });
+      } finally {
+        setChecking(false);
+      }
     };
-    checkVerified();
+    
+    validateToken();
   }, [token, email, router]);
 
   useEffect(() => {
@@ -72,11 +82,33 @@ function CompletarRegistro() {
     });
   }, [password]);
 
+  // Check if passwords match in real-time
+  useEffect(() => {
+    if (confirmPassword === '') {
+      setPasswordsMatch(true); // Don't show error when confirm password is empty
+    } else {
+      setPasswordsMatch(password === confirmPassword);
+    }
+  }, [password, confirmPassword]);
+
+  // Check username validity in real-time
+  useEffect(() => {
+    if (username === '') {
+      setUsernameValid(true); // Don't show error when username is empty
+    } else {
+      setUsernameValid(!username.includes(' ')); // Username is valid if it doesn't contain spaces
+    }
+  }, [username]);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     // Frontend validation
     if (!username || username.length < 4) {
       setError("El nombre de usuario debe tener al menos 4 caracteres.");
+      return;
+    }
+    if (username.includes(' ')) {
+      setError("El nombre de usuario no puede contener espacios.");
       return;
     }
     if (!name || name.trim().length === 0) {
@@ -124,7 +156,35 @@ function CompletarRegistro() {
     }
   };
 
-  if (checking) return <div className={styles.page}>Cargando...</div>;
+  if (checking) return <div className={styles.page}>Validando enlace de registro...</div>;
+
+  // Show error if token is invalid
+  if (tokenValidation.valid === false) {
+    return (
+      <div className={styles.page}>
+        <div className={styles.errorCard}>
+          <div className={styles.errorIcon}>
+            <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" fill="#ef4444" viewBox="0 0 16 16">
+              <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+              <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/>
+            </svg>
+          </div>
+          <h1 className={styles.errorTitle}>Enlace inválido o expirado</h1>
+          <p className={styles.errorText}>
+            {tokenValidation.message}
+          </p>
+          <div className={styles.errorLinkContainer}>
+            <Link href="/registro" className={styles.errorLink}>
+              Solicitar nuevo enlace de registro
+            </Link>
+            <Link href="/login" className={styles.errorLinkSecondary}>
+              ¿Ya tienes cuenta? Inicia sesión
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (success) {
     return (
@@ -180,6 +240,11 @@ function CompletarRegistro() {
               onChange={(e) => setUsername(e.target.value)}
               className={styles.input}
             />
+            {username && (
+              <div className={`${styles.usernameValidation} ${usernameValid ? styles.valid : styles.invalid}`}>
+                {usernameValid ? '✔ Nombre de usuario válido' : '✖ El nombre de usuario no puede contener espacios'}
+              </div>
+            )}
           </div>
           <div className={styles.formGroup}>
             <label htmlFor="name" className={styles.label}>Nombre completo</label>
@@ -269,23 +334,26 @@ function CompletarRegistro() {
                 {showPassword ? <FaEyeSlash /> : <FaEye />}
               </button>
             </div>
-            <ul className={styles.passwordValidations}>
-              <li className={passwordValidations.length ? styles.valid : styles.invalid}>
-                {passwordValidations.length ? '✔' : '✖'} Al menos 8 caracteres
-              </li>
-              <li className={passwordValidations.uppercase ? styles.valid : styles.invalid}>
-                {passwordValidations.uppercase ? '✔' : '✖'} Una letra mayúscula
-              </li>
-              <li className={passwordValidations.lowercase ? styles.valid : styles.invalid}>
-                {passwordValidations.lowercase ? '✔' : '✖'} Una letra minúscula
-              </li>
-              <li className={passwordValidations.number ? styles.valid : styles.invalid}>
-                {passwordValidations.number ? '✔' : '✖'} Un número
-              </li>
-              <li className={passwordValidations.symbol ? styles.valid : styles.invalid}>
-                {passwordValidations.symbol ? '✔' : '✖'} Un símbolo
-              </li>
-            </ul>
+            {/* Password validation - only show when user starts typing password */}
+            {password.length > 0 && (
+              <ul className={styles.passwordValidations}>
+                <li className={passwordValidations.length ? styles.valid : styles.invalid}>
+                  {passwordValidations.length ? '✔' : '✖'} Al menos 8 caracteres
+                </li>
+                <li className={passwordValidations.uppercase ? styles.valid : styles.invalid}>
+                  {passwordValidations.uppercase ? '✔' : '✖'} Una letra mayúscula
+                </li>
+                <li className={passwordValidations.lowercase ? styles.valid : styles.invalid}>
+                  {passwordValidations.lowercase ? '✔' : '✖'} Una letra minúscula
+                </li>
+                <li className={passwordValidations.number ? styles.valid : styles.invalid}>
+                  {passwordValidations.number ? '✔' : '✖'} Un número
+                </li>
+                <li className={passwordValidations.symbol ? styles.valid : styles.invalid}>
+                  {passwordValidations.symbol ? '✔' : '✖'} Un símbolo
+                </li>
+              </ul>
+            )}
           </div>
           <div className={styles.formGroup}>
             <label htmlFor="confirmPassword" className={styles.label}>Confirmar contraseña</label>
@@ -310,6 +378,11 @@ function CompletarRegistro() {
                 {showConfirmPassword ? <FaEyeSlash /> : <FaEye />}
               </button>
             </div>
+            {confirmPassword && (
+              <div className={`${styles.passwordMatch} ${passwordsMatch ? styles.valid : styles.invalid}`}>
+                {passwordsMatch ? '✔ Las contraseñas coinciden' : '✖ Las contraseñas no coinciden'}
+              </div>
+            )}
           </div>
           {error && <div className={styles.error}>{error}</div>}
           <button

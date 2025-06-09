@@ -363,3 +363,84 @@ model Admin {
   @@index([isActive])
   @@index([role])
 }
+
+// Analytics Models for Page Tracking
+model PageHit {
+  id              String   @id @default(cuid())
+  path            String   // e.g., "/publicacion/123", "/busqueda", "/planes"
+  method          String   @default("GET") // HTTP method
+  ipAddress       String?  // Hashed for privacy
+  userAgent       String?  @db.Text // Browser/device info
+  referer         String?  @db.Text // Where they came from
+  userId          String?  // If logged in (registered user ID)
+  sessionId       String?  // Session identifier (per browser tab)
+  analyticsUserId String?  // Persistent anonymous user ID (survives browser sessions)
+  timestamp       DateTime @default(now())
+  
+  // Additional context
+  country   String?  // Derived from IP (optional)
+  device    String?  // mobile/desktop/tablet
+  browser   String?  // chrome/firefox/safari
+  
+  @@index([path, timestamp])
+  @@index([userId, timestamp])
+  @@index([sessionId, timestamp])
+  @@index([analyticsUserId, timestamp])
+  @@index([timestamp])
+  @@index([path])
+}
+
+model PageStats {
+  id            String   @id @default(cuid())
+  path          String   @unique // The page path
+  totalHits     Int      @default(0) // Total page views
+  uniqueHits    Int      @default(0) // Unique visitors (by IP/session)
+  lastHit       DateTime @default(now())
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  // Aggregated stats for performance
+  hitsToday     Int      @default(0)
+  hitsThisWeek  Int      @default(0)
+  hitsThisMonth Int      @default(0)
+  
+  @@index([totalHits])
+  @@index([lastHit])
+  @@index([path])
+}
+
+model DailyStats {
+  id           String   @id @default(cuid())
+  date         DateTime @unique @db.Date // YYYY-MM-DD
+  totalViews   Int      @default(0)
+  uniqueViews  Int      @default(0)
+  newUsers     Int      @default(0) // First-time visitors
+  returningUsers Int    @default(0)
+  topPages     String   @db.Text // JSON string of top pages
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  
+  @@index([date])
+}
+
+model UserSession {
+  id              String   @id @default(cuid())
+  sessionId       String   @unique // Generated session ID
+  userId          String?  // If logged in
+  analyticsUserId String?  // Persistent anonymous user ID
+  ipAddress       String?  // Hashed for privacy
+  userAgent       String?  @db.Text
+  firstPageView   String   // First page they visited
+  lastPageView    String   // Last page they visited
+  pageCount       Int      @default(1) // Number of pages viewed
+  startTime       DateTime @default(now())
+  lastActivity    DateTime @default(now())
+  durationMinutes Int      @default(0) // Session duration
+  isActive        Boolean  @default(true)
+  
+  @@index([sessionId])
+  @@index([userId])
+  @@index([analyticsUserId])
+  @@index([startTime])
+  @@index([isActive])
+}

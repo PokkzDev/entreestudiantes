@@ -4,11 +4,12 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import styles from "./page.module.css";
-import { FaWhatsapp, FaEnvelope, FaPhone, FaRegAddressCard, FaMapMarkerAlt, FaTag, FaTags, FaCalendarAlt, FaIdCard, FaDollarSign, FaChevronLeft, FaChevronRight, FaTimes, FaArrowLeft, FaUniversity, FaFlag, FaUser, FaEye, FaInfo, FaHeart, FaShare } from "react-icons/fa";
+import { FaWhatsapp, FaEnvelope, FaPhone, FaRegAddressCard, FaMapMarkerAlt, FaTag, FaTags, FaCalendarAlt, FaIdCard, FaDollarSign, FaChevronLeft, FaChevronRight, FaTimes, FaArrowLeft, FaUniversity, FaFlag, FaUser, FaEye, FaInfo, FaHeart, FaShare, FaShieldAlt } from "react-icons/fa";
 import Image from 'next/image';
 import { getCategoryLabel } from "@/lib/categoryOptions";
 import ReportModal from "@/components/ReportModal";
 import ModalContactWarning from "@/components/ModalContactWarning";
+import { usePublicationTracking } from "@/lib/usePageTracking";
 
 export default function PublicacionDetalle(props) {
   // Handle params properly - React.use() should not be in try/catch
@@ -27,6 +28,14 @@ export default function PublicacionDetalle(props) {
   const { data: session } = useSession();
   const [publicacion, setPublicacion] = useState(null);
   const [loading, setLoading] = useState(true);
+  
+  // Analytics tracking
+  const { 
+    trackPublicationView, 
+    trackPublicationContact, 
+    trackPublicationFavorite,
+    trackPublicationShare 
+  } = usePublicationTracking(id);
   const [selectedImage, setSelectedImage] = useState(0);
   const [showCarousel, setShowCarousel] = useState(false);
   const [showReportModal, setShowReportModal] = useState(false);
@@ -53,6 +62,18 @@ export default function PublicacionDetalle(props) {
     }
     fetchPublicacion();
   }, [id]);
+
+  // Track publication view when publication is loaded
+  useEffect(() => {
+    if (publicacion) {
+      trackPublicationView({
+        title: publicacion.title,
+        category: publicacion.category,
+        type: publicacion.type,
+        authorId: publicacion.authorId,
+      });
+    }
+  }, [publicacion, trackPublicationView]);
 
   // Check if publication is favorited
   useEffect(() => {
@@ -116,6 +137,8 @@ export default function PublicacionDetalle(props) {
   const handleConfirmContact = () => {
     if (pendingContactInfo?.href) {
       window.open(pendingContactInfo.href, '_blank', 'noopener,noreferrer');
+      // Track contact interaction
+      trackPublicationContact(pendingContactInfo.method);
     }
     handleCloseContactWarning();
   };
@@ -141,6 +164,7 @@ export default function PublicacionDetalle(props) {
         if (res.ok) {
           setIsFavorited(false);
           showFavoriteNotification('Eliminado de favoritos');
+          trackPublicationFavorite('remove');
         } else {
           const data = await res.json();
           console.error('Error removing favorite:', data.error);
@@ -158,6 +182,7 @@ export default function PublicacionDetalle(props) {
         if (res.ok) {
           setIsFavorited(true);
           showFavoriteNotification('Agregado a favoritos');
+          trackPublicationFavorite('add');
         } else {
           const data = await res.json();
           console.error('Error adding favorite:', data.error);
@@ -207,6 +232,9 @@ export default function PublicacionDetalle(props) {
   // Share functionality
   const handleShare = async () => {
     if (!publicacion) return;
+
+    // Track share interaction
+    trackPublicationShare();
 
     const shareUrl = window.location.href;
     const shareData = {
@@ -465,6 +493,25 @@ export default function PublicacionDetalle(props) {
               <div className={styles.noImage}>
                 <FaEye />
                 <span>Sin imagen disponible</span>
+              </div>
+            )}
+
+            {/* Cybersecurity Warning */}
+            {images.length > 0 && (
+              <div className={styles.securityWarning}>
+                <div className={styles.securityWarningIcon}>
+                  <FaShieldAlt />
+                </div>
+                <div className={styles.securityWarningContent}>
+                                  <h4 className={styles.securityWarningTitle}>🔒 Mantente Seguro</h4>
+                <p className={styles.securityWarningText}>
+                  <strong>No escanees QR sospechosos, verifica la identidad del vendedor</strong> y reúnete en lugares públicos seguros. 
+                  Desconfía de precios excesivamente bajos y solicita evidencia del producto.
+                </p>
+                <p className={styles.securityWarningSubtext}>
+                  Las imágenes deben mostrar solo el producto. Reporta contenido sospechoso.
+                </p>
+                </div>
               </div>
             )}
           </div>

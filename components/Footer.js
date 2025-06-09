@@ -45,20 +45,9 @@ export default function Footer() {
             <div className={styles.linkColumn}>
               <h4>Legal</h4>
               <nav>
-                <button
-                  type="button"
-                  onClick={() => setShowTerminos(true)}
-                  className={styles.legalButton}
-                >
-                  Términos de Servicio
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setShowPrivacidad(true)}
-                  className={styles.legalButton}
-                >
-                  Política de Privacidad
-                </button>
+                <Link href="/terminos-uso">Términos de Uso</Link>
+                <Link href="/politica-privacidad">Política de Privacidad</Link>
+                
               </nav>
             </div>
           </div>

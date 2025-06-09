@@ -1,0 +1,227 @@
+.overlay {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 9999;
+  background: rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(2px);
+  padding: 0;
+  animation: slideUp 0.3s ease-out;
+}
+
+.overlay.closing {
+  animation: slideDown 0.3s ease-in;
+}
+
+.modal {
+  background: #ffffff;
+  border-radius: 0;
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.15);
+  width: 100%;
+  margin: 0;
+  border: none;
+  border-top: 1px solid #e5e7eb;
+  transform: translateY(0);
+  transition: transform 0.3s ease-out;
+}
+
+.modal.modalClosing {
+  transform: translateY(100%);
+}
+
+.content {
+  padding: 24px;
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.icon {
+  font-size: 32px;
+  flex-shrink: 0;
+  margin-top: 4px;
+}
+
+.text {
+  flex: 1;
+  margin-right: 16px;
+}
+
+.title {
+  margin: 0 0 12px 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #1f2937;
+  line-height: 1.4;
+}
+
+.description {
+  margin: 0 0 8px 0;
+  font-size: 14px;
+  color: #4b5563;
+  line-height: 1.5;
+}
+
+.subtext {
+  margin: 0;
+  font-size: 13px;
+  color: #6b7280;
+  line-height: 1.4;
+}
+
+.link {
+  color: #3b82f6;
+  text-decoration: underline;
+  transition: color 0.2s ease;
+}
+
+.link:hover {
+  color: #2563eb;
+}
+
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex-shrink: 0;
+  min-width: 140px;
+}
+
+.button {
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 1px solid;
+  white-space: nowrap;
+}
+
+.acceptButton {
+  background: #10b981;
+  color: white;
+  border-color: #10b981;
+}
+
+.acceptButton:hover {
+  background: #059669;
+  border-color: #059669;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(16, 185, 129, 0.3);
+}
+
+.declineButton {
+  background: #ffffff;
+  color: #6b7280;
+  border-color: #d1d5db;
+}
+
+.declineButton:hover {
+  background: #f9fafb;
+  border-color: #9ca3af;
+  color: #4b5563;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideDown {
+  from {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+}
+
+/* Mobile responsive adjustments */
+@media (max-width: 640px) {
+  .content {
+    padding: 20px;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 20px;
+  }
+  
+  .text {
+    margin-right: 0;
+  }
+  
+  .actions {
+    flex-direction: row;
+    width: 100%;
+    gap: 12px;
+  }
+  
+  .button {
+    flex: 1;
+    padding: 12px 16px;
+  }
+  
+  .title {
+    font-size: 16px;
+  }
+  
+  .icon {
+    font-size: 28px;
+    margin-top: 0;
+  }
+}
+
+/* Tablet adjustments */
+@media (max-width: 768px) and (min-width: 641px) {
+  .content {
+    padding: 22px;
+  }
+  
+  .actions {
+    min-width: 120px;
+  }
+}
+
+/* Dark mode support (if needed) */
+@media (prefers-color-scheme: dark) {
+  .modal {
+    background: #1f2937;
+    border-top-color: #374151;
+  }
+  
+  .title {
+    color: #f9fafb;
+  }
+  
+  .description {
+    color: #d1d5db;
+  }
+  
+  .subtext {
+    color: #9ca3af;
+  }
+  
+  .declineButton {
+    background: #374151;
+    color: #d1d5db;
+    border-color: #4b5563;
+  }
+  
+  .declineButton:hover {
+    background: #4b5563;
+    border-color: #6b7280;
+    color: #f3f4f6;
+  }
+} 

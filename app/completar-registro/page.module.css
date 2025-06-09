@@ -187,6 +187,36 @@
   }
 }
 
+.passwordMatch {
+  margin-top: 0.75rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.passwordMatch.valid {
+  color: #22c55e;
+  background-color: #f0fdf4;
+  border: 1px solid #bbf7d0;
+}
+
+.passwordMatch.invalid {
+  color: #ef4444;
+  background-color: #fef2f2;
+  border: 1px solid #fecaca;
+}
+
+.usernameValidation {
+  margin-top: 0.5rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
 .validationItem {
   font-weight: 600;
 }
@@ -286,6 +316,106 @@
 
 .successLinkContainer {
   margin-top: 1rem;
+}
+
+.errorCard {
+  background: #fff;
+  border-radius: 20px;
+  box-shadow: 0 8px 32px 0 rgba(31,38,135,0.07);
+  padding: 2.5rem 2rem;
+  max-width: 600px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+  text-align: center;
+}
+
+@media (min-width: 768px) {
+  .errorCard {
+    max-width: 700px;
+    padding: 3rem 3rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .errorCard {
+    max-width: 800px;
+    padding: 3.5rem 4rem;
+  }
+}
+
+.errorIcon {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: #fef2f2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1rem;
+}
+
+.errorTitle {
+  font-size: 1.8rem;
+  font-weight: 800;
+  color: #ef4444;
+  letter-spacing: -0.02em;
+}
+
+.errorText {
+  font-size: 1.1rem;
+  color: #64748b;
+  line-height: 1.6;
+}
+
+.errorLink {
+  color: #6366f1;
+  font-weight: 600;
+  text-decoration: none;
+  display: inline-block;
+  margin: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  background: #f1f5f9;
+  border-radius: 10px;
+  transition: all 0.2s;
+}
+
+.errorLink:hover {
+  background: #e2e8f0;
+  transform: translateY(-1px);
+}
+
+.errorLinkSecondary {
+  color: #64748b;
+  font-weight: 500;
+  text-decoration: none;
+  display: inline-block;
+  margin: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  border-radius: 10px;
+  transition: all 0.2s;
+}
+
+.errorLinkSecondary:hover {
+  color: #334155;
+  background: #f8fafc;
+}
+
+.errorLinkContainer {
+  margin-top: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+@media (min-width: 480px) {
+  .errorLinkContainer {
+    flex-direction: row;
+    justify-content: center;
+    gap: 1rem;
+  }
 }
 
 .formRow {
