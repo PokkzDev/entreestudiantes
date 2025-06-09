@@ -36,6 +36,11 @@ export default function ChangePasswordSection() {
     });
   }, [formData.newPassword]);
 
+  // Check if passwords match
+  const passwordsMatch = formData.newPassword && formData.confirmPassword && 
+                        formData.newPassword === formData.confirmPassword;
+  const showPasswordMatch = formData.newPassword.length > 0 && formData.confirmPassword.length > 0;
+
   const handleChange = (e) => {
     setFormData({
       ...formData,
@@ -197,24 +202,33 @@ export default function ChangePasswordSection() {
             </div>
           </div>
           
-          {/* Password validation using semaforo style */}
-          <ul className={styles.passwordValidations}>
-            <li className={passwordValidations.length ? styles.valid : styles.invalid}>
-              {passwordValidations.length ? '✔' : '✖'} Al menos 8 caracteres
-            </li>
-            <li className={passwordValidations.uppercase ? styles.valid : styles.invalid}>
-              {passwordValidations.uppercase ? '✔' : '✖'} Una letra mayúscula
-            </li>
-            <li className={passwordValidations.lowercase ? styles.valid : styles.invalid}>
-              {passwordValidations.lowercase ? '✔' : '✖'} Una letra minúscula
-            </li>
-            <li className={passwordValidations.number ? styles.valid : styles.invalid}>
-              {passwordValidations.number ? '✔' : '✖'} Un número
-            </li>
-            <li className={passwordValidations.symbol ? styles.valid : styles.invalid}>
-              {passwordValidations.symbol ? '✔' : '✖'} Un símbolo
-            </li>
-          </ul>
+          {/* Password validation - only show when user starts typing new password */}
+          {formData.newPassword.length > 0 && (
+            <ul className={styles.passwordValidations}>
+              <li className={passwordValidations.length ? styles.valid : styles.invalid}>
+                {passwordValidations.length ? '✔' : '✖'} Al menos 8 caracteres
+              </li>
+              <li className={passwordValidations.uppercase ? styles.valid : styles.invalid}>
+                {passwordValidations.uppercase ? '✔' : '✖'} Una letra mayúscula
+              </li>
+              <li className={passwordValidations.lowercase ? styles.valid : styles.invalid}>
+                {passwordValidations.lowercase ? '✔' : '✖'} Una letra minúscula
+              </li>
+              <li className={passwordValidations.number ? styles.valid : styles.invalid}>
+                {passwordValidations.number ? '✔' : '✖'} Un número
+              </li>
+              <li className={passwordValidations.symbol ? styles.valid : styles.invalid}>
+                {passwordValidations.symbol ? '✔' : '✖'} Un símbolo
+              </li>
+            </ul>
+          )}
+
+          {/* Password match indicator - only show when both passwords have content */}
+          {showPasswordMatch && (
+            <div className={`${styles.passwordMatch} ${passwordsMatch ? styles.valid : styles.invalid}`}>
+              {passwordsMatch ? '✔ Las contraseñas coinciden' : '✖ Las contraseñas no coinciden'}
+            </div>
+          )}
         </div>
 
         {message && (

@@ -99,9 +99,12 @@ export default withAuth(
           '/reset-contrasena',
           '/busqueda', // Search page should be public
           '/publicacion', // Individual publication pages should be public (will be handled by API)
+          '/perfil', // User profile pages should be public to allow viewing user profiles
           '/planes', // Plans page should be public to allow users to see pricing
           '/sugerencias', // Suggestions page should be public for both logged-in and anonymous users
-          '/contacto' // Contact page should be public for both logged-in and anonymous users
+          '/contacto', // Contact page should be public for both logged-in and anonymous users
+          '/terminos-uso', // Terms of use should be public
+          '/politica-privacidad' // Privacy policy should be public
         ];
         
         const isPublicRoute = publicRoutes.some(route => {
@@ -124,6 +127,6 @@ export default withAuth(
 
 export const config = {
   matcher: [
-    "/((?!api/auth|api/register|api/resend-verification|api/complete-registration|api/allowed-domains|api/busqueda|api/publicacion|api/check-session|api/check-verified|api/flow/webhook|api/flow/return|api/flow/refund-webhook|api/verify-turnstile|api/feedback|api/contact|api/cron|api/update-session|api/account-tiers|api/registration-status|_next/static|_next/image|favicon.ico|pageImages|images).*)"
+    "/((?!api/auth|api/register|api/resend-verification|api/complete-registration|api/allowed-domains|api/busqueda|api/publicacion|api/perfil|api/check-session|api/check-verified|api/flow/webhook|api/flow/return|api/flow/refund-webhook|api/verify-turnstile|api/feedback|api/contact|api/cron|api/update-session|api/account-tiers|api/registration-status|api/analytics|_next/static|_next/image|favicon.ico|pageImages|images).*)"
   ],
 }; 

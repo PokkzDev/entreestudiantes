@@ -8,18 +8,14 @@ import { FaCalendarAlt, FaUniversity, FaMapMarkerAlt, FaUser, FaArrowLeft } from
 import { getCategoryLabel } from "@/lib/categoryOptions";
 
 export default function PerfilUsuario(props) {
-  // Handle params properly - check if it's a promise or already resolved
+  // Handle params properly - React.use() should not be in try/catch
   let params;
-  try {
-    // If props.params is a promise, use React.use() to resolve it
-    if (props.params && typeof props.params.then === 'function') {
-      params = React.use(props.params);
-    } else {
-      // If props.params is already an object, use it directly
-      params = props.params;
-    }
-  } catch (error) {
-    console.error('Error resolving params:', error);
+  
+  // If props.params is a promise, use React.use() to resolve it
+  if (props.params && typeof props.params.then === 'function') {
+    params = React.use(props.params);
+  } else {
+    // If props.params is already an object, use it directly
     params = props.params || {};
   }
   
