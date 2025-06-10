@@ -52,9 +52,12 @@ model User {
   publicaciones            Publicacion[]
   cancelledRefunds         RefundLog[]    @relation("RefundCanceller")
   createdRefunds           RefundLog[]    @relation("RefundCreator")
-  reports                  Report[]
+  reportsCreated           Report[]       @relation("ReporterUser")
+  reportsReceived          Report[]       @relation("ReportedUser")
   sessions                 Session[]
   subscriptions            Subscription[]
+  givenRatings             UserRating[]   @relation("RaterUser")
+  receivedRatings          UserRating[]   @relation("RatedUser")
 }
 
 model Publicacion {
@@ -251,20 +254,26 @@ model VerificationToken {
 }
 
 model Report {
-  id            String      @id @default(cuid())
-  publicacionId String
-  reporterId    String?
-  reason        String
-  description   String?     @db.Text
-  status        String      @default("pending")
-  ipAddress     String?
-  userAgent     String?     @db.Text
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
-  publicacion   Publicacion @relation(fields: [publicacionId], references: [id], onDelete: Cascade)
-  reporter      User?       @relation(fields: [reporterId], references: [id])
+  id             String       @id @default(cuid())
+  publicacionId  String?      // Made optional since we can now report ratings and users too
+  ratingId       String?      // New field for reporting ratings
+  reportedUserId String?      // New field for reporting users
+  reporterId     String?
+  reason         String
+  description    String?      @db.Text
+  status         String       @default("pending")
+  ipAddress      String?
+  userAgent      String?      @db.Text
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  publicacion    Publicacion? @relation(fields: [publicacionId], references: [id], onDelete: Cascade)
+  rating         UserRating?  @relation(fields: [ratingId], references: [id], onDelete: Cascade)
+  reportedUser   User?        @relation("ReportedUser", fields: [reportedUserId], references: [id], onDelete: Cascade)
+  reporter       User?        @relation("ReporterUser", fields: [reporterId], references: [id])
 
   @@index([publicacionId], map: "Report_publicacionId_fkey")
+  @@index([ratingId], map: "Report_ratingId_fkey")
+  @@index([reportedUserId], map: "Report_reportedUserId_fkey")
   @@index([reporterId], map: "Report_reporterId_fkey")
 }
 
@@ -443,4 +452,22 @@ model UserSession {
   @@index([analyticsUserId])
   @@index([startTime])
   @@index([isActive])
+}
+
+model UserRating {
+  id        String   @id @default(cuid())
+  rating    Int      // 1-5 stars
+  comment   String?  @db.Text
+  raterId   String   // User who gives the rating
+  ratedId   String   // User who receives the rating
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  rater     User     @relation("RaterUser", fields: [raterId], references: [id], onDelete: Cascade)
+  rated     User     @relation("RatedUser", fields: [ratedId], references: [id], onDelete: Cascade)
+  reports   Report[] // Reports made against this rating
+  
+  @@unique([raterId, ratedId]) // One rating per user pair
+  @@index([ratedId]) // For efficient queries by rated user
+  @@index([raterId]) // For efficient queries by rater
 }

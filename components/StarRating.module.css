@@ -1,0 +1,97 @@
+.starRating {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.stars {
+  display: flex;
+  gap: 0.2rem;
+}
+
+.star {
+  color: #e5e7eb;
+  transition: color 0.2s ease;
+  cursor: default;
+}
+
+.star.active {
+  color: #fbbf24;
+}
+
+.star.interactive {
+  cursor: pointer;
+}
+
+.star.interactive:hover {
+  color: #f59e0b;
+}
+
+/* Size variants */
+.small .star {
+  font-size: 0.875rem;
+}
+
+.medium .star {
+  font-size: 1.125rem;
+}
+
+.large .star {
+  font-size: 1.5rem;
+}
+
+.extraLarge .star {
+  font-size: 2rem;
+}
+
+/* Rating info */
+.ratingInfo {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  color: #6b7280;
+}
+
+.averageRating {
+  font-weight: 600;
+  color: #374151;
+}
+
+.totalRatings {
+  color: #9ca3af;
+}
+
+/* Hover effects for interactive stars */
+.star.interactive:hover,
+.star.interactive:focus {
+  transform: scale(1.1);
+  transition: transform 0.1s ease;
+}
+
+/* Responsive adjustments */
+@media (max-width: 640px) {
+  .starRating {
+    gap: 0.25rem;
+  }
+  
+  .stars {
+    gap: 0.1rem;
+  }
+  
+  .small .star {
+    font-size: 0.75rem;
+  }
+  
+  .medium .star {
+    font-size: 1rem;
+  }
+  
+  .large .star {
+    font-size: 1.25rem;
+  }
+  
+  .extraLarge .star {
+    font-size: 1.75rem;
+  }
+} 

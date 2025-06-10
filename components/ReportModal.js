@@ -14,11 +14,26 @@ const REPORT_REASONS = [
   { value: "other", label: "Otro motivo" }
 ];
 
-export default function ReportModal({ isOpen, onClose, publicacionId, publicacionTitle }) {
+export default function ReportModal({ 
+  isOpen, 
+  onClose, 
+  publicacionId, 
+  publicacionTitle,
+  ratingId,
+  ratingInfo, // { raterName, comment, rating }
+  reportedUserId,
+  reportedUserInfo // { name, username }
+}) {
   const [selectedReason, setSelectedReason] = useState("");
   const [description, setDescription] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [message, setMessage] = useState(null);
+
+  const isRatingReport = !!ratingId;
+  const isPublicationReport = !!publicacionId;
+  const isUserReport = !!reportedUserId;
+
+
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -33,20 +48,39 @@ export default function ReportModal({ isOpen, onClose, publicacionId, publicacio
       return;
     }
 
+    // Validate that we have either a publicacion, rating, or user ID
+    if (!publicacionId && !ratingId && !reportedUserId) {
+      setMessage({ type: "error", text: "Error: No se pudo identificar el elemento a reportar" });
+      return;
+    }
+
     setIsSubmitting(true);
     setMessage(null);
 
     try {
+      const requestBody = {
+        reason: selectedReason,
+        description: description.trim() || null,
+      };
+
+      if (publicacionId) {
+        requestBody.publicacionId = publicacionId;
+      }
+      
+      if (ratingId) {
+        requestBody.ratingId = ratingId;
+      }
+      
+      if (reportedUserId) {
+        requestBody.reportedUserId = reportedUserId;
+      }
+
       const response = await fetch("/api/report", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          publicacionId,
-          reason: selectedReason,
-          description: description.trim() || null,
-        }),
+        body: JSON.stringify(requestBody),
       });
 
       const data = await response.json();
@@ -88,7 +122,7 @@ export default function ReportModal({ isOpen, onClose, publicacionId, publicacio
         <div className={styles.modalHeader}>
           <h2>
             <FaFlag className={styles.reportIcon} />
-            Reportar Publicación
+            {isRatingReport ? "Reportar Calificación" : isUserReport ? "Reportar Usuario" : "Reportar Publicación"}
           </h2>
           <button 
             className={styles.closeButton} 
@@ -101,7 +135,21 @@ export default function ReportModal({ isOpen, onClose, publicacionId, publicacio
 
         <div className={styles.modalBody}>
           <div className={styles.publicacionInfo}>
-            <p><strong>Publicación:</strong> {publicacionTitle}</p>
+            {isRatingReport ? (
+              <div>
+                <p><strong>Calificación de:</strong> {ratingInfo?.raterName}</p>
+                {ratingInfo?.comment && (
+                  <p><strong>Comentario:</strong> &quot;{ratingInfo.comment}&quot;</p>
+                )}
+              </div>
+            ) : isUserReport ? (
+              <div>
+                <p><strong>Usuario:</strong> {reportedUserInfo?.name || reportedUserInfo?.username}</p>
+                <p><strong>Nombre de usuario:</strong> @{reportedUserInfo?.username}</p>
+              </div>
+            ) : (
+              <p><strong>Publicación:</strong> {publicacionTitle}</p>
+            )}
           </div>
 
           {message && (
@@ -112,7 +160,9 @@ export default function ReportModal({ isOpen, onClose, publicacionId, publicacio
 
           <form onSubmit={handleSubmit}>
             <div className={styles.formGroup}>
-              <label htmlFor="reason">¿Por qué reportas esta publicación?</label>
+              <label htmlFor="reason">
+                {isRatingReport ? "¿Por qué reportas esta calificación?" : isUserReport ? "¿Por qué reportas este usuario?" : "¿Por qué reportas esta publicación?"}
+              </label>
               <select
                 id="reason"
                 value={selectedReason}

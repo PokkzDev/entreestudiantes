@@ -1,11 +1,15 @@
 "use client";
 import React from "react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import Image from "next/image";
 import styles from "./page.module.css";
-import { FaCalendarAlt, FaUniversity, FaMapMarkerAlt, FaUser, FaArrowLeft } from "react-icons/fa";
+import { FaCalendarAlt, FaUniversity, FaMapMarkerAlt, FaUser, FaArrowLeft, FaStar, FaFlag } from "react-icons/fa";
 import { getCategoryLabel } from "@/lib/categoryOptions";
+import StarRating from "@/components/StarRating";
+import RatingModal from "@/components/RatingModal";
+import ReportModal from "@/components/ReportModal";
 
 export default function PerfilUsuario(props) {
   // Handle params properly - React.use() should not be in try/catch
@@ -21,9 +25,17 @@ export default function PerfilUsuario(props) {
   
   const username = params?.username;
   const router = useRouter();
+  const { data: session } = useSession();
   const [usuario, setUsuario] = useState(null);
   const [publicaciones, setPublicaciones] = useState([]);
+  const [recentRatings, setRecentRatings] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [showRatingModal, setShowRatingModal] = useState(false);
+  const [userRating, setUserRating] = useState(null);
+  const [ratingLoading, setRatingLoading] = useState(false);
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [reportingRating, setReportingRating] = useState(null);
+  const [showUserReportModal, setShowUserReportModal] = useState(false);
 
   useEffect(() => {
     if (!username) return;
@@ -35,19 +47,105 @@ export default function PerfilUsuario(props) {
         if (data.success) {
           setUsuario(data.user);
           setPublicaciones(data.publicaciones || []);
+          setRecentRatings(data.recentRatings || []);
         } else {
           setUsuario(null);
           setPublicaciones([]);
+          setRecentRatings([]);
         }
       } catch (error) {
         console.error('Error fetching user profile:', error);
         setUsuario(null);
         setPublicaciones([]);
+        setRecentRatings([]);
       }
       setLoading(false);
     }
     fetchUserProfile();
   }, [username]);
+
+  const fetchUserRating = useCallback(async () => {
+    if (!usuario?.id || !session?.user?.id) return;
+    
+    try {
+      const res = await fetch(`/api/rating?userId=${usuario.id}&raterId=${session.user.id}`);
+      const data = await res.json();
+      if (data.success && data.ratings.length > 0) {
+        setUserRating(data.ratings[0]);
+      }
+    } catch (error) {
+      console.error('Error fetching user rating:', error);
+    }
+  }, [usuario?.id, session?.user?.id]);
+
+  // Fetch user's existing rating
+  useEffect(() => {
+    if (session && usuario && session.user.id !== usuario.id) {
+      fetchUserRating();
+    }
+  }, [session, usuario, fetchUserRating]);
+
+  const handleRatingSubmit = async ({ rating, comment }) => {
+    setRatingLoading(true);
+    try {
+      const res = await fetch('/api/rating', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          ratedUserId: usuario.id,
+          rating,
+          comment,
+        }),
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        setUserRating(data.rating);
+        // Refresh user profile to get updated rating stats
+        const profileRes = await fetch(`/api/perfil/${username}`);
+        const profileData = await profileRes.json();
+        if (profileData.success) {
+          setUsuario(profileData.user);
+          setRecentRatings(profileData.recentRatings || []);
+        }
+      } else {
+        throw new Error(data.error || 'Error al enviar calificación');
+      }
+    } catch (error) {
+      throw error;
+    } finally {
+      setRatingLoading(false);
+    }
+  };
+
+  const handleOpenReportModal = (rating) => {
+    console.log('Opening report modal for rating:', rating);
+    console.log('Rating ID:', rating?.id);
+    console.log('Rating object keys:', Object.keys(rating || {}));
+    
+    if (!rating?.id) {
+      console.error('Cannot report rating: missing ID');
+      return;
+    }
+    
+    setReportingRating(rating);
+    setShowReportModal(true);
+  };
+
+  const handleCloseReportModal = () => {
+    setShowReportModal(false);
+    setReportingRating(null);
+  };
+
+  const handleOpenUserReportModal = () => {
+    setShowUserReportModal(true);
+  };
+
+  const handleCloseUserReportModal = () => {
+    setShowUserReportModal(false);
+  };
 
   // Función para formatear números
   const formatNumber = (num) => {
@@ -96,13 +194,26 @@ export default function PerfilUsuario(props) {
 
   return (
     <div className={styles.perfilContainer}>
-      {/* Back button */}
-      <button 
-        className={styles.backButton}
-        onClick={() => router.back()}
-      >
-        <FaArrowLeft /> Volver
-      </button>
+      {/* Header with back button and actions */}
+      <div className={styles.headerActions}>
+        <button 
+          className={styles.backButton}
+          onClick={() => router.back()}
+        >
+          <FaArrowLeft /> Volver
+        </button>
+        
+        {/* Report user button - only show for other users when logged in */}
+        {session && session.user.id !== usuario.id && (
+          <button
+            className={styles.reportUserButton}
+            onClick={handleOpenUserReportModal}
+            title="Reportar usuario"
+          >
+            <FaFlag /> Reportar usuario
+          </button>
+        )}
+      </div>
 
       {/* User profile card */}
       <div className={styles.perfilCard}>
@@ -126,6 +237,20 @@ export default function PerfilUsuario(props) {
           <div className={styles.userInfo}>
             <h1 className={styles.userName}>{usuario.name || usuario.username}</h1>
             <p className={styles.userUsername}>@{usuario.username}</p>
+            
+            {/* Quick rating summary */}
+            {usuario.totalRatings > 0 && (
+              <div className={styles.quickRating}>
+                <FaStar className={styles.quickRatingIcon} />
+                <span className={styles.quickRatingValue}>
+                  {usuario.averageRating.toFixed(1)}
+                </span>
+                <span className={styles.quickRatingCount}>
+                  ({usuario.totalRatings})
+                </span>
+              </div>
+            )}
+            
             {usuario.university && (
               <div className={styles.userUniversity}>
                 <FaUniversity />
@@ -163,7 +288,7 @@ export default function PerfilUsuario(props) {
         </div>
       </div>
 
-      {/* Publications section */}
+      {/* Publications section - Show what the user offers first */}
       <div className={styles.publicacionesSection}>
         <h2 className={styles.sectionTitle}>
           Publicaciones de {usuario.name || usuario.username}
@@ -229,6 +354,124 @@ export default function PerfilUsuario(props) {
           </div>
         )}
       </div>
+
+      {/* Unified Rating section - After seeing publications, users can rate */}
+      <div className={styles.ratingSectionStandalone}>
+        <div className={styles.ratingHeader}>
+          <h2 className={styles.ratingMainTitle}>Calificaciones</h2>
+          <div className={styles.ratingDisplay}>
+            <StarRating
+              rating={usuario.averageRating}
+              readonly={true}
+              showCount={true}
+              totalRatings={usuario.totalRatings}
+              size="medium"
+            />
+          </div>
+        </div>
+        
+        {session && session.user.id !== usuario.id && (
+          <div className={styles.rateButtonContainer}>
+            <p className={styles.ratePrompt}>
+              ¿Has tenido alguna experiencia con {usuario.name || usuario.username}?
+            </p>
+            <button
+              className={styles.rateButton}
+              onClick={() => setShowRatingModal(true)}
+            >
+              <FaStar />
+              {userRating ? 'Editar mi calificación' : 'Calificar usuario'}
+            </button>
+          </div>
+        )}
+
+        {/* Recent ratings within the same section */}
+        {recentRatings.length > 0 && (
+          <div className={styles.ratingsSubsection}>
+            <h3 className={styles.ratingsSubtitle}>Lo que dicen otros usuarios</h3>
+            <div className={styles.ratingsList}>
+              {recentRatings.map((rating, index) => (
+                <div key={index} className={styles.ratingItem}>
+                  <div className={styles.ratingItemHeader}>
+                    <div className={styles.raterInfo}>
+                      <div className={styles.raterAvatar}>
+                        {rating.rater.image ? (
+                          <Image
+                            src={rating.rater.image}
+                            alt={rating.rater.name || rating.rater.username}
+                            width={32}
+                            height={32}
+                          />
+                        ) : (
+                          <div className={styles.avatarPlaceholder}>
+                            {(rating.rater.name || rating.rater.username)?.charAt(0).toUpperCase()}
+                          </div>
+                        )}
+                      </div>
+                      <div>
+                        <span className={styles.raterName}>
+                          {rating.rater.name || rating.rater.username}
+                        </span>
+                        <StarRating rating={rating.rating} readonly={true} size="small" />
+                      </div>
+                    </div>
+                    <div className={styles.ratingActions}>
+                      <span className={styles.ratingDate}>
+                        {formatDate(rating.createdAt)}
+                      </span>
+                      {session && session.user.id !== rating.raterId && (
+                        <button
+                          className={styles.reportButton}
+                          onClick={() => handleOpenReportModal(rating)}
+                          title="Reportar calificación"
+                        >
+                          <FaFlag />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                  {rating.comment && (
+                    <p className={styles.ratingComment}>{rating.comment}</p>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Rating Modal */}
+      <RatingModal
+        isOpen={showRatingModal}
+        onClose={() => setShowRatingModal(false)}
+        user={usuario}
+        onSubmit={handleRatingSubmit}
+        existingRating={userRating}
+        isLoading={ratingLoading}
+      />
+
+      {/* Report Modal for ratings */}
+      <ReportModal
+        isOpen={showReportModal && !!reportingRating}
+        onClose={handleCloseReportModal}
+        ratingId={reportingRating?.id}
+        ratingInfo={reportingRating ? {
+          raterName: reportingRating.rater?.name || reportingRating.rater?.username,
+          comment: reportingRating.comment,
+          rating: reportingRating.rating
+        } : null}
+      />
+
+      {/* Report Modal for user */}
+      <ReportModal
+        isOpen={showUserReportModal}
+        onClose={handleCloseUserReportModal}
+        reportedUserId={usuario?.id}
+        reportedUserInfo={usuario ? {
+          name: usuario.name,
+          username: usuario.username
+        } : null}
+      />
     </div>
   );
 } 
