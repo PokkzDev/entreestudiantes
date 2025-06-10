@@ -3,6 +3,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useSession, signOut } from "next-auth/react";
 import { useState, useRef, useEffect } from "react";
+import { FaPlus, FaFileAlt, FaUser, FaHeart, FaChartLine, FaCog, FaSignOutAlt } from "react-icons/fa";
 import styles from "./Navbar.module.css";
 
 export default function Navbar() {
@@ -175,24 +176,62 @@ export default function Navbar() {
               </div>
               {dropdownOpen && (
                 <div className={styles.userDropdown}>
-                  <Link href="/publicar" className={styles.btnDropdown} onClick={() => setDropdownOpen(false)}>
-                    Publicar
-                  </Link>
-                  <Link href="/favoritos" className={styles.btnDropdown} onClick={() => setDropdownOpen(false)}>
-                    Favoritos
-                  </Link>
-                  <Link href="/mis-publicaciones" className={styles.btnDropdown} onClick={() => setDropdownOpen(false)}>
-                    Mis Publicaciones
-                  </Link>
-                  <Link href="/configuraciones" className={styles.btnDropdown} onClick={() => setDropdownOpen(false)}>
-                    Configuraciones
-                  </Link>
-                  <button
-                    className={styles.btnDropdown}
-                    onClick={() => { setDropdownOpen(false); signOut({ callbackUrl: "/" }); }}
-                  >
-                    Cerrar Sesión
-                  </button>
+                  {/* Publications Section */}
+                  <div className={styles.dropdownSection}>
+                    <span className={styles.sectionLabel}>Publicaciones</span>
+                    <Link href="/publicar" className={styles.btnDropdown} onClick={() => setDropdownOpen(false)}>
+                      <FaPlus />
+                      <span>Publicar</span>
+                    </Link>
+                    <Link href="/mis-publicaciones" className={styles.btnDropdown} onClick={() => setDropdownOpen(false)}>
+                      <FaFileAlt />
+                      <span>Mis Publicaciones</span>
+                    </Link>
+                  </div>
+                  
+                  {/* Personal Section */}
+                  <div className={styles.dropdownSection}>
+                    <span className={styles.sectionLabel}>Personal</span>
+                    <Link href={`/perfil/${userUsername || session?.user?.username}`} className={styles.btnDropdown} onClick={() => setDropdownOpen(false)}>
+                      <FaUser />
+                      <span>Mi Perfil</span>
+                    </Link>
+                    <Link href="/favoritos" className={styles.btnDropdown} onClick={() => setDropdownOpen(false)}>
+                      <FaHeart />
+                      <span>Favoritos</span>
+                    </Link>
+                  </div>
+                  
+                  {/* Analytics Section - Only show if user has access */}
+                  {session?.user?.role === 'admin' || session?.user?.isAdmin ? (
+                    <div className={styles.dropdownSection}>
+                      <span className={styles.sectionLabel}>Analytics</span>
+                      <Link href="/analytics" className={styles.btnDropdown} onClick={() => setDropdownOpen(false)}>
+                        <FaChartLine />
+                        <span>Dashboard</span>
+                      </Link>
+                    </div>
+                  ) : null}
+                  
+                  {/* Settings Section */}
+                  <div className={styles.dropdownSection}>
+                    <span className={styles.sectionLabel}>Configuración</span>
+                    <Link href="/configuraciones" className={styles.btnDropdown} onClick={() => setDropdownOpen(false)}>
+                      <FaCog />
+                      <span>Configuraciones</span>
+                    </Link>
+                  </div>
+                  
+                  {/* Account Section */}
+                  <div className={styles.dropdownSection}>
+                    <button
+                      className={styles.btnDropdownDanger}
+                      onClick={() => { setDropdownOpen(false); signOut({ callbackUrl: "/" }); }}
+                    >
+                      <FaSignOutAlt />
+                      <span>Cerrar Sesión</span>
+                    </button>
+                  </div>
                 </div>
               )}
             </div>
@@ -234,11 +273,15 @@ export default function Navbar() {
                   <>
                     <Link href="/publicar" className={styles.mobileNavLink} onClick={() => setMobileMenuOpen(false)}>
                       Publicar
-                    </Link>                    <Link href="/favoritos" className={styles.mobileNavLink} onClick={() => setMobileMenuOpen(false)}>
-                      Favoritos
                     </Link>
                     <Link href="/mis-publicaciones" className={styles.mobileNavLink} onClick={() => setMobileMenuOpen(false)}>
                       Mis Publicaciones
+                    </Link>
+                    <Link href={`/perfil/${userUsername || session?.user?.username}`} className={styles.mobileNavLink} onClick={() => setMobileMenuOpen(false)}>
+                      Mi Perfil
+                    </Link>
+                    <Link href="/favoritos" className={styles.mobileNavLink} onClick={() => setMobileMenuOpen(false)}>
+                      Favoritos
                     </Link>
                     <Link href="/configuraciones" className={styles.mobileNavLink} onClick={() => setMobileMenuOpen(false)}>
                       Configuraciones

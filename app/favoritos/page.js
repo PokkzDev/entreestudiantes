@@ -140,23 +140,25 @@ export default function FavoritosPage() {
             </Link>
           </div>
         ) : (
-          <div className={styles.favoritesGrid}>
-            {favorites.map((favorite, index) => (
-              <PublicationCard
-                key={favorite.id}
-                publication={favorite.publicacion}
-                index={index}
-                onActionClick={handleRemoveFavorite}
-                onClick={(publication) => router.push(`/publicacion/${publication.id}`)}
-                priority={index < 4}
-                actionButton={{
-                  icon: <FaTrash />,
-                  title: "Eliminar de favoritos",
-                  className: cardStyles.removeButtonCard,
-                  disabled: removingFavorite === favorite.publicacion.id
-                }}
-              />
-            ))}
+          <div className={styles.favoritesContainer}>
+            <div className={styles.favoritesGrid}>
+              {favorites.map((favorite, index) => (
+                <PublicationCard
+                  key={favorite.id}
+                  publication={favorite.publicacion}
+                  index={index}
+                  onActionClick={handleRemoveFavorite}
+                  onClick={(publication) => router.push(`/publicacion/${publication.id}`)}
+                  priority={index < 4}
+                  actionButton={{
+                    icon: <FaTrash />,
+                    title: "Eliminar de favoritos",
+                    className: cardStyles.removeButtonCard,
+                    disabled: removingFavorite === favorite.publicacion.id
+                  }}
+                />
+              ))}
+            </div>
           </div>
         )}
       </div>

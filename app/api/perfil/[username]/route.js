@@ -54,6 +54,37 @@ export async function GET(req, context) {
       }, { status: 404 });
     }
 
+    // Get user ratings statistics
+    const ratingsData = await prisma.userRating.aggregate({
+      where: { ratedId: user.id },
+      _avg: { rating: true },
+      _count: { rating: true }
+    });
+
+    // Get recent ratings with comments
+    const recentRatings = await prisma.userRating.findMany({
+      where: { 
+        ratedId: user.id,
+        comment: { not: null }
+      },
+      orderBy: { createdAt: 'desc' },
+      take: 5,
+      select: {
+        id: true,
+        rating: true,
+        comment: true,
+        raterId: true,
+        createdAt: true,
+        rater: {
+          select: {
+            username: true,
+            name: true,
+            image: true
+          }
+        }
+      }
+    });
+
     // Obtener las publicaciones activas del usuario
     const publicaciones = await prisma.publicacion.findMany({
       where: { 
@@ -80,8 +111,13 @@ export async function GET(req, context) {
 
     return NextResponse.json({
       success: true,
-      user: publicUser,
-      publicaciones
+      user: {
+        ...publicUser,
+        averageRating: ratingsData._avg.rating || 0,
+        totalRatings: ratingsData._count.rating || 0
+      },
+      publicaciones,
+      recentRatings
     });
   } catch (error) {
     console.error("Error fetching user profile:", error);
