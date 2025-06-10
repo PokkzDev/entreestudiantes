@@ -2,15 +2,38 @@
 import { useState } from "react";
 import Link from 'next/link';
 import styles from './page.module.css';
+import TurnstileWidget from '../../components/Turnstile';
 
 export default function RecuperarContrasena() {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState("");
+  const [turnstileToken, setTurnstileToken] = useState("");
+
+  const handleTurnstileSuccess = (token) => {
+    setTurnstileToken(token);
+    setError(""); // Clear any existing errors when Turnstile is verified
+  };
+
+  const handleTurnstileError = () => {
+    setTurnstileToken("");
+    setError("Error en la verificación de seguridad. Por favor, recarga la página e intenta de nuevo.");
+  };
+
+  const handleTurnstileExpire = () => {
+    setTurnstileToken("");
+    setError("La verificación de seguridad ha expirado. Por favor, completa la verificación nuevamente.");
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    if (!turnstileToken) {
+      setError("Por favor, completa la verificación de seguridad.");
+      return;
+    }
+    
     setLoading(true);
     setError("");
     setSuccess(false);
@@ -19,7 +42,7 @@ export default function RecuperarContrasena() {
       const res = await fetch("/api/auth/recuperar-contrasena", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ email, turnstileToken }),
       });
       
       if (res.ok) {
@@ -27,9 +50,13 @@ export default function RecuperarContrasena() {
       } else {
         const data = await res.json();
         setError(data.error || "Error al enviar el correo");
+        // Reset Turnstile on error
+        setTurnstileToken("");
       }
     } catch (err) {
       setError("Error de conexión. Por favor, verifica tu conexión a internet e intenta nuevamente.");
+      // Reset Turnstile on error
+      setTurnstileToken("");
     }
     
     setLoading(false);
@@ -91,9 +118,17 @@ export default function RecuperarContrasena() {
                 </div>
               )}
               
+              <div className={styles.turnstileWrapper}>
+                <TurnstileWidget
+                  onSuccess={handleTurnstileSuccess}
+                  onError={handleTurnstileError}
+                  onExpire={handleTurnstileExpire}
+                />
+              </div>
+              
               <button
                 type="submit"
-                disabled={loading}
+                disabled={loading || !turnstileToken}
                 className={styles.submitButton}
               >
                 {loading ? 'Enviando...' : 'Enviar enlace de recuperación'}

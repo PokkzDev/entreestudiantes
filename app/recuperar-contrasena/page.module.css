@@ -170,6 +170,15 @@
   text-decoration: underline;
 }
 
+/* Center the Turnstile widget */
+.turnstileWrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  margin: 0.5rem 0;
+}
+
 @media (max-width: 480px) {
   .card {
     padding: 2rem 1.5rem;

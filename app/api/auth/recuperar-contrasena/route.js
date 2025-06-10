@@ -14,10 +14,37 @@ export async function POST(req) {
     });
   }
 
-  const { email } = await req.json();
+  const { email, turnstileToken } = await req.json();
+  
   if (!email) {
     return new Response(JSON.stringify({ error: "Email requerido" }), { status: 400 });
   }
+
+  if (!turnstileToken) {
+    return new Response(JSON.stringify({ error: "Verificación de seguridad requerida" }), { status: 400 });
+  }
+
+  // Verify Turnstile token
+  try {
+    const formData = new FormData();
+    formData.append('secret', process.env.CLOUDFARE_TURNSTILE_SECRET_KEY);
+    formData.append('response', turnstileToken);
+
+    const turnstileResponse = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
+      method: 'POST',
+      body: formData,
+    });
+
+    const turnstileResult = await turnstileResponse.json();
+
+    if (!turnstileResult.success) {
+      return new Response(JSON.stringify({ error: "Verificación de seguridad fallida. Por favor, intenta de nuevo." }), { status: 400 });
+    }
+  } catch (error) {
+    console.error('Error verifying Turnstile:', error);
+    return new Response(JSON.stringify({ error: "Error en la verificación de seguridad. Por favor, intenta de nuevo." }), { status: 500 });
+  }
+
   const user = await prisma.user.findUnique({ where: { email } });
   if (!user || !user.isVerified) {
     // No revelar si el email existe o si está verificado
