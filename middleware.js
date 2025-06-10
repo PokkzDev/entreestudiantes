@@ -1,35 +1,139 @@
 import { withAuth } from "next-auth/middleware";
 import { NextResponse } from "next/server";
 
+// ============================================================================
+// ROUTE CONFIGURATIONS - Easy to edit!
+// ============================================================================
+
+// Public routes that don't require authentication
+const PUBLIC_ROUTES = [
+  '/', // Home page
+  '/login', 
+  '/registro', 
+  '/completar-registro', 
+  '/recuperar-contrasena', 
+  '/reset-contrasena',
+  '/busqueda', // Search page
+  '/publicacion', // Individual publication pages
+  '/perfil', // User profile pages
+  '/planes', // Plans page
+  '/sugerencias', // Suggestions page
+  '/contacto', // Contact page
+  '/terminos-uso', // Terms of use
+  '/politica-privacidad' // Privacy policy
+];
+
+// API routes that should be excluded from authentication
+const PUBLIC_API_ROUTES = [
+  'api/auth',
+  'api/register',
+  'api/resend-verification',
+  'api/complete-registration',
+  'api/validate-registration-token', // Registration token validation
+  'api/allowed-domains',
+  'api/busqueda',
+  'api/publicacion',
+  'api/perfil',
+  'api/check-session',
+  'api/check-verified',
+  'api/flow/webhook',
+  'api/flow/return',
+  'api/flow/refund-webhook',
+  'api/verify-turnstile',
+  'api/feedback',
+  'api/contact',
+  'api/cron',
+  'api/update-session',
+  'api/account-tiers',
+  'api/registration-status',
+  'api/analytics'
+];
+
+// Static assets that should be excluded from authentication
+const STATIC_ASSETS = [
+  '_next/static',
+  '_next/image',
+  'favicon.ico',
+  'pageImages',
+  'images'
+];
+
+// Suspicious patterns to block (security)
+const SUSPICIOUS_PATTERNS = [
+  /wp-admin/i,
+  /wp-content/i,
+  /wp-includes/i,
+  /xmlrpc\.php/i,
+  /wp-login\.php/i,
+  /phpmyadmin/i,
+  /admin/i,
+  /administrator/i,
+  /setup-config\.php/i
+];
+
+// ============================================================================
+// HELPER FUNCTIONS
+// ============================================================================
+
+function isPublicRoute(pathname) {
+  return PUBLIC_ROUTES.some(route => {
+    if (route === '/') {
+      return pathname === '/';
+    }
+    return pathname.startsWith(route);
+  });
+}
+
+function isSuspiciousRequest(pathname, callbackUrl) {
+  const isSuspiciousPath = SUSPICIOUS_PATTERNS.some(pattern => pattern.test(pathname));
+  const isSuspiciousCallback = callbackUrl && 
+    SUSPICIOUS_PATTERNS.some(pattern => pattern.test(decodeURIComponent(callbackUrl)));
+  
+  return isSuspiciousPath || isSuspiciousCallback;
+}
+
+function isUserBannedOrSuspended(token) {
+  if (!token) return false;
+  
+  return (
+    token.isBanned === true || 
+    token.isActive === false ||
+    (token.isSuspended === true && token.suspensionEndsAt && new Date() < new Date(token.suspensionEndsAt)) ||
+    (token.isSuspended === true && !token.suspensionEndsAt) // Indefinite suspension
+  );
+}
+
+function getSuspensionMessage(token) {
+  if (token.isBanned === true) {
+    return "Tu cuenta ha sido suspendida permanentemente. Contacta al soporte si crees que esto es un error.";
+  } else if (token.isActive === false) {
+    return "Tu cuenta está desactivada. Contacta al soporte para más información.";
+  } else if (token.isSuspended === true && token.suspensionEndsAt) {
+    const endDate = new Date(token.suspensionEndsAt).toLocaleDateString('es-ES');
+    return `Tu cuenta está suspendida hasta el ${endDate}. Razón: ${token.suspensionReason || 'No especificada'}`;
+  } else if (token.isSuspended === true) {
+    return `Tu cuenta está suspendida indefinidamente. Razón: ${token.suspensionReason || 'No especificada'}`;
+  }
+  return "Tu sesión ha expirado";
+}
+
+// ============================================================================
+// MIDDLEWARE LOGIC
+// ============================================================================
+
 export default withAuth(
   function middleware(req) {
     const { pathname, searchParams } = req.nextUrl;
     
-    // Debug logging for webhook routes
+    // Debug logging for payment routes
     if (pathname.includes('/api/payments')) {
       console.log(`🔍 Middleware processing payment route: ${pathname}`);
       console.log('🔍 This should be excluded from authentication!');
     }
     
-    // Security: Block WordPress admin and suspicious requests
-    const suspiciousPatterns = [
-      /wp-admin/i,
-      /wp-content/i,
-      /wp-includes/i,
-      /xmlrpc\.php/i,
-      /wp-login\.php/i,
-      /phpmyadmin/i,
-      /admin/i,
-      /administrator/i,
-      /setup-config\.php/i
-    ];
-    
-    // Check URL path and callback URLs for suspicious patterns
+    // Security: Block suspicious requests
     const callbackUrl = searchParams.get('callbackUrl');
-    const isSuspiciousPath = suspiciousPatterns.some(pattern => pattern.test(pathname));
-    const isSuspiciousCallback = callbackUrl && suspiciousPatterns.some(pattern => pattern.test(decodeURIComponent(callbackUrl)));
-    
-    if (isSuspiciousPath || isSuspiciousCallback) {
+    if (isSuspiciousRequest(pathname, callbackUrl)) {
       console.warn(`Blocked suspicious request: ${pathname}${callbackUrl ? ` with callback: ${callbackUrl}` : ''}`);
       return NextResponse.json(
         { error: "Access denied" }, 
@@ -39,36 +143,19 @@ export default withAuth(
     
     const token = req.nextauth.token;
     
-    // If user is banned, suspended (and suspension hasn't expired), or inactive, redirect to login
-    // Note: We need to explicitly check for false, not just falsy values
-    if (token && (
-      token.isBanned === true || 
-      token.isActive === false ||
-      (token.isSuspended === true && token.suspensionEndsAt && new Date() < new Date(token.suspensionEndsAt)) ||
-      (token.isSuspended === true && !token.suspensionEndsAt) // Indefinite suspension
-    )) {
-      // Determine the appropriate message based on the user's status
-      let message = "Tu sesión ha expirado";
-      if (token.isBanned === true) {
-        message = "Tu cuenta ha sido suspendida permanentemente. Contacta al soporte si crees que esto es un error.";
-      } else if (token.isActive === false) {
-        message = "Tu cuenta está desactivada. Contacta al soporte para más información.";
-      } else if (token.isSuspended === true && token.suspensionEndsAt) {
-        const endDate = new Date(token.suspensionEndsAt).toLocaleDateString('es-ES');
-        message = `Tu cuenta está suspendida hasta el ${endDate}. Razón: ${token.suspensionReason || 'No especificada'}`;
-      } else if (token.isSuspended === true) {
-        message = `Tu cuenta está suspendida indefinidamente. Razón: ${token.suspensionReason || 'No especificada'}`;
-      }
+    // Handle banned/suspended users
+    if (isUserBannedOrSuspended(token)) {
+      const message = getSuspensionMessage(token);
       
-      // Redirect directly to login with the message, avoiding NextAuth signout flow
+      // Redirect to login with appropriate message
       const url = req.nextUrl.clone();
       url.pathname = '/login';
       url.searchParams.set('message', message);
-      url.searchParams.set('suspended', 'true'); // Flag to indicate this is a suspension redirect
+      url.searchParams.set('suspended', 'true');
       
       const response = NextResponse.redirect(url);
       
-      // Clear the NextAuth session cookies to ensure clean logout
+      // Clear NextAuth session cookies
       response.cookies.delete('next-auth.session-token');
       response.cookies.delete('__Secure-next-auth.session-token');
       response.cookies.delete('next-auth.csrf-token');
@@ -82,39 +169,15 @@ export default withAuth(
   {
     callbacks: {
       authorized: ({ token, req }) => {
-        // Debug logging for webhook routes
+        // Debug logging for payment routes
         if (req.nextUrl.pathname.includes('/api/payments')) {
           console.log(`🔍 Authorized callback for payment route: ${req.nextUrl.pathname}`);
           console.log('🔍 This should return true without requiring authentication!');
-          return true; // Always allow payment routes
+          return true;
         }
         
-        // Define public routes that don't require authentication
-        const publicRoutes = [
-          '/', // Home page
-          '/login', 
-          '/registro', 
-          '/completar-registro', 
-          '/recuperar-contrasena', 
-          '/reset-contrasena',
-          '/busqueda', // Search page should be public
-          '/publicacion', // Individual publication pages should be public (will be handled by API)
-          '/perfil', // User profile pages should be public to allow viewing user profiles
-          '/planes', // Plans page should be public to allow users to see pricing
-          '/sugerencias', // Suggestions page should be public for both logged-in and anonymous users
-          '/contacto', // Contact page should be public for both logged-in and anonymous users
-          '/terminos-uso', // Terms of use should be public
-          '/politica-privacidad' // Privacy policy should be public
-        ];
-        
-        const isPublicRoute = publicRoutes.some(route => {
-          if (route === '/') {
-            return req.nextUrl.pathname === '/';
-          }
-          return req.nextUrl.pathname.startsWith(route);
-        });
-        
-        if (isPublicRoute) {
+        // Check if it's a public route
+        if (isPublicRoute(req.nextUrl.pathname)) {
           return true;
         }
         
@@ -125,8 +188,12 @@ export default withAuth(
   }
 );
 
+// ============================================================================
+// MATCHER CONFIGURATION
+// ============================================================================
+
 export const config = {
   matcher: [
-    "/((?!api/auth|api/register|api/resend-verification|api/complete-registration|api/allowed-domains|api/busqueda|api/publicacion|api/perfil|api/check-session|api/check-verified|api/flow/webhook|api/flow/return|api/flow/refund-webhook|api/verify-turnstile|api/feedback|api/contact|api/cron|api/update-session|api/account-tiers|api/registration-status|api/analytics|_next/static|_next/image|favicon.ico|pageImages|images).*)"
+    "/((?!api/auth|api/register|api/resend-verification|api/complete-registration|api/validate-registration-token|api/allowed-domains|api/busqueda|api/publicacion|api/perfil|api/check-session|api/check-verified|api/flow/webhook|api/flow/return|api/flow/refund-webhook|api/verify-turnstile|api/feedback|api/contact|api/cron|api/update-session|api/account-tiers|api/registration-status|api/analytics|_next/static|_next/image|favicon.ico|pageImages|images).*)"
   ],
 }; 

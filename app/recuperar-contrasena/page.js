@@ -1,5 +1,7 @@
 "use client";
 import { useState } from "react";
+import Link from 'next/link';
+import styles from './page.module.css';
 
 export default function RecuperarContrasena() {
   const [email, setEmail] = useState("");
@@ -12,12 +14,14 @@ export default function RecuperarContrasena() {
     setLoading(true);
     setError("");
     setSuccess(false);
+    
     try {
       const res = await fetch("/api/auth/recuperar-contrasena", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email }),
       });
+      
       if (res.ok) {
         setSuccess(true);
       } else {
@@ -25,81 +29,83 @@ export default function RecuperarContrasena() {
         setError(data.error || "Error al enviar el correo");
       }
     } catch (err) {
-      setError("Error de red");
+      setError("Error de conexión. Por favor, verifica tu conexión a internet e intenta nuevamente.");
     }
+    
     setLoading(false);
   };
 
   return (
-    <div style={{ minHeight: '80vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f8fafc' }}>
-      <div style={{
-        background: '#fff',
-        borderRadius: '20px',
-        boxShadow: '0 8px 32px 0 rgba(31,38,135,0.07)',
-        padding: '2.5rem 2rem',
-        maxWidth: '400px',
-        width: '100%',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        gap: '2rem',
-      }}>
-        <h1 style={{ fontSize: '2rem', fontWeight: 800, color: '#2563eb', marginBottom: '0.5rem', letterSpacing: '-0.02em' }}>
-          Recuperar contraseña
-        </h1>
-        <div style={{ color: '#64748b', fontWeight: 500, textAlign: 'center', fontSize: '1rem', marginBottom: '-1rem' }}>
-          {/* Mensaje solo antes de enviar */}
-          {/* Eliminado el mensaje duplicado */}
-        </div>
+    <div className={styles.page}>
+      <div className={styles.card}>
         {success ? (
-          <div style={{ color: '#22c55e', fontWeight: 600, textAlign: 'center' }}>
-            Si el correo electrónico está registrado, recibirás un enlace para restablecer tu contraseña.
+          <div className={styles.success}>
+            <div className={styles.successIcon}>
+              ✓
+            </div>
+            <div className={styles.header}>
+              <h1 className={styles.title}>¡Correo enviado!</h1>
+            </div>
+            <div className={styles.successMessage}>
+              Si el correo electrónico está registrado, recibirás un enlace para restablecer tu contraseña.
+            </div>
+            <div className={styles.successSubtext}>
+              Revisa tu bandeja de entrada y también la carpeta de spam. El enlace será válido por 1 hora.
+            </div>
+            <div className={styles.backToLogin}>
+              <Link href="/login" className={styles.backToLoginLink}>
+                Volver al inicio de sesión
+              </Link>
+            </div>
           </div>
         ) : (
-          <form onSubmit={handleSubmit} style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '1.2rem' }}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-              <label htmlFor="email" style={{ fontWeight: 600, color: '#334155' }}>Correo electrónico</label>
-              <input
-                id="email"
-                name="email"
-                type="email"
-                required
-                autoComplete="email"
-                value={email}
-                onChange={e => setEmail(e.target.value)}
-                style={{
-                  padding: '0.85rem 1rem',
-                  borderRadius: '10px',
-                  border: '1.5px solid #e0e7ef',
-                  fontSize: '1.08rem',
-                  outline: 'none',
-                  background: '#f8fafc',
-                  color: '#334155',
-                  transition: 'border 0.2s',
-                }}
-              />
+          <>
+            <div className={styles.header}>
+              <h1 className={styles.title}>Recuperar contraseña</h1>
+              <p className={styles.subtitle}>
+                Ingresa tu dirección de correo electrónico y te enviaremos un enlace para restablecer tu contraseña
+              </p>
             </div>
-            {error && <div style={{ color: '#ef4444', fontWeight: 600, textAlign: 'center' }}>{error}</div>}
-            <button
-              type="submit"
-              disabled={loading}
-              style={{
-                background: 'linear-gradient(90deg, #334155 0%, #6366f1 100%)',
-                color: '#fff',
-                fontWeight: 700,
-                fontSize: '1.13rem',
-                border: 'none',
-                borderRadius: '10px',
-                padding: '0.85rem 2.2rem',
-                boxShadow: '0 8px 24px -8px #33415533',
-                cursor: loading ? 'not-allowed' : 'pointer',
-                opacity: loading ? 0.7 : 1,
-                transition: 'all 0.3s',
-              }}
-            >
-              {loading ? 'Enviando...' : 'Enviar enlace'}
-            </button>
-          </form>
+            
+            <form onSubmit={handleSubmit} className={styles.form}>
+              <div className={styles.inputGroup}>
+                <label htmlFor="email" className={styles.label}>
+                  Correo electrónico
+                </label>
+                <input
+                  id="email"
+                  name="email"
+                  type="email"
+                  required
+                  autoComplete="email"
+                  placeholder="tu@ejemplo.com"
+                  value={email}
+                  onChange={e => setEmail(e.target.value)}
+                  className={styles.input}
+                />
+              </div>
+              
+              {error && (
+                <div className={styles.error}>
+                  {error}
+                </div>
+              )}
+              
+              <button
+                type="submit"
+                disabled={loading}
+                className={styles.submitButton}
+              >
+                {loading ? 'Enviando...' : 'Enviar enlace de recuperación'}
+              </button>
+            </form>
+            
+            <div className={styles.backToLogin}>
+              <Link href="/login" className={styles.backToLoginLink}>
+                ← Volver al inicio de sesión
+              </Link>
+            </div>
+          </>
         )}
       </div>
     </div>
