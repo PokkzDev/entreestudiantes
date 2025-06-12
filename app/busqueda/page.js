@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import { useSession } from "next-auth/react";
 import styles from "./page.module.css";
 import cardStyles from "@/components/PublicationCard.module.css";
 import { FaFlag, FaChevronUp } from "react-icons/fa";
@@ -8,6 +9,7 @@ import PublicationCard from "@/components/PublicationCard";
 import { getCategoryLabel, getProductCategories, getServiceCategories } from "../../lib/categoryOptions";
 
 export default function Busqueda() {
+  const { data: session } = useSession();
   const [productos, setProductos] = useState([]);
   const [categorias, setCategorias] = useState([]);
   const [categoria, setCategoria] = useState("");
@@ -447,11 +449,14 @@ export default function Busqueda() {
                   index={index}
                   onActionClick={handleReport}
                   priority={index < 4}
-                  actionButton={{
-                    icon: <FaFlag />,
-                    title: "Reportar publicación",
-                    className: cardStyles.reportButtonCard
-                  }}
+                  actionButton={
+                    // Only show report button if user is not the author
+                    session?.user?.id !== prod.authorId ? {
+                      icon: <FaFlag />,
+                      title: "Reportar publicación",
+                      className: cardStyles.reportButtonCard
+                    } : null
+                  }
                 />
               ))
             )}

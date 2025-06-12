@@ -429,13 +429,16 @@ export default function PublicacionDetalle(props) {
           >
             <FaHeart />
           </button>
-          <button
-            className={styles.actionButton}
-            onClick={handleReport}
-            title="Reportar esta publicación"
-          >
-            <FaFlag />
-          </button>
+          {/* Only show report button if user is not the author */}
+          {session?.user?.id !== publicacion?.authorId && (
+            <button
+              className={styles.actionButton}
+              onClick={handleReport}
+              title="Reportar esta publicación"
+            >
+              <FaFlag />
+            </button>
+          )}
         </div>
       </div>
 

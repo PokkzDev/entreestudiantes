@@ -39,10 +39,52 @@ export async function POST(req) {
     let targetItem = null;
     let targetType = null;
 
+    // Get user session (optional - reports can be anonymous)
+    let reporterId = null;
+    try {
+      const session = await getServerSession(authOptions);
+      if (session?.user?.id) {
+        reporterId = session.user.id;
+      }
+    } catch (error) {
+      // Continue without user ID if session fails
+      console.log("Error getting session for report:", error);
+    }
+
+    // Get request info
+    const headers = req.headers;
+    const ipAddress = headers.get('x-forwarded-for') || headers.get('x-real-ip') || 'unknown';
+    const userAgent = headers.get('user-agent') || 'unknown';
+
+    // Check if user has already reported this item (if logged in)
+    if (reporterId) {
+      const whereClause = { reporterId };
+      if (publicacionId) whereClause.publicacionId = publicacionId;
+      if (ratingId) whereClause.ratingId = ratingId;
+      if (reportedUserId) whereClause.reportedUserId = reportedUserId;
+
+      const existingReport = await prisma.report.findFirst({
+        where: whereClause
+      });
+
+      if (existingReport) {
+        const itemType = publicacionId ? "publicación" : ratingId ? "calificación" : "usuario";
+        return NextResponse.json({
+          success: false,
+          error: `Ya has reportado este/a ${itemType} anteriormente`
+        }, { status: 400 });
+      }
+    }
+
     // Check if the publication exists (if reporting a publication)
     if (publicacionId) {
       const publicacion = await prisma.publicacion.findUnique({
-        where: { id: publicacionId }
+        where: { id: publicacionId },
+        include: {
+          author: {
+            select: { id: true }
+          }
+        }
       });
 
       if (!publicacion) {
@@ -51,6 +93,15 @@ export async function POST(req) {
           error: "Publicación no encontrada"
         }, { status: 404 });
       }
+      
+      // Check if user is trying to report their own publication
+      if (reporterId && publicacion.author.id === reporterId) {
+        return NextResponse.json({
+          success: false,
+          error: "No puedes reportar tu propia publicación"
+        }, { status: 400 });
+      }
+      
       targetItem = publicacion;
       targetType = "publicacion";
     }
@@ -98,43 +149,6 @@ export async function POST(req) {
       
       targetItem = user;
       targetType = "user";
-    }
-
-    // Get user session (optional - reports can be anonymous)
-    let reporterId = null;
-    try {
-      const session = await getServerSession(authOptions);
-      if (session?.user?.id) {
-        reporterId = session.user.id;
-      }
-    } catch (error) {
-      // Continue without user ID if session fails
-      console.log("Error getting session for report:", error);
-    }
-
-    // Get request info
-    const headers = req.headers;
-    const ipAddress = headers.get('x-forwarded-for') || headers.get('x-real-ip') || 'unknown';
-    const userAgent = headers.get('user-agent') || 'unknown';
-
-    // Check if user has already reported this item (if logged in)
-    if (reporterId) {
-      const whereClause = { reporterId };
-      if (publicacionId) whereClause.publicacionId = publicacionId;
-      if (ratingId) whereClause.ratingId = ratingId;
-      if (reportedUserId) whereClause.reportedUserId = reportedUserId;
-
-      const existingReport = await prisma.report.findFirst({
-        where: whereClause
-      });
-
-      if (existingReport) {
-        const itemType = publicacionId ? "publicación" : ratingId ? "calificación" : "usuario";
-        return NextResponse.json({
-          success: false,
-          error: `Ya has reportado este/a ${itemType} anteriormente`
-        }, { status: 400 });
-      }
     }
 
     // Create the report and update target item in a transaction
