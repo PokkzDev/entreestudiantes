@@ -70,11 +70,12 @@ function LoginForm() {
       // Show specific error message from authentication, or generic message for credential errors
       if (res.error === "CredentialsSignin") {
         setError("Correo, usuario o contraseña incorrectos");
+        // Don't reset Turnstile for credential errors - allow retry
       } else {
         setError(res.error);
+        // Reset Turnstile for other security-related errors
+        setTurnstileToken("");
       }
-      // Reset Turnstile on error
-      setTurnstileToken("");
     } else {
       router.push("/");
     }

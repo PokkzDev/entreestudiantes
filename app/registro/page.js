@@ -195,7 +195,7 @@ export default function Register() {
       if (response.status === 400 && data.message) {
         if (data.message.includes('ya está registrado y verificado')) {
           setError('Este correo ya está registrado. Inicia sesión.');
-          setTurnstileToken(""); // Clear token for this error
+          setTurnstileToken(""); // Clear token for this error (security)
           return;
         }
         if (data.message.includes('ya está registrado pero no verificado')) {
@@ -205,9 +205,14 @@ export default function Register() {
           // Don't clear turnstile token here - we need it for resend
           return;
         }
-        // Handle other 400 errors
+        // Handle other 400 errors - be selective about token reset
         setError(data.message);
-        setTurnstileToken(""); // Clear token for other errors
+        // Only reset token for security-related errors, not validation errors
+        if (data.message.includes('Verificación de seguridad fallida') || 
+            data.message.includes('Error en la verificación de seguridad')) {
+          setTurnstileToken(""); // Clear token for security errors
+        }
+        // Don't reset token for domain validation errors - user can fix and retry
         return;
       }
 
