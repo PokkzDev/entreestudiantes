@@ -55,7 +55,7 @@ function PlanesContent() {
   const [processing, setProcessing] = useState(null); // Track which plan is being processed
   const [message, setMessage] = useState(null);
   const [messageTimeoutId, setMessageTimeoutId] = useState(null);
-  const [planPurchasingEnabled, setPlanPurchasingEnabled] = useState(true);
+  const [planPurchasingEnabled, setPlanPurchasingEnabled] = useState(false); // Hardcoded disabled
   const [accountTiers, setAccountTiers] = useState([]); // Remove fallback data - use only DB values
   const [tiersLoading, setTiersLoading] = useState(true); // Start with loading true
   const { data: session, status } = useSession();
@@ -207,7 +207,7 @@ function PlanesContent() {
     if (status === "authenticated") {
       setLoading(true); // Set loading to true when we start fetching account info
       fetchAccountInfo();
-      checkPlanPurchasingStatus();
+      // checkPlanPurchasingStatus(); // Commented out - plan purchasing hardcoded to disabled
       
       // Add a delayed refresh to catch any recent subscription updates
       // This helps with race conditions after payments
@@ -222,7 +222,7 @@ function PlanesContent() {
       setLoading(false);
     }
     // If status is "loading", don't change the loading state yet
-  }, [status, fetchAccountTiersData, fetchAccountInfo, checkPlanPurchasingStatus]);
+  }, [status, fetchAccountTiersData, fetchAccountInfo]); // Removed checkPlanPurchasingStatus dependency
 
   useEffect(() => {
     if (!searchParams) {
